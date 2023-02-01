@@ -94,5 +94,12 @@ mod tests {
         assert_eq!(arr1.bimap(arr2, |x, y| x + y).data, [4, 6, 8, 10])
     }
 
+    #[test]
+    fn transpose() {
+        let arr = Ndarr::new([0, 1, 2, 3, 4, 5, 6, 7], [2,2,2]).expect("Error initializing");
+        // same as arr.T.flatten() in numpy
+        assert_eq!(arr.t().data, [0, 4, 2, 6, 1, 5, 3, 7])
+    }
+
 
 }
