@@ -1,2 +1,2 @@
 # rapl
-Rust Array Polymorphic Library (or maybe Rust APL)
+Rank Polymorphic array library for Rust (or maybe Rust APL) 
