@@ -1,4 +1,5 @@
 mod helpers;
+mod ops;
 use std::{
     fmt::Debug,
     fmt::{write, Display},
@@ -41,6 +42,7 @@ impl<T: Copy + Clone + Debug + Default, const N: usize, const R: usize> Ndarr<T,
 impl<T: Copy + Clone + Debug + Default + Display, const N: usize, const R: usize> Display
     for Ndarr<T, N, R>
 {
+    // Kind of nasty function, it can be imprube a lot, but I think there is no scape from recursion.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let strs = self.data.map(|x| x.to_string());
         let binding = strs.clone().map(|s| s.len());
@@ -146,5 +148,14 @@ mod tests {
         println!("{}", arr);
         // same as arr.T.flatten() in numpy
         assert_eq!(arr.t().data, [0, 4, 2, 6, 1, 5, 3, 7])
+    }
+
+    #[test]
+    fn element_wise_ops() {
+        let arr1 = Ndarr::new([1, 1, 1, 1], [2, 2]).expect("Error initializing");
+        let arr2 = Ndarr::new([1, 1, 1, 1], [2, 2]).expect("Error initializing");
+
+        let result = Ndarr::new([2, 2, 2, 2], [2, 2]).expect("Error initializing");
+        assert_eq!((arr1 + arr2).data, result.data)
     }
 }
