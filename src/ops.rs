@@ -1,6 +1,8 @@
 use super::*;
 use std::ops::*;
 
+// Arithmetic operations
+
 impl<T, const R: usize, const N: usize> Add for Ndarr<T, N, R>
 where
     T: Add<Output = T> + Copy + Clone + Debug + Default,
@@ -10,7 +12,7 @@ where
     fn add(self, other: Self) -> Self {
         //this is temporary, util we att projection por rank polymorphic operations
         if self.shape != other.shape {
-            panic!("Shape missmatch")
+            panic!("Shape mismatch")
         } else {
             self.bimap(other, |x, y| *x + *y)
         }
@@ -26,7 +28,7 @@ where
     fn sub(self, other: Self) -> Self {
         //this is temporary, util we att projection por rank polymorphic operations
         if self.shape != other.shape {
-            panic!("Shape missmatch")
+            panic!("Shape mismatch")
         } else {
             self.bimap(other, |x, y| *x - *y)
         }
@@ -42,13 +44,28 @@ where
     fn mul(self, other: Self) -> Self {
         //this is temporary, util we att projection por rank polymorphic operations
         if self.shape != other.shape {
-            panic!("Shape missmatch")
+            panic!("Shape mismatch")
         } else {
             self.bimap(other, |x, y| *x * *y)
         }
     }
 }
 
+impl<T, const R: usize, const N: usize> Div for Ndarr<T, N, R>
+where
+    T: Div<Output = T> + Copy + Clone + Debug + Default,
+    [T; N]: Default,
+{
+    type Output = Self;
+    fn div(self, other: Self) -> Self {
+        //this is temporary, util we att projection por rank polymorphic operations
+        if self.shape != other.shape {
+            panic!("Shape mismatch")
+        } else {
+            self.bimap(other, |x, y| *x / *y)
+        }
+    }
+}
 impl<T, const R: usize, const N: usize> Rem for Ndarr<T, N, R>
 where
     T: Rem<Output = T> + Copy + Clone + Debug + Default,
@@ -58,7 +75,7 @@ where
     fn rem(self, other: Self) -> Self {
         //this is temporary, util we att projection por rank polymorphic operations
         if self.shape != other.shape {
-            panic!("Shape missmatch")
+            panic!("Shape mismatch")
         } else {
             self.bimap(other, |x, y| *x % *y)
         }
@@ -76,3 +93,4 @@ where
     }
 
 }
+

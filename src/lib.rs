@@ -5,7 +5,7 @@ use std::{
     fmt::{write, Display},
 };
 
-// main struct of N Dimentional generic array.
+// main struct of N Dimensional generic array.
 //the shape is denoted by the `shape` array where the length is the Rank of the Ndarray
 //the actual values are stored in a flattend state in a rank 1 array
 
@@ -18,7 +18,7 @@ pub struct Ndarr<T: Copy + Clone + Default, const N: usize, const R: usize> {
 impl<T: Copy + Clone + Debug + Default, const N: usize, const R: usize> Ndarr<T, N, R> {
     //TODO: implement errors
     pub fn new(data: [T; N], shape: [usize; R]) -> Result<Self, String> {
-        let n = helpers::muliply_list(&shape, 1);
+        let n = helpers::multiply_list(&shape, 1);
         if data.len() == n {
             Ok(Ndarr {
                 data: data,
@@ -51,22 +51,22 @@ impl<T: Copy + Clone + Debug + Default + Display, const N: usize, const R: usize
         let mut splits = self.shape.clone();
         splits.reverse();
 
-        fn slip_fromat<'a>(strings: &'a mut [String], splits: &'a [usize]) -> () {
+        fn slip_format<'a>(strings: &'a mut [String], splits: &'a [usize]) -> () {
             if splits.len() == 0 {
                 return;
             }
-            let l = helpers::muliply_list(splits, 1);
+            let l = helpers::multiply_list(splits, 1);
             let n_splits = strings.len() / l;
             for i in 0..n_splits {
                 let new_s: &mut [String] = &mut strings[i * l..(i + 1) * l];
                 new_s[0].insert_str(0, "[");
                 new_s[l - 1].push_str("]");
-                slip_fromat(new_s, &splits[1..]);
+                slip_format(new_s, &splits[1..]);
             }
             return;
         }
         // TODO: add new lines in the correct places to display it more numpy like
-        slip_fromat(&mut fmt_str[0..], &mut splits[..]);
+        slip_format(&mut fmt_str[0..], &mut splits[..]);
 
         let out = fmt_str.clone().join(" ");
         write!(f, "Ndarr({})", out)
@@ -103,7 +103,7 @@ trait Map<F> {
     fn mapinplace(&mut self, f: F) -> &mut Self;
 }
 
-// Here we need to think about if valueble maybe checking for the same shape and return an option instead
+// Here we need to think about if worth it maybe checking for the same shape and return an option instead or just panic()
 impl<F, T: Copy + Debug + Clone + Default, const N: usize, const R: usize> Map<F>
     for Ndarr<T, N, R>
 where
@@ -134,7 +134,8 @@ trait Transpose {
 }
 
 // Generic transpose for array of rank R
-// The helper functions use in here can be derive with some maths, but maybe there is a beeter way to do it.
+    // the basic idea of a generic transpose of an N-dimentional array is to flip de shape of it like in a mirror.
+    // The helper functions use in here can be derive with some maths, but maybe there is a beeter way to do it.
 impl<T: Default + Copy + Clone, const N: usize, const R: usize> Transpose for Ndarr<T, N, R>
 where
     [T; N]: Default,
@@ -163,7 +164,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn constoctor_test() {
+    fn constructor_test() {
         let arr = Ndarr::new([0, 1, 2, 3], [2, 2]).expect("Error initializing");
         assert_eq!(arr.shape(), [2, 2]);
         assert_eq!(arr.rank(), 2)
@@ -189,7 +190,10 @@ mod tests {
         let arr1 = Ndarr::new([1, 1, 1, 1], [2, 2]).expect("Error initializing");
         let arr2 = Ndarr::new([1, 1, 1, 1], [2, 2]).expect("Error initializing");
 
-        let result = Ndarr::new([2, 2, 2, 2], [2, 2]).expect("Error initializing");
-        assert_eq!((arr1 + arr2).data, result.data)
+        let arr3 = Ndarr::new([2, 2, 2, 2], [2, 2]).expect("Error initializing");
+        assert_eq!((arr1 + arr2).data, arr3.data);
+        assert_eq!((arr1 - arr2).data, [0,0,0,0]);
+        assert_eq!((arr3 * arr3).data, [4,4,4,4]);
+        assert_eq!((arr3 / arr3).data, [2,2,2,2]);
     }
 }
