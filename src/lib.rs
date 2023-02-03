@@ -95,6 +95,32 @@ where
     }
 }
 
+
+
+trait Map<F> {
+    fn map(self, f: F) -> Self;
+}
+
+// Here we need to think about if valueble maybe checking for the same shape and return an option instead
+impl<F, T: Copy + Debug + Clone + Default, const N: usize, const R: usize> Map<F>
+    for Ndarr<T, N, R>
+where
+    F: Fn(&T) -> T,
+    [T; N]: Default,
+{
+    fn map(self, f: F) -> Self {
+        let mut out: [T; N] = Default::default();
+        for i in 0..N {
+            out[i] = f(&self.data[i])
+        }
+        Ndarr {
+            data: out,
+            shape: self.shape,
+        }
+    }
+}
+
+
 trait Transpose {
     fn t(self) -> Self;
 }
