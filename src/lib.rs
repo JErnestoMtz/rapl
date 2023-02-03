@@ -99,6 +99,8 @@ where
 
 trait Map<F> {
     fn map(self, f: F) -> Self;
+    
+    fn mapinplace(&mut self, f: F) -> &mut Self;
 }
 
 // Here we need to think about if valueble maybe checking for the same shape and return an option instead
@@ -117,6 +119,12 @@ where
             data: out,
             shape: self.shape,
         }
+    }
+    fn mapinplace(&mut self, f: F) -> &mut Self {
+       for i in 0..N{
+            self.data[i] = f(&self.data[i])
+       } 
+       self
     }
 }
 
