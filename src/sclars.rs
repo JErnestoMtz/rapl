@@ -31,14 +31,6 @@ pub fn extend_scalar<P,T, const N: usize, const R: usize>(scalar: P, ndarr: &Nda
 
 }
 
-//TODO: the problem her is we can not use Into because we need to know the shape, and Into trait does not passes any reference 
-trait IntoNdarr<T, const N: usize, const R: usize>
-    where T: Debug + Copy + Clone + Default,
-    [T; N]: Default
-{
-    fn into_ndarr(self, ndarr: &Ndarr<T,N, R>) -> Ndarr<T,N,R>;
-}
-
 
 impl<T, P, const N: usize, const R: usize> IntoNdarr<T,N,R> for P
     where T: Debug + Copy + Clone + Default,
@@ -50,11 +42,3 @@ impl<T, P, const N: usize, const R: usize> IntoNdarr<T,N,R> for P
     }
 }
 
-impl<T, const N: usize, const R: usize> IntoNdarr<T,N,R> for Ndarr<T,N,R>
-    where T: Debug + Copy + Clone + Default,
-    [T; N]: Default
-{
-    fn into_ndarr(self, ndarr: &Ndarr<T,N, R>) -> Ndarr<T,N,R> {
-        self
-    }
-}

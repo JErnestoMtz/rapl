@@ -77,6 +77,24 @@ trait Bimap<F> {
     fn bimap(self, other: Self, f: F) -> Self;
 }
 
+
+//TODO: the problem her is we can not use Into because we need to know the shape, and Into trait does not passes any reference 
+pub trait IntoNdarr<T, const N: usize, const R: usize>
+    where T: Debug + Copy + Clone + Default,
+    [T; N]: Default
+{
+    fn into_ndarr(self, ndarr: &Ndarr<T,N, R>) -> Ndarr<T,N,R>;
+}
+
+impl<T, const N: usize, const R: usize> IntoNdarr<T,N,R> for Ndarr<T,N,R>
+    where T: Debug + Copy + Clone + Default,
+    [T; N]: Default
+{
+    fn into_ndarr(self, ndarr: &Ndarr<T,N, R>) -> Ndarr<T,N,R> {
+        self
+    }
+}
+
 // Here we need to think about if valueble maybe checking for the same shape and return an option instead
 impl<F, T: Copy + Debug + Clone + Default, const N: usize, const R: usize> Bimap<F>
     for Ndarr<T, N, R>
