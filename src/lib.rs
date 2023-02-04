@@ -100,7 +100,7 @@ where
 trait Map<F> {
     fn map(self, f: F) -> Self;
     
-    fn mapinplace(&mut self, f: F) -> &mut Self;
+    fn mapinplace(&mut self, f: F);
 }
 
 // Here we need to think about if worth it maybe checking for the same shape and return an option instead or just panic()
@@ -110,7 +110,7 @@ where
     F: Fn(&T) -> T,
     [T; N]: Default,
 {
-    fn map(self, f: F) -> Self {
+    fn map(self, f: F) -> Self{
         let mut out: [T; N] = Default::default();
         for i in 0..N {
             out[i] = f(&self.data[i])
@@ -120,11 +120,10 @@ where
             shape: self.shape,
         }
     }
-    fn mapinplace(&mut self, f: F) -> &mut Self {
+    fn mapinplace(&mut self, f: F){
        for i in 0..N{
             self.data[i] = f(&self.data[i])
        } 
-       self
     }
 }
 

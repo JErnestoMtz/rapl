@@ -94,3 +94,15 @@ where
 
 }
 
+// Assign traits
+
+impl<P, T, const R: usize, const N: usize> AddAssign<P> for Ndarr<T, N, R>
+where 
+    T: Neg<Output = T> + Copy + Clone + Debug + Default,
+    P: Into<T>,
+    [T; N]: Default,
+{
+    fn add_assign(&mut self, other: P){
+        self.mapinplace(|x| *x + other.into())
+    }
+}
