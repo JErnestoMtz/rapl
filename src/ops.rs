@@ -98,10 +98,11 @@ where
 
 impl<P, T, const R: usize, const N: usize> AddAssign<P> for Ndarr<T, N, R>
 where 
-    T: Neg<Output = T> + Copy + Clone + Debug + Default,
-    P: Into<T>,
+    T: Add<Output = T> + Copy + Clone + Debug + Default,
+    P: Into<T> + Copy,
     [T; N]: Default,
 {
+    //TODO: to be more general es better to converte P into Ndarr<T,N,R> and then use bimap in place. but first we need the casting trait
     fn add_assign(&mut self, other: P){
         self.mapinplace(|x| *x + other.into())
     }
