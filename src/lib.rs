@@ -219,5 +219,18 @@ mod tests {
         assert_eq!((arr1 - arr2).data, [0,0,0,0]);
         assert_eq!((arr3 * arr3).data, [4,4,4,4]);
         assert_eq!((arr3 / arr3).data, [1,1,1,1]);
+        assert_eq!((-arr1).data, [-1,-1,-1,-1]);
+    }
+
+    #[test]
+    fn scalar_ext(){
+
+        let arr1 = Ndarr::new([2, 2, 2, 2], [2, 2]).expect("Error initializing");
+        assert_eq!((arr1 + 1).data, [3,3,3,3]);
+        assert_eq!((arr1 - 2).data, [0,0,0,0]);
+        assert_eq!((arr1 * 3).data, [6,6,6,6]);
+        assert_eq!((arr1 / 2).data, [1,1,1,1]);
+
+
     }
 }
