@@ -1,6 +1,6 @@
 mod helpers;
 mod ops;
-mod sclars;
+mod scalars;
 use std::{
     fmt::Debug,
     fmt::{write, Display},
@@ -91,7 +91,11 @@ impl<T, const N: usize, const R: usize> IntoNdarr<T,N,R> for Ndarr<T,N,R>
     [T; N]: Default
 {
     fn into_ndarr(self, ndarr: &Ndarr<T,N, R>) -> Ndarr<T,N,R> {
-        self
+        if self.shape == ndarr.shape{
+            panic!("Mismatch shape")
+        }else{
+            self
+        }
     }
 }
 

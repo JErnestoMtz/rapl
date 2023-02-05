@@ -1,32 +1,34 @@
+use crate::scalars::Scalar;
+
 use super::*;
 use std::ops::*;
 
 // Arithmetic operations
 
-impl<T, const R: usize, const N: usize> Add for Ndarr<T, N, R>
+impl<P,T, const R: usize, const N: usize> Add<P> for Ndarr<T, N, R>
 where
     T: Add<Output = T> + Copy + Clone + Debug + Default,
     [T; N]: Default,
+    P: IntoNdarr<T,N,R>,
 {
     type Output = Self;
-    fn add(self, other: Self) -> Self {
+    fn add(self, other: P) -> Self {
         //this is temporary, util we att projection por rank polymorphic operations
-        if self.shape != other.shape {
-            panic!("Shape mismatch")
-        } else {
+        let other = other.into_ndarr(&self);
             self.bimap(other, |x, y| *x + *y)
-        }
     }
 }
 
-impl<T, const R: usize, const N: usize> Sub for Ndarr<T, N, R>
+impl<P,T, const R: usize, const N: usize> Sub<P> for Ndarr<T, N, R>
 where
     T: Sub<Output = T> + Copy + Clone + Debug + Default,
     [T; N]: Default,
+    P: IntoNdarr<T,N,R>,
 {
     type Output = Self;
-    fn sub(self, other: Self) -> Self {
+    fn sub(self, other: P) -> Self {
         //this is temporary, util we att projection por rank polymorphic operations
+        let other = other.into_ndarr(&self);
         if self.shape != other.shape {
             panic!("Shape mismatch")
         } else {
@@ -35,14 +37,18 @@ where
     }
 }
 
-impl<T, const R: usize, const N: usize> Mul for Ndarr<T, N, R>
+
+
+impl<P,T, const R: usize, const N: usize> Mul<P> for Ndarr<T, N, R>
 where
     T: Mul<Output = T> + Copy + Clone + Debug + Default,
     [T; N]: Default,
+    P: IntoNdarr<T,N,R>,
 {
     type Output = Self;
-    fn mul(self, other: Self) -> Self {
+    fn mul(self, other: P) -> Self {
         //this is temporary, util we att projection por rank polymorphic operations
+        let other = other.into_ndarr(&self);
         if self.shape != other.shape {
             panic!("Shape mismatch")
         } else {
@@ -51,14 +57,16 @@ where
     }
 }
 
-impl<T, const R: usize, const N: usize> Div for Ndarr<T, N, R>
+impl<P,T, const R: usize, const N: usize> Div<P> for Ndarr<T, N, R>
 where
     T: Div<Output = T> + Copy + Clone + Debug + Default,
     [T; N]: Default,
+    P: IntoNdarr<T,N,R>,
 {
     type Output = Self;
-    fn div(self, other: Self) -> Self {
+    fn div(self, other: P) -> Self {
         //this is temporary, util we att projection por rank polymorphic operations
+        let other = other.into_ndarr(&self);
         if self.shape != other.shape {
             panic!("Shape mismatch")
         } else {
@@ -66,14 +74,17 @@ where
         }
     }
 }
-impl<T, const R: usize, const N: usize> Rem for Ndarr<T, N, R>
+impl<P,T, const R: usize, const N: usize> Rem<P> for Ndarr<T, N, R>
 where
     T: Rem<Output = T> + Copy + Clone + Debug + Default,
     [T; N]: Default,
+    P: IntoNdarr<T,N,R>,
 {
     type Output = Self;
-    fn rem(self, other: Self) -> Self {
+    fn rem(self, other: P) -> Self {
         //this is temporary, util we att projection por rank polymorphic operations
+
+        let other = other.into_ndarr(&self);
         if self.shape != other.shape {
             panic!("Shape mismatch")
         } else {
