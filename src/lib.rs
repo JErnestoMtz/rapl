@@ -91,8 +91,10 @@ impl<T, const N: usize, const R: usize> IntoNdarr<T,N,R> for Ndarr<T,N,R>
     [T; N]: Default
 {
     fn into_ndarr(self, ndarr: &Ndarr<T,N, R>) -> Ndarr<T,N,R> {
-        if self.shape == ndarr.shape{
-            panic!("Mismatch shape")
+
+        if self.shape != ndarr.shape{
+            let err = format!("self is shape {:?}, and ndarr is shape {:?}",self.shape, ndarr.shape);
+            panic!("Mismatch shape: {}", err)
         }else{
             self
         }
@@ -216,6 +218,6 @@ mod tests {
         assert_eq!((arr1 + arr2).data, arr3.data);
         assert_eq!((arr1 - arr2).data, [0,0,0,0]);
         assert_eq!((arr3 * arr3).data, [4,4,4,4]);
-        assert_eq!((arr3 / arr3).data, [2,2,2,2]);
+        assert_eq!((arr3 / arr3).data, [1,1,1,1]);
     }
 }
