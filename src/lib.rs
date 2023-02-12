@@ -9,7 +9,7 @@ mod ops;
 mod scalars;
 use std::{
     fmt::Debug,
-    fmt::{write, Display},
+    fmt::{write, Display}, ops::Deref,
 };
 
 // main struct of N Dimensional generic array.
@@ -22,7 +22,8 @@ pub struct Ndarr<T: Copy + Clone + Default, const N: usize, const R: usize> {
     pub shape: [usize; R],
 }
 
-pub struct Ndarr2<T: Copy + Clone + Default, const N: usize, const shape: &'static [usize]> {
+#[derive(Debug, Copy, Clone)]
+pub struct Ndarr2<T: Copy + Clone + Default, const N: usize, const SHAPE: &'static [usize]> {
     pub data: [T; N],
 }
 
@@ -50,6 +51,31 @@ impl<T: Copy + Clone + Debug + Default, const N: usize, const R: usize> Ndarr<T,
     }
 }
 
+
+impl<T: Copy + Clone + Debug + Default, const N: usize, const SHAPE: &'static [usize]> Ndarr2<T, N, SHAPE> {
+    //TODO: implement errors
+    pub fn new(data: [T; N]) -> Result<Self, String> {
+        let n = helpers::multiply_list(SHAPE, 1);
+        if data.len() == n {
+            Ok(Ndarr2 {
+                data: data,
+            })
+        } else {
+            Err(format!(
+                "The number of elements of an Ndarray of shape {:?} is {}, and {} were provided.",
+                SHAPE, n, N
+            ))
+        }
+    }
+    pub fn rank(self) -> usize {
+        SHAPE.len()
+    }
+    pub fn shape(self) -> &'static [usize] {
+        SHAPE
+    }
+}
+
+
 impl<T: Copy + Clone + Debug + Default + Display, const N: usize, const R: usize> Display
     for Ndarr<T, N, R>
 {
@@ -61,6 +87,47 @@ impl<T: Copy + Clone + Debug + Default + Display, const N: usize, const R: usize
         let mut fmt_str: [String; N] = strs.map(|s| helpers::format_vla(s, max_size));
         let mut splits = self.shape.clone();
         splits.reverse();
+
+        fn slip_format<'a>(strings: &'a mut [String], splits: &'a [usize]) -> () {
+            if splits.len() == 0 {
+                return;
+            }
+            let l = helpers::multiply_list(splits, 1);
+            let n_splits = strings.len() / l;
+            for i in 0..n_splits {
+                let new_s: &mut [String] = &mut strings[i * l..(i + 1) * l];
+                new_s[0].insert_str(0, "[");
+                new_s[l - 1].push_str("]");
+                slip_format(new_s, &splits[1..]);
+            }
+            return;
+        }
+        // TODO: add new lines in the correct places to display it more numpy like
+        slip_format(&mut fmt_str[0..], &mut splits[..]);
+
+        let out = fmt_str.clone().join(" ");
+        write!(f, "Ndarr({})", out)
+    }
+}
+
+
+
+impl<T: Copy + Clone + Debug + Default + Display, const N: usize, const SHAPE: &'static [usize]> Display for Ndarr2<T, N, SHAPE>
+
+{
+    // Kind of nasty function, it can be imprube a lot, but I think there is no scape from recursion.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result 
+    {
+        let strs = self.data.map(|x| x.to_string());
+        let binding = strs.clone().map(|s| s.len());
+        let max_size = binding.iter().max().unwrap();
+        let mut fmt_str: [String; N] = strs.map(|s| helpers::format_vla(s, max_size));
+        let r: usize = SHAPE.len();
+        let mut splits = Vec::with_capacity(r);
+
+        //reverse array to simplify code
+        splits.extend(SHAPE.iter().rev());
+
 
         fn slip_format<'a>(strings: &'a mut [String], splits: &'a [usize]) -> () {
             if splits.len() == 0 {
@@ -241,8 +308,14 @@ mod tests {
     fn constructor_test() {
         let arr = Ndarr::new([0, 1, 2, 3], [2, 2]).expect("Error initializing");
         assert_eq!(arr.shape(), [2, 2]);
-        assert_eq!(arr.rank(), 2)
+        assert_eq!(arr.rank(), 2);
+        
+        let arr: Ndarr2<_ , _, {&[2,2]}> =Ndarr2::new([0,1,2,3]).expect("Error initializing");
+        print!("{}", arr);
+        assert_eq!(arr.shape(), [2, 2]);
+        assert_eq!(arr.rank(), 2);
     }
+
 
     #[test]
     fn bimap_test() {
