@@ -1,3 +1,9 @@
+#![feature(generic_const_exprs)]
+#![feature(adt_const_params)]
+#![feature(generic_arg_infer)]
+#![feature(const_trait_impl)]
+#![feature(const_slice_index)]
+
 mod helpers;
 mod ops;
 mod scalars;
@@ -8,12 +14,16 @@ use std::{
 
 // main struct of N Dimensional generic array.
 //the shape is denoted by the `shape` array where the length is the Rank of the Ndarray
-//the actual values are stored in a flattend state in a rank 1 array
+//the actual values are stored in a flattened state in a rank 1 array
 
 #[derive(Debug, Copy, Clone)]
 pub struct Ndarr<T: Copy + Clone + Default, const N: usize, const R: usize> {
     pub data: [T; N],
     pub shape: [usize; R],
+}
+
+pub struct Ndarr2<T: Copy + Clone + Default, const N: usize, const shape: &'static [usize]> {
+    pub data: [T; N],
 }
 
 impl<T: Copy + Clone + Debug + Default, const N: usize, const R: usize> Ndarr<T, N, R> {
@@ -125,7 +135,7 @@ where
 trait Map<F> {
     fn map(self, f: F) -> Self;
     
-    fn mapinplace(&mut self, f: F);
+    fn map_in_place(&mut self, f: F);
 }
 
 // Here we need to think about if worth it maybe checking for the same shape and return an option instead or just panic()
@@ -145,7 +155,7 @@ where
             shape: self.shape,
         }
     }
-    fn mapinplace(&mut self, f: F){
+    fn map_in_place(&mut self, f: F){
        for i in 0..N{
             self.data[i] = f(&self.data[i])
        } 
@@ -158,8 +168,8 @@ trait Transpose {
 }
 
 // Generic transpose for array of rank R
-    // the basic idea of a generic transpose of an N-dimentional array is to flip de shape of it like in a mirror.
-    // The helper functions use in here can be derive with some maths, but maybe there is a beeter way to do it.
+    // the basic idea of a generic transpose of an N-dimensional array is to flip de shape of it like in a mirror.
+    // The helper functions use in here can be derive with some maths, but maybe there is a better way to do it.
 impl<T: Default + Copy + Clone, const N: usize, const R: usize> Transpose for Ndarr<T, N, R>
 where
     [T; N]: Default,
@@ -182,6 +192,46 @@ where
         }
     }
 }
+
+trait Reduce<F> {
+    type Out;
+    fn reduce(self, f: F, axis: usize) -> Self::Out;
+}
+
+//impl<F,T, const N: usize, const R: usize> Reduce<F> for Ndarr<T,N,R>
+//where
+    //T: Copy + Clone + Default,
+    //[T; N]: Default,
+    //[usize; R]: Default,
+    //F: Fn(T,T) -> T,
+    //[T; N / ]: Sized
+//{
+    //type Out = Ndarr<T,{N / 2} ,R>;
+    //fn reduce(self, f: F, axis: usize) -> Self::Out {
+        
+    //}
+//}
+
+pub const fn divide_from(n: usize, arr: &'static [usize])->usize{
+    n / arr[0]
+}
+
+pub const fn const_drop(arr: &'static [usize])->&[usize]{
+    &arr[1..]
+}
+
+pub fn reduce<F,T,const N: usize, const shape: &'static [usize]>(arr: Ndarr2<T,N,shape>, f:F)->Ndarr2<T, {divide_from(N, shape)}, {const_drop(shape)}>
+        where 
+            T: Copy + Clone + Default,
+            [T; N]: Default,
+            [T; divide_from(N, shape)]: Sized + Default,
+            F: Fn(T,T) -> T,
+{
+    let out: [T; divide_from(N, shape)] = Default::default();
+    Ndarr2 { data: out }
+
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -224,13 +274,17 @@ mod tests {
 
     #[test]
     fn scalar_ext(){
-
         let arr1 = Ndarr::new([2, 2, 2, 2], [2, 2]).expect("Error initializing");
         assert_eq!((arr1 + 1).data, [3,3,3,3]);
         assert_eq!((arr1 - 2).data, [0,0,0,0]);
         assert_eq!((arr1 * 3).data, [6,6,6,6]);
         assert_eq!((arr1 / 2).data, [1,1,1,1]);
+    }
 
-
+    #[test]
+    fn ndarr2(){
+        let x: Ndarr2<_, _, {&[2,2]}> = Ndarr2{data: [0,1,2,3]};
+        let a = reduce(x, |x, y| x);
+        assert_eq!(a.data.len(), 2);
     }
 }

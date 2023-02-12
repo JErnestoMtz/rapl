@@ -83,7 +83,6 @@ where
     type Output = Self;
     fn rem(self, other: P) -> Self {
         //this is temporary, util we att projection por rank polymorphic operations
-
         let other = other.into_ndarr(&self);
         if self.shape != other.shape {
             panic!("Shape mismatch")
@@ -113,8 +112,8 @@ where
     P: Into<T> + Copy,
     [T; N]: Default,
 {
-    //TODO: to be more general es better to converte P into Ndarr<T,N,R> and then use bimap in place. but first we need the casting trait
+    //TODO: to be more general es better to converted P into Ndarr<T,N,R> and then use bimap in place. but first we need the casting trait
     fn add_assign(&mut self, other: P){
-        self.mapinplace(|x| *x + other.into())
+        self.map_in_place(|x| *x + other.into())
     }
 }
