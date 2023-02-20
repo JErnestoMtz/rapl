@@ -1,3 +1,5 @@
+use crate::helpers::multiply_list;
+
 use super::*;
 
 // this is a work around to not conflict between scalars and Ndarr for IntoNdarr trait,
@@ -18,27 +20,26 @@ impl Scalar for usize {}
 
 
 
-pub fn extend_scalar<P,T, const N: usize, const R: usize>(scalar: P, ndarr: &Ndarr<T, N, R>)-> Ndarr<T,N,R>
+pub fn extend_scalar<P,T, const R: usize>(scalar: P, shape: &[usize; R])-> Ndarr<T,R>
     where T: Debug + Copy + Clone + Default,
     P: Into<T> + Clone,
-    [T; N]: Default
 {
-   let mut out_data: [T; N] = Default::default();
-   for i in 0..N{
+    let N = multiply_list(shape, 1);
+    let s = shape.clone();
+   let mut out_data = vec![T::default(); N];
+   for i in 0..out_data.len(){
     out_data[i] = scalar.clone().into();
    };
-   Ndarr { data: out_data, shape: ndarr.shape.clone() }
+   Ndarr { data: out_data, shape: s }
 
 }
 
 
-impl<T, P, const N: usize, const R: usize> IntoNdarr<T,N,R> for P
+impl<T, P, const R: usize> IntoNdarr<T,R> for P
     where T: Debug + Copy + Clone + Default,
     P: Into<T> + Clone + Scalar,
-    [T; N]: Default
 {
-    fn into_ndarr(self, ndarr: &Ndarr<T,N, R>) -> Ndarr<T,N,R> {
-        extend_scalar(self, ndarr)
+    fn into_ndarr(self, shape: &[usize; R]) -> Ndarr<T,R> {
+        extend_scalar(self, shape)
     }
 }
-
