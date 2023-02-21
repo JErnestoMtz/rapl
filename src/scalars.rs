@@ -18,28 +18,29 @@ impl Scalar for u16 {}
 impl Scalar for u8 {}
 impl Scalar for usize {}
 
-
-
-pub fn extend_scalar<P,T, const R: usize>(scalar: P, shape: &[usize; R])-> Ndarr<T,R>
-    where T: Debug + Copy + Clone + Default,
+pub fn extend_scalar<P, T, const R: usize>(scalar: P, shape: &[usize; R]) -> Ndarr<T, R>
+where
+    T: Debug + Copy + Clone + Default,
     P: Into<T> + Clone,
 {
-    let N = multiply_list(shape, 1);
+    let n= multiply_list(shape, 1);
     let s = shape.clone();
-   let mut out_data = vec![T::default(); N];
-   for i in 0..out_data.len(){
-    out_data[i] = scalar.clone().into();
-   };
-   Ndarr { data: out_data, shape: s }
-
+    let mut out_data = vec![T::default(); n];
+    for i in 0..out_data.len() {
+        out_data[i] = scalar.clone().into();
+    }
+    Ndarr {
+        data: out_data,
+        shape: s,
+    }
 }
 
-
-impl<T, P, const R: usize> IntoNdarr<T,R> for P
-    where T: Debug + Copy + Clone + Default,
+impl<T, P, const R: usize> IntoNdarr<T, R> for P
+where
+    T: Debug + Copy + Clone + Default,
     P: Into<T> + Clone + Scalar,
 {
-    fn into_ndarr(self, shape: &[usize; R]) -> Ndarr<T,R> {
+    fn into_ndarr(self, shape: &[usize; R]) -> Ndarr<T, R> {
         extend_scalar(self, shape)
     }
 }
