@@ -17,7 +17,7 @@ use std::{
 //the shape is denoted by the `shape` array where the length is the Rank of the Ndarray
 //the actual values are stored in a flattened state in a rank 1 array
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ndarr<T: Copy + Clone + Default, const R: usize> {
     pub data: Vec<T>,
     pub shape: [usize; R],
@@ -156,6 +156,7 @@ impl<T: Copy + Clone + Debug + Default + Display, const R: usize> Display for Nd
 //}
 trait Bimap<F> {
     fn bimap(self, other: Self, f: F) -> Self;
+    fn bimap_in_place(&mut self, other: Self, f: F);
 }
 
 ///////////
@@ -218,6 +219,12 @@ where
         Ndarr {
             data: out,
             shape: self.shape,
+        }
+    }
+
+    fn bimap_in_place(&mut self, other: Self, f: F) {
+        for i in 0..self.data.len() {
+            self.data[i] = f(&self.data[i], &other.data[i])
         }
     }
 }
@@ -329,7 +336,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::primitives::Slice;
+    use crate::primitives::{Slice, Reduce};
 
     use super::*;
 
@@ -383,7 +390,40 @@ mod tests {
             [2, 3, 3],
         )
         .unwrap();
-        let slices = arr.clone().slice_at(2);
-        println!("arr: {}", slices[0])
+        // [[[ 0,  1,  2],
+        //[ 3,  4,  5],
+        //[ 6,  7,  8]],
+        //-------------
+       //[[ 9, 10, 11],
+        //[12, 13, 14],
+        //[15, 16, 17]]])
+        let slices_0 = arr.clone().slice_at(0);
+        let slices_1 = arr.clone().slice_at(1);
+        let slices_2 = arr.clone().slice_at(2);
+        
+        assert_eq!(slices_0[0], Ndarr::new(&[0,1,2,3,4,5,6,7,8], [3,3]).unwrap());
+        assert_eq!(slices_1[0], Ndarr::new(&[0,1,2,9,10,11], [2,3]).unwrap());
+        assert_eq!(slices_2[0], Ndarr::new(&[0,3,6,9,12,15], [2,3]).unwrap());
     }
+
+    #[test]
+    fn reduce() {
+        let arr = Ndarr::new(
+            &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+            [2, 3, 3],
+        )
+        .unwrap();
+        // [[[ 0,  1,  2],
+        //[ 3,  4,  5],
+        //[ 6,  7,  8]],
+        //-------------
+       //[[ 9, 10, 11],
+        //[12, 13, 14],
+        //[15, 16, 17]]])
+        let red_0 = arr.clone().reduce(0, |x, y| x + y).unwrap();
+        let red_1: Ndarr<i32, 2> = arr.reduce(1, |x, y| x + y).unwrap();
+        assert_eq!(red_0, Ndarr::new(&[9,11,13,15,17,19,21,23,25], [3,3]).unwrap());
+        assert_eq!(red_1, Ndarr::new(&[9,12,15,36,39,42], [2,3]).unwrap());
+    }
+
 }
