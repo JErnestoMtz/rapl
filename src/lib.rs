@@ -1,24 +1,25 @@
 #![feature(generic_const_exprs)]
 #![feature(adt_const_params)]
-#![feature(generic_arg_infer)]
-#![feature(const_trait_impl)]
-#![feature(const_slice_index)]
+
 
 mod helpers;
 mod ops;
+mod primitives;
 mod scalars;
+use core::slice;
 use std::{
     fmt::Debug,
-    fmt::{write, Display}, ops::Deref,
+    fmt::{write, Display},
+    ops::Deref,
 };
 
 // main struct of N Dimensional generic array.
 //the shape is denoted by the `shape` array where the length is the Rank of the Ndarray
 //the actual values are stored in a flattened state in a rank 1 array
 
-#[derive(Debug, Copy, Clone)]
-pub struct Ndarr<T: Copy + Clone + Default, const N: usize, const R: usize> {
-    pub data: [T; N],
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Ndarr<T: Copy + Clone + Default, const R: usize> {
+    pub data: Vec<T>,
     pub shape: [usize; R],
 }
 
@@ -27,66 +28,72 @@ pub struct Ndarr2<T: Copy + Clone + Default, const N: usize, const SHAPE: &'stat
     pub data: [T; N],
 }
 
-impl<T: Copy + Clone + Debug + Default, const N: usize, const R: usize> Ndarr<T, N, R> {
+impl<T: Copy + Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     //TODO: implement errors
-    pub fn new(data: [T; N], shape: [usize; R]) -> Result<Self, String> {
+    pub fn new(data: &[T], shape: [usize; R]) -> Result<Self, String> {
         let n = helpers::multiply_list(&shape, 1);
         if data.len() == n {
             Ok(Ndarr {
-                data: data,
+                data: data.to_vec(),
                 shape: shape,
             })
         } else {
             Err(format!(
                 "The number of elements of an Ndarray of shape {:?} is {}, and {} were provided.",
-                shape, n, N
+                shape,
+                n,
+                data.len()
             ))
         }
     }
-    pub fn rank(self) -> usize {
+    pub fn rank(&self) -> usize {
         R
     }
-    pub fn shape(self) -> [usize; R] {
+    pub fn shape(&self) -> [usize; R] {
         self.shape
     }
 }
 
+//impl<T: Copy + Clone + Debug + Default, const N: usize, const SHAPE: &'static [usize]> Ndarr2<T, N, SHAPE> {
+////TODO: implement errors
+//pub fn new(data: [T; N]) -> Result<Self, String> {
+//let n = helpers::multiply_list(SHAPE, 1);
+//if data.len() == n {
+//Ok(Ndarr2 {
+//data: data,
+//})
+//} else {
+//Err(format!(
+//"The number of elements of an Ndarray of shape {:?} is {}, and {} were provided.",
+//SHAPE, n, N
+//))
+//}
+//}
+//pub fn rank(self) -> usize {
+//SHAPE.len()
+//}
+//pub fn shape(self) -> &'static [usize] {
+//SHAPE
+//}
+//}
 
-impl<T: Copy + Clone + Debug + Default, const N: usize, const SHAPE: &'static [usize]> Ndarr2<T, N, SHAPE> {
-    //TODO: implement errors
-    pub fn new(data: [T; N]) -> Result<Self, String> {
-        let n = helpers::multiply_list(SHAPE, 1);
-        if data.len() == n {
-            Ok(Ndarr2 {
-                data: data,
-            })
-        } else {
-            Err(format!(
-                "The number of elements of an Ndarray of shape {:?} is {}, and {} were provided.",
-                SHAPE, n, N
-            ))
-        }
-    }
-    pub fn rank(self) -> usize {
-        SHAPE.len()
-    }
-    pub fn shape(self) -> &'static [usize] {
-        SHAPE
-    }
-}
-
-
-impl<T: Copy + Clone + Debug + Default + Display, const N: usize, const R: usize> Display
-    for Ndarr<T, N, R>
-{
+impl<T: Copy + Clone + Debug + Default + Display, const R: usize> Display for Ndarr<T, R> {
     // Kind of nasty function, it can be imprube a lot, but I think there is no scape from recursion.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let strs = self.data.map(|x| x.to_string());
-        let binding = strs.clone().map(|s| s.len());
+        //convert to string
+        let strs: Vec<String> = self.data.iter().map(|x| x.to_string()).collect();
+        // len of each strings
+        let binding: Vec<usize> = strs.clone().iter().map(|s| s.len()).collect();
+        // max len ( for formatting)
         let max_size = binding.iter().max().unwrap();
-        let mut fmt_str: [String; N] = strs.map(|s| helpers::format_vla(s, max_size));
+        //format each string
+        let mut fmt_str: Vec<String> = strs
+            .iter()
+            .map(|s| helpers::format_vla(s.to_string(), max_size))
+            .collect();
+
         let mut splits = self.shape.clone();
-        splits.reverse();
+        //splits.reverse();
 
         fn slip_format<'a>(strings: &'a mut [String], splits: &'a [usize]) -> () {
             if splits.len() == 0 {
@@ -110,84 +117,103 @@ impl<T: Copy + Clone + Debug + Default + Display, const N: usize, const R: usize
     }
 }
 
+//impl<T: Copy + Clone + Debug + Default + Display, const N: usize, const SHAPE: &'static [usize]> Display for Ndarr2<T, N, SHAPE>
 
+//{
+//// Kind of nasty function, it can be imprube a lot, but I think there is no scape from recursion.
+//fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+//{
+//let strs = self.data.map(|x| x.to_string());
+//let binding = strs.clone().map(|s| s.len());
+//let max_size = binding.iter().max().unwrap();
+//let mut fmt_str: [String; N] = strs.map(|s| helpers::format_vla(s, max_size));
+//let r: usize = SHAPE.len();
+//let mut splits = Vec::with_capacity(r);
 
-impl<T: Copy + Clone + Debug + Default + Display, const N: usize, const SHAPE: &'static [usize]> Display for Ndarr2<T, N, SHAPE>
+////reverse array to simplify code
+//splits.extend(SHAPE.iter().rev());
 
-{
-    // Kind of nasty function, it can be imprube a lot, but I think there is no scape from recursion.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result 
-    {
-        let strs = self.data.map(|x| x.to_string());
-        let binding = strs.clone().map(|s| s.len());
-        let max_size = binding.iter().max().unwrap();
-        let mut fmt_str: [String; N] = strs.map(|s| helpers::format_vla(s, max_size));
-        let r: usize = SHAPE.len();
-        let mut splits = Vec::with_capacity(r);
+//fn slip_format<'a>(strings: &'a mut [String], splits: &'a [usize]) -> () {
+//if splits.len() == 0 {
+//return;
+//}
+//let l = helpers::multiply_list(splits, 1);
+//let n_splits = strings.len() / l;
+//for i in 0..n_splits {
+//let new_s: &mut [String] = &mut strings[i * l..(i + 1) * l];
+//new_s[0].insert_str(0, "[");
+//new_s[l - 1].push_str("]");
+//slip_format(new_s, &splits[1..]);
+//}
+//return;
+//}
+//// TODO: add new lines in the correct places to display it more numpy like
+//slip_format(&mut fmt_str[0..], &mut splits[..]);
 
-        //reverse array to simplify code
-        splits.extend(SHAPE.iter().rev());
-
-
-        fn slip_format<'a>(strings: &'a mut [String], splits: &'a [usize]) -> () {
-            if splits.len() == 0 {
-                return;
-            }
-            let l = helpers::multiply_list(splits, 1);
-            let n_splits = strings.len() / l;
-            for i in 0..n_splits {
-                let new_s: &mut [String] = &mut strings[i * l..(i + 1) * l];
-                new_s[0].insert_str(0, "[");
-                new_s[l - 1].push_str("]");
-                slip_format(new_s, &splits[1..]);
-            }
-            return;
-        }
-        // TODO: add new lines in the correct places to display it more numpy like
-        slip_format(&mut fmt_str[0..], &mut splits[..]);
-
-        let out = fmt_str.clone().join(" ");
-        write!(f, "Ndarr({})", out)
-    }
-}
+//let out = fmt_str.clone().join(" ");
+//write!(f, "Ndarr({})", out)
+//}
+//}
 trait Bimap<F> {
     fn bimap(self, other: Self, f: F) -> Self;
+    fn bimap_in_place(&mut self, other: Self, f: F);
 }
 
+///////////
 
-//TODO: the problem her is we can not use Into because we need to know the shape, and Into trait does not passes any reference 
-pub trait IntoNdarr<T, const N: usize, const R: usize>
-    where T: Debug + Copy + Clone + Default,
-    [T; N]: Default
+//TODO: the problem her is we can not use Into because we need to know the shape, and Into trait does not passes any reference
+pub trait IntoNdarr<T, const R: usize>
+where
+    T: Debug + Copy + Clone + Default,
 {
-    fn into_ndarr(self, ndarr: &Ndarr<T,N, R>) -> Ndarr<T,N,R>;
+    fn into_ndarr(self, shape: &[usize; R]) -> Ndarr<T, R>;
 }
 
-impl<T, const N: usize, const R: usize> IntoNdarr<T,N,R> for Ndarr<T,N,R>
-    where T: Debug + Copy + Clone + Default,
-    [T; N]: Default
-{
-    fn into_ndarr(self, ndarr: &Ndarr<T,N, R>) -> Ndarr<T,N,R> {
+//pub trait IntoNdarr2<T, const N: usize, const SHAPE: &'static [usize]>
+//where T: Debug + Copy + Clone + Default,
+//[T; N]: Default
+//{
+//fn into_ndarr2(self) -> Ndarr2<T,N,SHAPE>;
+//}
 
-        if self.shape != ndarr.shape{
-            let err = format!("self is shape {:?}, and ndarr is shape {:?}",self.shape, ndarr.shape);
+/////////
+
+impl<T, const R: usize> IntoNdarr<T, R> for Ndarr<T, R>
+where
+    T: Debug + Copy + Clone + Default,
+{
+    fn into_ndarr(self, shape: &[usize; R]) -> Ndarr<T, R> {
+        if self.shape != *shape {
+            let err = format!(
+                "self is shape {:?}, and ndarr is shape {:?}",
+                self.shape, shape
+            );
             panic!("Mismatch shape: {}", err)
-        }else{
+        } else {
             self
         }
     }
 }
 
+//impl<T, const N: usize, const  SHAPE: &'static [usize]> IntoNdarr2<T,N,SHAPE> for Ndarr2<T,N,SHAPE>
+//where T: Debug + Copy + Clone + Default,
+//[T; N]: Default
+//{
+//fn into_ndarr2(self) -> Ndarr2<T,N,SHAPE> {
+//self
+//}
+//}
+
+////////
+
 // Here we need to think about if valueble maybe checking for the same shape and return an option instead
-impl<F, T: Copy + Debug + Clone + Default, const N: usize, const R: usize> Bimap<F>
-    for Ndarr<T, N, R>
+impl<F, T: Copy + Debug + Clone + Default, const R: usize> Bimap<F> for Ndarr<T, R>
 where
     F: Fn(&T, &T) -> T,
-    [T; N]: Default,
 {
     fn bimap(self, other: Self, f: F) -> Self {
-        let mut out: [T; N] = Default::default();
-        for i in 0..N {
+        let mut out = vec![T::default(); self.data.len()];
+        for i in 0..out.len() {
             out[i] = f(&self.data[i], &other.data[i])
         }
         Ndarr {
@@ -195,26 +221,47 @@ where
             shape: self.shape,
         }
     }
+
+    fn bimap_in_place(&mut self, other: Self, f: F) {
+        for i in 0..self.data.len() {
+            self.data[i] = f(&self.data[i], &other.data[i])
+        }
+    }
 }
 
+//impl<F, T: Copy + Debug + Clone + Default, const N: usize, const SHAPE: &'static [usize]> Bimap<F>
+//for Ndarr2<T, N, SHAPE>
+//where
+//F: Fn(&T, &T) -> T,
+//[T; N]: Default,
+//{
+//fn bimap(self, other: Self, f: F) -> Self {
+//let mut out: [T; N] = Default::default();
+//for i in 0..N {
+//out[i] = f(&self.data[i], &other.data[i])
+//}
+//Ndarr2 {
+//data: out,
+//}
+//}
+//}
 
+/////
 
 trait Map<F> {
     fn map(self, f: F) -> Self;
-    
+
     fn map_in_place(&mut self, f: F);
 }
 
 // Here we need to think about if worth it maybe checking for the same shape and return an option instead or just panic()
-impl<F, T: Copy + Debug + Clone + Default, const N: usize, const R: usize> Map<F>
-    for Ndarr<T, N, R>
+impl<F, T: Copy + Debug + Clone + Default, const R: usize> Map<F> for Ndarr<T, R>
 where
     F: Fn(&T) -> T,
-    [T; N]: Default,
 {
-    fn map(self, f: F) -> Self{
-        let mut out: [T; N] = Default::default();
-        for i in 0..N {
+    fn map(self, f: F) -> Self {
+        let mut out = vec![T::default(); self.data.len()];
+        for i in 0..out.len() {
             out[i] = f(&self.data[i])
         }
         Ndarr {
@@ -222,32 +269,52 @@ where
             shape: self.shape,
         }
     }
-    fn map_in_place(&mut self, f: F){
-       for i in 0..N{
+    fn map_in_place(&mut self, f: F) {
+        for i in 0..self.data.len() {
             self.data[i] = f(&self.data[i])
-       } 
+        }
     }
 }
 
+//impl<F, T: Copy + Debug + Clone + Default, const N: usize, const SHAPE: &'static [usize]> Map<F>
+//for Ndarr2<T, N, SHAPE>
+//where
+//F: Fn(&T) -> T,
+//[T; N]: Default,
+//{
+//fn map(self, f: F) -> Self{
+//let mut out: [T; N] = Default::default();
+//for i in 0..N {
+//out[i] = f(&self.data[i])
+//}
+//Ndarr2 {
+//data: out,
+//}
+//}
+//fn map_in_place(&mut self, f: F){
+//for i in 0..N{
+//self.data[i] = f(&self.data[i])
+//}
+//}
+//}
 
 trait Transpose {
     fn t(self) -> Self;
 }
 
 // Generic transpose for array of rank R
-    // the basic idea of a generic transpose of an N-dimensional array is to flip de shape of it like in a mirror.
-    // The helper functions use in here can be derive with some maths, but maybe there is a better way to do it.
-impl<T: Default + Copy + Clone, const N: usize, const R: usize> Transpose for Ndarr<T, N, R>
+// the basic idea of a generic transpose of an N-dimensional array is to flip de shape of it like in a mirror.
+// The helper functions use in here can be derive with some maths, but maybe there is a better way to do it.
+impl<T: Default + Copy + Clone, const R: usize> Transpose for Ndarr<T, R>
 where
-    [T; N]: Default,
     [usize; R]: Default,
 {
     fn t(self) -> Self {
         let shape = self.shape.clone();
         let mut out_dim: [usize; R] = self.shape.clone();
         out_dim.reverse();
-        let mut out_arr: [T; N] = Default::default();
-        for i in 0..N {
+        let mut out_arr = vec![T::default(); self.data.len()];
+        for i in 0..self.data.len() {
             let mut new_indexes = helpers::get_indexes(&i, &shape);
             new_indexes.reverse();
             let new_pos = helpers::get_flat_pos(&new_indexes, &out_dim).unwrap();
@@ -260,104 +327,103 @@ where
     }
 }
 
-trait Reduce<F> {
-    type Out;
-    fn reduce(self, f: F, axis: usize) -> Self::Out;
-}
+///////////////////////////////////////////
+///
+///
+///
 
-//impl<F,T, const N: usize, const R: usize> Reduce<F> for Ndarr<T,N,R>
-//where
-    //T: Copy + Clone + Default,
-    //[T; N]: Default,
-    //[usize; R]: Default,
-    //F: Fn(T,T) -> T,
-    //[T; N / ]: Sized
-//{
-    //type Out = Ndarr<T,{N / 2} ,R>;
-    //fn reduce(self, f: F, axis: usize) -> Self::Out {
-        
-    //}
-//}
-
-pub const fn divide_from(n: usize, arr: &'static [usize])->usize{
-    n / arr[0]
-}
-
-pub const fn const_drop(arr: &'static [usize])->&[usize]{
-    &arr[1..]
-}
-
-pub fn reduce<F,T,const N: usize, const shape: &'static [usize]>(arr: Ndarr2<T,N,shape>, f:F)->Ndarr2<T, {divide_from(N, shape)}, {const_drop(shape)}>
-        where 
-            T: Copy + Clone + Default,
-            [T; N]: Default,
-            [T; divide_from(N, shape)]: Sized + Default,
-            F: Fn(T,T) -> T,
-{
-    let out: [T; divide_from(N, shape)] = Default::default();
-    Ndarr2 { data: out }
-
-}
-
+////////////////////////
 
 #[cfg(test)]
 mod tests {
+    use crate::primitives::{Slice, Reduce};
+
     use super::*;
 
     #[test]
     fn constructor_test() {
-        let arr = Ndarr::new([0, 1, 2, 3], [2, 2]).expect("Error initializing");
-        assert_eq!(arr.shape(), [2, 2]);
-        assert_eq!(arr.rank(), 2);
-        
-        let arr: Ndarr2<_ , _, {&[2,2]}> =Ndarr2::new([0,1,2,3]).expect("Error initializing");
-        print!("{}", arr);
-        assert_eq!(arr.shape(), [2, 2]);
-        assert_eq!(arr.rank(), 2);
+        let arr = Ndarr::new(&[0, 1, 2, 3], [2, 2]).expect("Error initializing");
+        assert_eq!(&arr.shape(), &[2, 2]);
+        assert_eq!(&arr.rank(), &2);
     }
-
 
     #[test]
     fn bimap_test() {
-        let arr1 = Ndarr::new([0, 1, 2, 3], [2, 2]).expect("Error initializing");
-        let arr2 = Ndarr::new([4, 5, 6, 7], [2, 2]).expect("Error initializing");
-        assert_eq!(arr1.bimap(arr2, |x, y| x + y).data, [4, 6, 8, 10])
+        let arr1 = Ndarr::new(&[0, 1, 2, 3], [2, 2]).expect("Error initializing");
+        let arr2 = Ndarr::new(&[4, 5, 6, 7], [2, 2]).expect("Error initializing");
+        //assert_eq!(arr1.bimap(arr2, |x, y| x + y).data, vec![4, 6, 8, 10])
     }
 
     #[test]
     fn transpose() {
-        let arr = Ndarr::new([0, 1, 2, 3, 4, 5, 6, 7], [2, 2, 2]).expect("Error initializing");
-        println!("{}", arr);
+        let arr = Ndarr::new(&[0, 1, 2, 3, 4, 5, 6, 7], [2, 2, 2]).expect("Error initializing");
         // same as arr.T.flatten() in numpy
-        assert_eq!(arr.t().data, [0, 4, 2, 6, 1, 5, 3, 7])
+        assert_eq!(arr.clone().t().data, vec![0, 4, 2, 6, 1, 5, 3, 7])
     }
 
     #[test]
     fn element_wise_ops() {
-        let arr1 = Ndarr::new([1, 1, 1, 1], [2, 2]).expect("Error initializing");
-        let arr2 = Ndarr::new([1, 1, 1, 1], [2, 2]).expect("Error initializing");
+        let arr1 = Ndarr::new(&[1, 1, 1, 1], [2, 2]).expect("Error initializing");
+        let arr2 = Ndarr::new(&[1, 1, 1, 1], [2, 2]).expect("Error initializing");
 
-        let arr3 = Ndarr::new([2, 2, 2, 2], [2, 2]).expect("Error initializing");
-        assert_eq!((arr1 + arr2).data, arr3.data);
-        assert_eq!((arr1 - arr2).data, [0,0,0,0]);
-        assert_eq!((arr3 * arr3).data, [4,4,4,4]);
-        assert_eq!((arr3 / arr3).data, [1,1,1,1]);
-        assert_eq!((-arr1).data, [-1,-1,-1,-1]);
+        let arr3 = Ndarr::new(&[2, 2, 2, 2], [2, 2]).expect("Error initializing");
+        assert_eq!((arr1.clone() + arr2.clone()).data, arr3.clone().data);
+        assert_eq!((arr1.clone() - arr2.clone()).data, vec![0, 0, 0, 0]);
+        assert_eq!((arr3.clone() * arr3.clone()).data, vec![4, 4, 4, 4]);
+        assert_eq!((arr3.clone() / arr3.clone()).data, vec![1, 1, 1, 1]);
+        assert_eq!((-arr1.clone()).data, vec![-1, -1, -1, -1]);
     }
 
     #[test]
-    fn scalar_ext(){
-        let arr1 = Ndarr::new([2, 2, 2, 2], [2, 2]).expect("Error initializing");
-        assert_eq!((arr1 + 1).data, [3,3,3,3]);
-        assert_eq!((arr1 - 2).data, [0,0,0,0]);
-        assert_eq!((arr1 * 3).data, [6,6,6,6]);
-        assert_eq!((arr1 / 2).data, [1,1,1,1]);
+    fn scalar_ext() {
+        let arr1 = Ndarr::new(&[2, 2, 2, 2], [2, 2]).expect("Error initializing");
+        assert_eq!((arr1.clone() + 1).data, vec![3, 3, 3, 3]);
+        assert_eq!((arr1.clone() - 2).data, vec![0, 0, 0, 0]);
+        assert_eq!((arr1.clone() * 3).data, vec![6, 6, 6, 6]);
+        assert_eq!((arr1.clone() / 2).data, vec![1, 1, 1, 1]);
     }
 
     #[test]
-    fn ndarr2(){
-        let x: Ndarr2<_, _, {&[2,2]}> = Ndarr2{data: [0,1,2,3]};
-        let a = reduce(x, |x, y| x);
-        assert_eq!(a.data.len(), 2);
+    fn slice_arr() {
+        let arr = Ndarr::new(
+            &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+            [2, 3, 3],
+        )
+        .unwrap();
+        // [[[ 0,  1,  2],
+        //[ 3,  4,  5],
+        //[ 6,  7,  8]],
+        //-------------
+       //[[ 9, 10, 11],
+        //[12, 13, 14],
+        //[15, 16, 17]]])
+        let slices_0 = arr.clone().slice_at(0);
+        let slices_1 = arr.clone().slice_at(1);
+        let slices_2 = arr.clone().slice_at(2);
+        
+        assert_eq!(slices_0[0], Ndarr::new(&[0,1,2,3,4,5,6,7,8], [3,3]).unwrap());
+        assert_eq!(slices_1[0], Ndarr::new(&[0,1,2,9,10,11], [2,3]).unwrap());
+        assert_eq!(slices_2[0], Ndarr::new(&[0,3,6,9,12,15], [2,3]).unwrap());
     }
+
+    #[test]
+    fn reduce() {
+        let arr = Ndarr::new(
+            &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+            [2, 3, 3],
+        )
+        .unwrap();
+        // [[[ 0,  1,  2],
+        //[ 3,  4,  5],
+        //[ 6,  7,  8]],
+        //-------------
+       //[[ 9, 10, 11],
+        //[12, 13, 14],
+        //[15, 16, 17]]])
+        let red_0 = arr.clone().reduce(0, |x, y| x + y).unwrap();
+        let red_1: Ndarr<i32, 2> = arr.reduce(1, |x, y| x + y).unwrap();
+        assert_eq!(red_0, Ndarr::new(&[9,11,13,15,17,19,21,23,25], [3,3]).unwrap());
+        assert_eq!(red_1, Ndarr::new(&[9,12,15,36,39,42], [2,3]).unwrap());
+    }
+
 }
