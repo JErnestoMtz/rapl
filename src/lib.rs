@@ -8,6 +8,7 @@ mod helpers;
 mod ops;
 mod primitives;
 mod scalars;
+mod natives;
 use core::slice;
 use std::{
     fmt::Debug,
@@ -57,6 +58,10 @@ impl<T: Copy + Clone + Debug + Default, const R: usize> Ndarr<T, R> {
 
     pub fn len(&self) -> usize {
         self.data.len()
+    }
+
+    pub fn from<P: Into<Self>>(p: P)->Self{
+        p.into()
     }
 }
 
@@ -321,22 +326,24 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::primitives::{Slice, Reduce};
+    use crate::primitives::{Slice, Reduce, Broadcast};
 
     use super::*;
 
     #[test]
     fn constructor_test() {
         let arr = Ndarr::new(&[0, 1, 2, 3], [2, 2]).expect("Error initializing");
+        let arr2 = Ndarr::from([[0,1],[2,3]]);
         assert_eq!(&arr.shape(), &[2, 2]);
         assert_eq!(&arr.rank(), &2);
+        assert_eq!(&arr, &arr2)
     }
 
     #[test]
     fn bimap_test() {
         let arr1 = Ndarr::new(&[0, 1, 2, 3], [2, 2]).expect("Error initializing");
         let arr2 = Ndarr::new(&[4, 5, 6, 7], [2, 2]).expect("Error initializing");
-        //assert_eq!(arr1.bimap(arr2, |x, y| x + y).data, vec![4, 6, 8, 10])
+        assert_eq!(arr1.bimap(arr2, |x, y| x + y).data, vec![4, 6, 8, 10])
     }
 
     #[test]
@@ -353,19 +360,19 @@ mod tests {
 
         let arr3 = Ndarr::new(&[2, 2, 2, 2], [2, 2]).expect("Error initializing");
         assert_eq!((arr1.clone() + arr2.clone()).data, arr3.clone().data);
-        assert_eq!((arr1.clone() - arr2.clone()).data, vec![0, 0, 0, 0]);
-        assert_eq!((arr3.clone() * arr3.clone()).data, vec![4, 4, 4, 4]);
-        assert_eq!((arr3.clone() / arr3.clone()).data, vec![1, 1, 1, 1]);
-        assert_eq!((-arr1.clone()).data, vec![-1, -1, -1, -1]);
+        assert_eq!((&arr1 - &arr2).data, vec![0, 0, 0, 0]);
+        assert_eq!((&arr3 * &arr3).data, vec![4, 4, 4, 4]);
+        assert_eq!((&arr3 / &arr3).data, vec![1, 1, 1, 1]);
+        assert_eq!((-arr1).data, vec![-1, -1, -1, -1]);
     }
 
     #[test]
     fn scalar_ext() {
         let arr1 = Ndarr::new(&[2, 2, 2, 2], [2, 2]).expect("Error initializing");
-        assert_eq!((arr1.clone() + 1).data, vec![3, 3, 3, 3]);
-        assert_eq!((arr1.clone() - 2).data, vec![0, 0, 0, 0]);
-        assert_eq!((arr1.clone() * 3).data, vec![6, 6, 6, 6]);
-        assert_eq!((arr1.clone() / 2).data, vec![1, 1, 1, 1]);
+        assert_eq!((&arr1 + &1).data, vec![3, 3, 3, 3]);
+        assert_eq!((&arr1 - &2).data, vec![0, 0, 0, 0]);
+        assert_eq!((&arr1 * &3).data, vec![6, 6, 6, 6]);
+        assert_eq!((&arr1 / &2).data, vec![1, 1, 1, 1]);
     }
 
     #[test]
@@ -419,7 +426,10 @@ mod tests {
         assert!(helpers::broadcast_shape(&[2,2], &[3,2,2]).is_ok());
 
         assert!(helpers::broadcast_shape(&[2,2], &[2,3]).is_err());
-        assert!(helpers::broadcast_shape(&[2,2], &[2,2,3]).is_err())
+        assert!(helpers::broadcast_shape(&[2,2], &[2,2,3]).is_err());
+
+        let a = Ndarr::new(&[1,2], [2]).unwrap();
+        assert_eq!(a.broadcast(&[2,2]), Ndarr::new(&[1,2,1,2], [2,2]).unwrap());
 
     }
 

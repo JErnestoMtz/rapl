@@ -81,7 +81,7 @@ where
 
 pub trait Broadcast<const R2: usize>{
     type Output;
-    fn broadcast(&self, axis: usize, shape: &[usize; R2]) -> Self::Output;
+    fn broadcast(&self, shape: &[usize; R2]) -> Self::Output;
 }
 
 impl <T, const R1: usize, const R2: usize> Broadcast<R2> for Ndarr<T, R1>
@@ -91,20 +91,22 @@ impl <T, const R1: usize, const R2: usize> Broadcast<R2> for Ndarr<T, R1>
     
 {
     type Output = Ndarr<T, {helpers::const_max(R1, R2)}>;
-    fn broadcast(&self, axis: usize, shape: &[usize; R2]) -> Self::Output {
-        let new_shape = helpers::broadcast_shape(&self.shape, shape).unwrap();
+    fn broadcast(&self, shape: &[usize; R2]) -> Self::Output {
+        //see https://numpy.org/doc/stable/user/basics.broadcasting.html
+        //TODO: not sure at all if this implementation is general, but it seems to work for Rank 1 2 array broadcasted up to rank 3. For higher ranks a more rigorous proof is needed.
+        let new_shape = helpers::broadcast_shape(&self.shape, shape).expect("Shape not compatible");
         let n_old = helpers::multiply_list(&self.shape, 1);
         let n = helpers::multiply_list(&new_shape, 1);
         let repetitions = n / n_old;
         let mut new_data = vec![T::default(); n];
         for i in 0..repetitions{
-            for j in 0..n{
-                todo!()
+            for j in 0..n_old{
+                new_data[i*n_old + j] = self.data[j]
             }
 
         }
 
-        Ndarr{data: Vec::new(), shape: new_shape}
+        Ndarr{data: new_data, shape: new_shape}
     }
     
 }
