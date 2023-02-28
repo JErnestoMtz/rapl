@@ -1,4 +1,7 @@
+
 use std::ops;
+use std::cmp::max;
+use core::marker::Destruct;
 
 pub(crate) fn multiply_list<T>(list: &[T], init: T) -> T
 where
@@ -80,4 +83,38 @@ pub fn remove_element<T: Copy, const N: usize>(arr: [T; N], index: usize) -> [T;
         }
     }
     result
+}
+
+pub const fn const_max<T:  ~const Ord + ~const Destruct>(a: T, b: T)->T{
+    max(a, b)
+}
+
+fn index_or(arr: &[usize], index: usize, or: usize)->usize{
+    if index >= arr.len(){
+        or
+    }else {
+        arr[index]
+    }
+}
+
+pub fn broadcast_shape<const N: usize, const M: usize>(shape1: &[usize; N], shape2: &[usize; M])->Result<[usize; {const_max(N,M)}], String>
+where [usize; {const_max(N, M)}]: Default
+{
+    let mut out_shape: [usize; {const_max(N, M)}] = Default::default();
+    let mut sh1 = shape1.to_vec();
+    let mut sh2 = shape2.to_vec();
+    sh1.reverse();
+    sh2.reverse();
+
+    let l = max(N,M);
+    for i in 0..l{
+        let size1 = index_or(&sh1, i, 1);
+        let size2 = index_or(&sh2, i, 1);
+        if size1 != 1 && size2 != 1 && size1 != size2{
+            return Err(String::from(format!("Error arrays with shape {:?} and {:?} can not be broadcasted", shape1, shape2)))
+        }
+        out_shape[l-i-1] = max(size1, size2)
+    }
+    return Ok(out_shape);
+
 }

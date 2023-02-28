@@ -1,5 +1,7 @@
 #![feature(generic_const_exprs)]
 #![feature(adt_const_params)]
+#![feature(const_trait_impl)]
+#![feature(const_cmp)]
 
 
 mod helpers;
@@ -51,6 +53,10 @@ impl<T: Copy + Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     }
     pub fn shape(&self) -> [usize; R] {
         self.shape
+    }
+
+    pub fn len(&self) -> usize {
+        self.data.len()
     }
 }
 
@@ -276,27 +282,7 @@ where
     }
 }
 
-//impl<F, T: Copy + Debug + Clone + Default, const N: usize, const SHAPE: &'static [usize]> Map<F>
-//for Ndarr2<T, N, SHAPE>
-//where
-//F: Fn(&T) -> T,
-//[T; N]: Default,
-//{
-//fn map(self, f: F) -> Self{
-//let mut out: [T; N] = Default::default();
-//for i in 0..N {
-//out[i] = f(&self.data[i])
-//}
-//Ndarr2 {
-//data: out,
-//}
-//}
-//fn map_in_place(&mut self, f: F){
-//for i in 0..N{
-//self.data[i] = f(&self.data[i])
-//}
-//}
-//}
+
 
 trait Transpose {
     fn t(self) -> Self;
@@ -332,7 +318,6 @@ where
 ///
 ///
 
-////////////////////////
 
 #[cfg(test)]
 mod tests {
@@ -400,7 +385,7 @@ mod tests {
         let slices_0 = arr.clone().slice_at(0);
         let slices_1 = arr.clone().slice_at(1);
         let slices_2 = arr.clone().slice_at(2);
-        
+
         assert_eq!(slices_0[0], Ndarr::new(&[0,1,2,3,4,5,6,7,8], [3,3]).unwrap());
         assert_eq!(slices_1[0], Ndarr::new(&[0,1,2,9,10,11], [2,3]).unwrap());
         assert_eq!(slices_2[0], Ndarr::new(&[0,3,6,9,12,15], [2,3]).unwrap());
@@ -425,5 +410,19 @@ mod tests {
         assert_eq!(red_0, Ndarr::new(&[9,11,13,15,17,19,21,23,25], [3,3]).unwrap());
         assert_eq!(red_1, Ndarr::new(&[9,12,15,36,39,42], [2,3]).unwrap());
     }
+
+    #[test]
+    fn broadcast(){
+        // see https://numpy.org/doc/stable/user/basics.broadcasting.html
+        assert_eq!(helpers::broadcast_shape(&[2,2], &[2]).unwrap(),[2,2]);
+        assert_eq!(helpers::broadcast_shape(&[3,3], &[3,3]).unwrap(),[3,3]);
+        assert!(helpers::broadcast_shape(&[2,2], &[3,2,2]).is_ok());
+
+        assert!(helpers::broadcast_shape(&[2,2], &[2,3]).is_err());
+        assert!(helpers::broadcast_shape(&[2,2], &[2,2,3]).is_err())
+
+    }
+
+
 
 }

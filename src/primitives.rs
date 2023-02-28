@@ -78,3 +78,33 @@ where
         }
     }
 }
+
+pub trait Broadcast<const R2: usize>{
+    type Output;
+    fn broadcast(&self, axis: usize, shape: &[usize; R2]) -> Self::Output;
+}
+
+impl <T, const R1: usize, const R2: usize> Broadcast<R2> for Ndarr<T, R1>
+    where 
+    T: Copy + Clone + Default + Debug,
+    [usize; {helpers::const_max(R1, R2)}]: Default
+    
+{
+    type Output = Ndarr<T, {helpers::const_max(R1, R2)}>;
+    fn broadcast(&self, axis: usize, shape: &[usize; R2]) -> Self::Output {
+        let new_shape = helpers::broadcast_shape(&self.shape, shape).unwrap();
+        let n_old = helpers::multiply_list(&self.shape, 1);
+        let n = helpers::multiply_list(&new_shape, 1);
+        let repetitions = n / n_old;
+        let mut new_data = vec![T::default(); n];
+        for i in 0..repetitions{
+            for j in 0..n{
+                todo!()
+            }
+
+        }
+
+        Ndarr{data: Vec::new(), shape: new_shape}
+    }
+    
+}
