@@ -16,6 +16,8 @@ use std::{
     ops::Deref,
 };
 
+use scalars::Scalar;
+
 // main struct of N Dimensional generic array.
 //the shape is denoted by the `shape` array where the length is the Rank of the Ndarray
 //the actual values are stored in a flattened state in a rank 1 array
@@ -65,6 +67,13 @@ impl<T: Copy + Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     }
 }
 
+
+//impl <T: Copy + Debug + Clone + Default, const R: usize> Rank for Ndarr<T,R> {
+    //fn get_rank(&self)->usize {
+        //R
+    //}
+    
+//}
 //impl<T: Copy + Clone + Debug + Default, const N: usize, const SHAPE: &'static [usize]> Ndarr2<T, N, SHAPE> {
 ////TODO: implement errors
 //pub fn new(data: [T; N]) -> Result<Self, String> {
@@ -178,6 +187,7 @@ where
     T: Debug + Copy + Clone + Default,
 {
     fn into_ndarr(self, shape: &[usize; R]) -> Ndarr<T, R>;
+    fn get_rank(&self)->usize;
 }
 
 //pub trait IntoNdarr2<T, const N: usize, const SHAPE: &'static [usize]>
@@ -204,7 +214,12 @@ where
             self
         }
     }
+    fn get_rank(&self)->usize {
+        R
+    }
 }
+
+
 
 //impl<T, const N: usize, const  SHAPE: &'static [usize]> IntoNdarr2<T,N,SHAPE> for Ndarr2<T,N,SHAPE>
 //where T: Debug + Copy + Clone + Default,
@@ -297,8 +312,6 @@ trait Transpose {
 // the basic idea of a generic transpose of an N-dimensional array is to flip de shape of it like in a mirror.
 // The helper functions use in here can be derive with some maths, but maybe there is a better way to do it.
 impl<T: Default + Copy + Clone, const R: usize> Transpose for Ndarr<T, R>
-where
-    [usize; R]: Default,
 {
     fn t(self) -> Self {
         let shape = self.shape.clone();
@@ -322,6 +335,8 @@ where
 ///
 ///
 ///
+/// 
+
 
 
 #[cfg(test)]
@@ -422,17 +437,45 @@ mod tests {
     fn broadcast(){
         // see https://numpy.org/doc/stable/user/basics.broadcasting.html
         assert_eq!(helpers::broadcast_shape(&[2,2], &[2]).unwrap(),[2,2]);
+        assert_eq!(helpers::broadcast_shape(&[2], &[2,2]).unwrap(),[2,2]);
         assert_eq!(helpers::broadcast_shape(&[3,3], &[3,3]).unwrap(),[3,3]);
         assert!(helpers::broadcast_shape(&[2,2], &[3,2,2]).is_ok());
 
         assert!(helpers::broadcast_shape(&[2,2], &[2,3]).is_err());
         assert!(helpers::broadcast_shape(&[2,2], &[2,2,3]).is_err());
 
+        assert!(Ndarr::from([[1,2],[3,4]]).broadcast_to(&[2]).is_err());
+        assert!(Ndarr::from([[1,2],[3,4]]).broadcast_to(&[4,2,2]).is_ok());
+        assert!(Ndarr::from([[1,2],[3,4]]).broadcast_to(&[2,2]).is_ok());
+
         let a = Ndarr::new(&[1,2], [2]).unwrap();
-        assert_eq!(a.broadcast(&[2,2]), Ndarr::new(&[1,2,1,2], [2,2]).unwrap());
+        assert_eq!(a.broadcast(&[2,2]).unwrap(), Ndarr::new(&[1,2,1,2], [2,2]).unwrap());
 
     }
 
+    #[test]
+    fn diatic_polymorphism(){
+        let arr1 = Ndarr::from([[1,2],[3,4]]);
+        let arr2 = Ndarr::from([1,1]);
+        assert_eq!(ops::poly_diatic(arr2.clone(), arr1.clone(), |x,y| x+y).unwrap(),Ndarr::from([[2,3],[4,5]]));
+        assert_eq!(ops::poly_diatic(arr1, arr2, |x,y| x+y).unwrap(),Ndarr::from([[2,3],[4,5]]));
+
+    }
+
+    #[test]
+    fn inner(){
+        let a = Ndarr::from([[1,2,3],[4,5,6]]);
+        let b = Ndarr::from([[7,8],[9,10],[11,12]]);
+        let c = a.clone().t().broadcast(&[1,3,2]).unwrap().t();
+        let d = b.clone().broadcast(&[1,3,2]).unwrap();
+        let cc = c.broadcast(&[2,3,2]).unwrap();
+        let r = ops::poly_diatic(cc,d, |x,y| x*y).unwrap();
+        let rr = r.reduce(1, |x,y| x+y).unwrap();
+        //print!("{:?}",&r.shape);
+        println!("{}", rr);
 
 
+
+    }
 }
+

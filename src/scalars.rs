@@ -18,6 +18,8 @@ impl Scalar for u16 {}
 impl Scalar for u8 {}
 impl Scalar for usize {}
 
+
+
 pub fn extend_scalar<P, T, const R: usize>(scalar: P, shape: &[usize; R]) -> Ndarr<T, R>
 where
     T: Debug + Copy + Clone + Default,
@@ -43,4 +45,8 @@ where
     fn into_ndarr(self, shape: &[usize; R]) -> Ndarr<T, R> {
         extend_scalar(self, shape)
     }
+    fn get_rank(&self)->usize {
+        0
+    }
 }
+

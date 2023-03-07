@@ -1,13 +1,14 @@
-use crate::scalars::Scalar;
+use crate::{scalars::Scalar, primitives::{Broadcast, DimError, Reduce}, helpers::{const_max}};
 
 use super::*;
 use std::ops::*;
+
 
 // Arithmetic operations
 
 impl<P, T, const R: usize> Add<P> for Ndarr<T, R>
 where
-    T: Add<Output = T> + Copy + Clone + Debug + Default,
+    T: Add<Output = T> + Copy + Clone + Debug + Default + Scalar,
     P: IntoNdarr<T, R>,
 {
     type Output = Self;
@@ -17,6 +18,58 @@ where
         self.bimap(other, |x, y| *x + *y)
     }
 }
+
+//TODO: this is super cursed but is the only solution I found 
+pub fn poly_diatic<F,T, const R1: usize, const R2: usize>(arr1: Ndarr<T,R1>, arr2: Ndarr<T,R2>, f: F)->Result<Ndarr<T,{const_max(R1,  R2)}>,DimError>
+where
+    T: Copy + Clone + Debug + Default,
+    F: Fn(T,T) -> T,
+    [usize; {const_max(R2, R1)}]: Sized,
+{
+    let new_shape = helpers::broadcast_shape(&arr1.shape, &arr2.shape)?;
+    let mut  cast1 = arr1.broadcast(&arr2.shape)?; // BUG // this also does't work for some limitations in const generics
+    let cast2 = arr2.broadcast(&arr1.shape)?; // BUG // this also does't work for some limitations in const generics
+    for i in 0..cast1.len(){
+        cast1.data[i] = f(cast1.data[i], cast2.data[i])
+    }
+    return Ok(Ndarr { data: cast1.data, shape: new_shape });
+}
+
+//pub fn inner_product<T,F,G, const R1: usize, const R2: usize>(f: F, g: G)->Fn(Ndarr<T,R1>,Ndarr<T,R2>)->Ndarr<T,{R1 + R2 -1}>
+    //where
+    //T: Copy + Clone + Debug + Default,
+    //F: Fn(T,T) -> T,
+    //G: Fn(T,T) -> T,
+    //[usize; {const_max(R1, R2)}]: Sized + Default, // BUG: Rust don not know that std::cmp::max(R1, R2) as std::cmp::max(R2, R1) for some reason
+    //[usize; {const_max(R2, R1)}]: Sized + Default,
+//{
+    //fn out<T, const R1: usize, const R2: usize>(arr1: Ndarr<T,R1>, arr2: Ndarr<T,R2>)->Ndarr<T,{R1 + R2 -1}>{
+        
+    //}
+//}
+
+pub fn mat_mul<T,const R1: usize, const R2: usize>(arr1: Ndarr<T,R1>, arr2: Ndarr<T,R2>)->Ndarr<T,{const_max(const_max(R1, R1 + 1), const_max(R2, R2 + 1))-1}>
+    where T: Sub<Output = T> + Copy + Clone + Debug + Default + Add<Output = T> + Mul<Output = T>,
+    [usize; R2 + 1]: Sized,
+    [usize; R1 + R2 - 2]: Sized,
+    [usize; const_max(R1, R1 + 1)]: Sized,
+    [usize; const_max(R2, R2 + 1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
+    [usize; const_max(const_max(R1, R1 + 1), const_max(R2, R2 + 1))]: Sized,
+    [usize; const_max(const_max(R2, R2 + 1), const_max(R1, R1 + 1))]: Sized,
+    [usize; {const_max(const_max(R1, R1 + 1), const_max(R2, R2 + 1))-1}]: Sized,
+
+{
+    let arr1 = arr1.t();
+    let pad_shape: [usize; R1 + 1] = helpers::path_shape(&arr1.shape).unwrap();
+    let arr1 = arr1.broadcast(&pad_shape).unwrap().t();
+    let pad_shape2: [usize; R2 + 1] = helpers::path_shape(&arr2.shape).unwrap();
+    let arr2 = arr2.broadcast(&pad_shape2).unwrap();
+    let r = poly_diatic(arr1, arr2, |x,y| x * y).unwrap();
+    let rr  = r.reduce(1, |x,y| *x + *y).unwrap();
+    return rr;
+}
+
 impl<P, T, const R: usize> Sub<P> for Ndarr<T, R>
 where
     T: Sub<Output = T> + Copy + Clone + Debug + Default,
@@ -121,6 +174,7 @@ where
         self.clone().bimap(other, |x, y| *x + *y)
     }
 }
+
 
 
 impl<P, T, const R: usize> Sub<&P> for &Ndarr<T, R>

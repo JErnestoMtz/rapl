@@ -7,7 +7,7 @@ pub struct DimError {
 }
 
 impl DimError {
-    fn new(msg: &str) -> DimError {
+    pub fn new(msg: &str) -> DimError {
         DimError {
             details: msg.to_string(),
         }
@@ -22,7 +22,6 @@ pub trait Slice {
 impl<T, const R: usize> Slice for Ndarr<T, R>
 where
     T: Copy + Clone + Default + Debug,
-    [usize; R]: Default,
     [usize;  R - 1 ]: Sized,
 {
     type Output = Vec<Ndarr<T, { R - 1 }>>;
@@ -60,7 +59,6 @@ where
     F: Fn(&T, &T) -> T + Clone,
     T: Copy + Clone + Default + Debug,
     [usize;  R - 1 ]: Sized,
-    [usize;  R ]: Default,
 {
     type Output = Result<Ndarr<T, { R - 1 }>, DimError>;
     fn reduce(self, axis: usize, f: F) -> Self::Output {
@@ -81,32 +79,56 @@ where
 
 pub trait Broadcast<const R2: usize>{
     type Output;
-    fn broadcast(&self, shape: &[usize; R2]) -> Self::Output;
+    fn broadcast_to(&self, shape: &[usize; R2]) -> Result<Self::Output, DimError>;//try broadcast to shape 
+    fn broadcast(&self, shape: &[usize; R2]) -> Result<Self::Output, DimError>;//try broadcasting to compatible shape between self.shape and shape
 }
 
 impl <T, const R1: usize, const R2: usize> Broadcast<R2> for Ndarr<T, R1>
     where 
     T: Copy + Clone + Default + Debug,
-    [usize; {helpers::const_max(R1, R2)}]: Default
+    [usize; {const_max(R1, R2)}]: Sized
     
 {
-    type Output = Ndarr<T, {helpers::const_max(R1, R2)}>;
-    fn broadcast(&self, shape: &[usize; R2]) -> Self::Output {
+    type Output = Ndarr<T, {const_max(R1, R2)}>;
+    fn broadcast_to(&self, shape: &[usize; R2]) -> Result<Self::Output,DimError> {
         //see https://numpy.org/doc/stable/user/basics.broadcasting.html
         //TODO: not sure at all if this implementation is general, but it seems to work for Rank 1 2 array broadcasted up to rank 3. For higher ranks a more rigorous proof is needed.
-        let new_shape = helpers::broadcast_shape(&self.shape, shape).expect("Shape not compatible");
+        let new_shape = helpers::broadcast_shape(&self.shape, shape)?;
+
+        if new_shape.len() > R2{
+            return Err(DimError { details: "Array can not be broadcasted to shape".to_string() });
+        }else{
+            let n_old = helpers::multiply_list(&self.shape, 1);
+            let n = helpers::multiply_list(&new_shape, 1);
+            let repetitions = n / n_old;
+
+            let mut new_data = vec![T::default(); n];
+            for i in 0..repetitions{
+                for j in 0..n_old{
+                    new_data[i*n_old + j] = self.data[j]
+                }
+
+            }
+
+                return Ok(Ndarr{data: new_data, shape: new_shape})
+        }
+    }
+    fn broadcast(&self, shape: &[usize; R2]) -> Result<Self::Output, DimError> {
+        
+        let new_shape = helpers::broadcast_shape(&self.shape, shape)?;
+
         let n_old = helpers::multiply_list(&self.shape, 1);
         let n = helpers::multiply_list(&new_shape, 1);
         let repetitions = n / n_old;
+
         let mut new_data = vec![T::default(); n];
-        for i in 0..repetitions{
-            for j in 0..n_old{
-                new_data[i*n_old + j] = self.data[j]
-            }
-
+        for i in 0..n{
+            let indexes = get_indexes(&i, &new_shape);
+            let rev_casted_pos = rev_cast_pos(&self.shape, &indexes)?;
+            new_data[i] = self.data[rev_casted_pos];
         }
+        Ok(Ndarr { data: new_data, shape: new_shape })
 
-        Ndarr{data: new_data, shape: new_shape}
     }
-    
+
 }
