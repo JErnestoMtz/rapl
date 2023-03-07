@@ -464,16 +464,16 @@ mod tests {
 
     #[test]
     fn inner(){
-        let a = Ndarr::from([[1,2,3],[4,5,6]]);
-        let b = Ndarr::from([[7,8],[9,10],[11,12]]);
-        let c = a.clone().t().broadcast(&[1,3,2]).unwrap().t();
-        let d = b.clone().broadcast(&[1,3,2]).unwrap();
-        let cc = c.broadcast(&[2,3,2]).unwrap();
-        let r = ops::poly_diatic(cc,d, |x,y| x*y).unwrap();
-        let rr = r.reduce(1, |x,y| x+y).unwrap();
+        let x = Ndarr::from([[1,2],[3,4],[5,6]]);
+        let y = Ndarr::from([[[1,2],[3,4]],[[5,6],[7,8]]]);
+        //let c = a.clone().t().broadcast(&[1,3,2]).unwrap().t();
+        //let d = b.clone().broadcast(&[1,3,2]).unwrap();
+        //let cc = c.broadcast(&[2,3,2]).unwrap();
+        //let r = ops::poly_diatic(cc,d, |x,y| x*y).unwrap();
+        //let rr = r.reduce(1, |x,y| x+y).unwrap();
+        let r = ops::mat_mul(x, y);
         //print!("{:?}",&r.shape);
-        println!("{}", rr);
-
+        println!("{}", r);
 
 
     }
