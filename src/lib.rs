@@ -28,10 +28,10 @@ pub struct Ndarr<T: Copy + Clone + Default, const R: usize> {
     pub shape: [usize; R],
 }
 
-#[derive(Debug, Copy, Clone)]
-pub struct Ndarr2<T: Copy + Clone + Default, const N: usize, const SHAPE: &'static [usize]> {
-    pub data: [T; N],
-}
+//#[derive(Debug, Copy, Clone)]
+//pub struct Ndarr2<T: Copy + Clone + Default, const N: usize, const SHAPE: &'static [usize]> {
+    //pub data: [T; N],
+//}
 
 impl<T: Copy + Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     //TODO: implement errors
@@ -68,34 +68,15 @@ impl<T: Copy + Clone + Debug + Default, const R: usize> Ndarr<T, R> {
 }
 
 
-//impl <T: Copy + Debug + Clone + Default, const R: usize> Rank for Ndarr<T,R> {
-    //fn get_rank(&self)->usize {
-        //R
-    //}
-    
-//}
-//impl<T: Copy + Clone + Debug + Default, const N: usize, const SHAPE: &'static [usize]> Ndarr2<T, N, SHAPE> {
-////TODO: implement errors
-//pub fn new(data: [T; N]) -> Result<Self, String> {
-//let n = helpers::multiply_list(SHAPE, 1);
-//if data.len() == n {
-//Ok(Ndarr2 {
-//data: data,
-//})
-//} else {
-//Err(format!(
-//"The number of elements of an Ndarray of shape {:?} is {}, and {} were provided.",
-//SHAPE, n, N
-//))
-//}
-//}
-//pub fn rank(self) -> usize {
-//SHAPE.len()
-//}
-//pub fn shape(self) -> &'static [usize] {
-//SHAPE
-//}
-//}
+impl<T: Copy + Clone + Debug + Default,const R: usize> Ndarr<T, R> {
+    pub fn scalar(self)->T{
+        if R == 0{
+            self.data[0]
+        }else{
+            panic!("Can not convert {:?} to Scalar",self)
+        }
+    }
+}
 
 impl<T: Copy + Clone + Debug + Default + Display, const R: usize> Display for Ndarr<T, R> {
     // Kind of nasty function, it can be imprube a lot, but I think there is no scape from recursion.
@@ -137,51 +118,8 @@ impl<T: Copy + Clone + Debug + Default + Display, const R: usize> Display for Nd
     }
 }
 
-//impl<T: Copy + Clone + Debug + Default + Display, const N: usize, const SHAPE: &'static [usize]> Display for Ndarr2<T, N, SHAPE>
 
-//{
-//// Kind of nasty function, it can be imprube a lot, but I think there is no scape from recursion.
-//fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
-//{
-//let strs = self.data.map(|x| x.to_string());
-//let binding = strs.clone().map(|s| s.len());
-//let max_size = binding.iter().max().unwrap();
-//let mut fmt_str: [String; N] = strs.map(|s| helpers::format_vla(s, max_size));
-//let r: usize = SHAPE.len();
-//let mut splits = Vec::with_capacity(r);
 
-////reverse array to simplify code
-//splits.extend(SHAPE.iter().rev());
-
-//fn slip_format<'a>(strings: &'a mut [String], splits: &'a [usize]) -> () {
-//if splits.len() == 0 {
-//return;
-//}
-//let l = helpers::multiply_list(splits, 1);
-//let n_splits = strings.len() / l;
-//for i in 0..n_splits {
-//let new_s: &mut [String] = &mut strings[i * l..(i + 1) * l];
-//new_s[0].insert_str(0, "[");
-//new_s[l - 1].push_str("]");
-//slip_format(new_s, &splits[1..]);
-//}
-//return;
-//}
-//// TODO: add new lines in the correct places to display it more numpy like
-//slip_format(&mut fmt_str[0..], &mut splits[..]);
-
-//let out = fmt_str.clone().join(" ");
-//write!(f, "Ndarr({})", out)
-//}
-//}
-trait Bimap<F> {
-    fn bimap(self, other: Self, f: F) -> Self;
-    fn bimap_in_place(&mut self, other: Self, f: F);
-}
-
-///////////
-
-//TODO: the problem her is we can not use Into because we need to know the shape, and Into trait does not passes any reference
 pub trait IntoNdarr<T, const R: usize>
 where
     T: Debug + Copy + Clone + Default,
@@ -190,14 +128,6 @@ where
     fn get_rank(&self)->usize;
 }
 
-//pub trait IntoNdarr2<T, const N: usize, const SHAPE: &'static [usize]>
-//where T: Debug + Copy + Clone + Default,
-//[T; N]: Default
-//{
-//fn into_ndarr2(self) -> Ndarr2<T,N,SHAPE>;
-//}
-
-/////////
 
 impl<T, const R: usize> IntoNdarr<T, R> for Ndarr<T, R>
 where
@@ -221,17 +151,11 @@ where
 
 
 
-//impl<T, const N: usize, const  SHAPE: &'static [usize]> IntoNdarr2<T,N,SHAPE> for Ndarr2<T,N,SHAPE>
-//where T: Debug + Copy + Clone + Default,
-//[T; N]: Default
-//{
-//fn into_ndarr2(self) -> Ndarr2<T,N,SHAPE> {
-//self
-//}
-//}
 
-////////
-
+trait Bimap<F> {
+    fn bimap(self, other: Self, f: F) -> Self;
+    fn bimap_in_place(&mut self, other: Self, f: F);
+}
 // Here we need to think about if valueble maybe checking for the same shape and return an option instead
 impl<F, T: Copy + Debug + Clone + Default, const R: usize> Bimap<F> for Ndarr<T, R>
 where
@@ -255,24 +179,34 @@ where
     }
 }
 
-//impl<F, T: Copy + Debug + Clone + Default, const N: usize, const SHAPE: &'static [usize]> Bimap<F>
-//for Ndarr2<T, N, SHAPE>
-//where
-//F: Fn(&T, &T) -> T,
-//[T; N]: Default,
-//{
-//fn bimap(self, other: Self, f: F) -> Self {
-//let mut out: [T; N] = Default::default();
-//for i in 0..N {
-//out[i] = f(&self.data[i], &other.data[i])
-//}
-//Ndarr2 {
-//data: out,
-//}
-//}
-//}
+trait GeneralBimap<F,T2,T3> {
+    type Other;
+    type Output;
+    fn gen_bimap(self, other: Self::Other, f: F) -> Self::Output;
+}
 
-/////
+
+impl<F,T1, T2, T3, const R: usize> GeneralBimap<F,T2,T3> for Ndarr<T1, R>
+where
+    T1: Copy + Debug + Clone + Default,
+    T2: Copy + Debug + Clone + Default,
+    T3: Copy + Debug + Clone + Default,
+    F: Fn(T1,T2) -> T3,
+{
+    type Other = Ndarr<T2,R>;
+    type Output = Ndarr<T3,R>;
+
+    fn gen_bimap(self, other: Self::Other, f: F) -> Self::Output {
+        let mut out = vec![T3::default(); self.data.len()];
+        for i in 0..out.len() {
+            out[i] = f(self.data[i], other.data[i])
+        }
+        Ndarr {
+            data: out,
+            shape: self.shape,
+        }
+    }
+}
 
 trait Map<F> {
     fn map(self, f: F) -> Self;
@@ -331,16 +265,16 @@ impl<T: Default + Copy + Clone, const R: usize> Transpose for Ndarr<T, R>
     }
 }
 
-///////////////////////////////////////////
-///
-///
-///
-/// 
+
+
 
 
 
 #[cfg(test)]
 mod tests {
+    use core::num;
+    use std::cmp::min;
+
     use crate::primitives::{Slice, Reduce, Broadcast};
 
     use super::*;
@@ -462,24 +396,36 @@ mod tests {
 
     }
 
+
     #[test]
     fn inner(){
-        let x = Ndarr::from([[[1,2,3],[4,5,6]],[[7,8,9],[10,11,12]]]);
-        let y = Ndarr::from([[[1]],[[2]],[[3]]]);
+        let x = Ndarr::from([[1,2,3],[4,5,6]]);
+        let y = Ndarr::from([[1,2],[3,4],[5,6]]);
+        let z = Ndarr::from([1,2,3,4,5]);
+        let  matmul = ops::inner_product(|x,y| x*y, |x,y| x+y);
+        let  r = matmul(x, y);
+        let  matmul = ops::inner_product(|x,y| x*y, |x,y| x+y);
+        let r2 = matmul(z.clone(), z);
+        let g1 = Ndarr::from("gattaca");
+        let g2 = Ndarr::from("tattcag");
+        let g = |a: char, b: char| {if a ==b {1}else{0}};
+        let  numequals = ops::inner_product(g, |x,y| x+y);
+        let ttt = numequals(g1,g2).scalar();
 
-        //let c = a.clone().t().broadcast(&[1,3,2]).unwrap().t();
-        //let d = b.clone().broadcast(&[1,3,2]).unwrap();
-        //let cc = c.broadcast(&[2,3,2]).unwrap();
-        //let r = ops::poly_diatic(cc,d, |x,y| x*y).unwrap();
-        //let rr = r.reduce(1, |x,y| x+y).unwrap();
-        let r = ops::mat_mul(x, y);
-        //print!("{:?}",&r.shape);
-        //let a = Ndarr::from([1,2,3,4,5]);
-        //let b = a.reduce(0, |x,y| x+y).unwrap();
-        //let b = ops::mat_mul(a.clone(), a.t());
-        println!("{:?}", r);
+        assert_eq!(r,Ndarr::from([[22,28],[49,64]])) ;
+        assert_eq!(r2.scalar(),55) ;
+        assert_eq!(ttt,3)
+        
+        //println!("{:?}", r);
 
-
+    }
+    #[test]
+    fn outer(){
+        let z = Ndarr::from([1,2,3,4,5]);
+        let g = |a, b| {if a ==b {1}else{0}};
+        let r1 = ops::outer(|x,y| x + y, z.clone(), z.clone());
+        let r2 = ops::outer( g , z.clone(), z);
+        print!("{}",r2)
     }
 }
 

@@ -1,3 +1,4 @@
+
 use super::*;
 use crate::scalars::Scalar;
 
@@ -37,5 +38,21 @@ impl <T, const N1: usize, const N2: usize, const N3: usize> Into<Ndarr<T,3>> for
             }
         }
        Ndarr { data: data , shape: [N3, N2, N1] }
+   } 
+}
+
+impl <T> Into<Ndarr<T,1>> for Vec<T>
+    where T: Clone + Debug + Copy + Default + Scalar
+{
+    fn into(self) -> Ndarr<T,1> {
+        let l = &self.len();
+        Ndarr { data: self, shape: [*l] }
+    }
+}
+
+impl Into<Ndarr<char,1>> for &str
+{
+   fn into(self) -> Ndarr<char,1> {
+       Ndarr { data: self.chars().collect() , shape: [self.len()] }
    } 
 }
