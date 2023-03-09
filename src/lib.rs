@@ -464,8 +464,9 @@ mod tests {
 
     #[test]
     fn inner(){
-        let x = Ndarr::from([[1,2],[3,4],[5,6]]);
-        let y = Ndarr::from([[[1,2],[3,4]],[[5,6],[7,8]]]);
+        let x = Ndarr::from([[[1,2,3],[4,5,6]],[[7,8,9],[10,11,12]]]);
+        let y = Ndarr::from([[[1]],[[2]],[[3]]]);
+
         //let c = a.clone().t().broadcast(&[1,3,2]).unwrap().t();
         //let d = b.clone().broadcast(&[1,3,2]).unwrap();
         //let cc = c.broadcast(&[2,3,2]).unwrap();
@@ -473,7 +474,10 @@ mod tests {
         //let rr = r.reduce(1, |x,y| x+y).unwrap();
         let r = ops::mat_mul(x, y);
         //print!("{:?}",&r.shape);
-        println!("{}", r);
+        //let a = Ndarr::from([1,2,3,4,5]);
+        //let b = a.reduce(0, |x,y| x+y).unwrap();
+        //let b = ops::mat_mul(a.clone(), a.t());
+        println!("{:?}", r);
 
 
     }

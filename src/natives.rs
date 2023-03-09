@@ -31,7 +31,7 @@ impl <T, const N1: usize, const N2: usize, const N3: usize> Into<Ndarr<T,3>> for
         let mut data = Vec::new();
         for i in 0..N3{
             for j in 0..N2{
-                for k in 0..N3{
+                for k in 0..N1{
                     data.push(self[i][j][k]);
                 }
             }
