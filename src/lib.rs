@@ -23,7 +23,7 @@ use scalars::Scalar;
 //the actual values are stored in a flattened state in a rank 1 array
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Ndarr<T: Copy + Clone + Default, const R: usize> {
+pub struct Ndarr<T: Clone + Default, const R: usize> {
     pub data: Vec<T>,
     pub shape: [usize; R],
 }
@@ -33,7 +33,7 @@ pub struct Ndarr<T: Copy + Clone + Default, const R: usize> {
     //pub data: [T; N],
 //}
 
-impl<T: Copy + Clone + Debug + Default, const R: usize> Ndarr<T, R> {
+impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     //TODO: implement errors
     pub fn new(data: &[T], shape: [usize; R]) -> Result<Self, String> {
         let n = helpers::multiply_list(&shape, 1);
@@ -78,7 +78,7 @@ impl<T: Copy + Clone + Debug + Default,const R: usize> Ndarr<T, R> {
     }
 }
 
-impl<T: Copy + Clone + Debug + Default + Display, const R: usize> Display for Ndarr<T, R> {
+impl<T: Clone + Debug + Default + Display, const R: usize> Display for Ndarr<T, R> {
     // Kind of nasty function, it can be imprube a lot, but I think there is no scape from recursion.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         //convert to string
@@ -122,7 +122,7 @@ impl<T: Copy + Clone + Debug + Default + Display, const R: usize> Display for Nd
 
 pub trait IntoNdarr<T, const R: usize>
 where
-    T: Debug + Copy + Clone + Default,
+    T: Debug + Clone + Default,
 {
     fn into_ndarr(self, shape: &[usize; R]) -> Ndarr<T, R>;
     fn get_rank(&self)->usize;
@@ -131,7 +131,7 @@ where
 
 impl<T, const R: usize> IntoNdarr<T, R> for Ndarr<T, R>
 where
-    T: Debug + Copy + Clone + Default,
+    T: Debug+ Clone + Default,
 {
     fn into_ndarr(self, shape: &[usize; R]) -> Ndarr<T, R> {
         if self.shape != *shape {
@@ -157,14 +157,14 @@ trait Bimap<F> {
     fn bimap_in_place(&mut self, other: Self, f: F);
 }
 // Here we need to think about if valueble maybe checking for the same shape and return an option instead
-impl<F, T: Copy + Debug + Clone + Default, const R: usize> Bimap<F> for Ndarr<T, R>
+impl<F, T: Debug + Clone + Default, const R: usize> Bimap<F> for Ndarr<T, R>
 where
-    F: Fn(&T, &T) -> T,
+    F: Fn(T, T) -> T,
 {
     fn bimap(self, other: Self, f: F) -> Self {
         let mut out = vec![T::default(); self.data.len()];
         for i in 0..out.len() {
-            out[i] = f(&self.data[i], &other.data[i])
+            out[i] = f(self.data[i].clone(), other.data[i].clone())
         }
         Ndarr {
             data: out,
@@ -174,7 +174,7 @@ where
 
     fn bimap_in_place(&mut self, other: Self, f: F) {
         for i in 0..self.data.len() {
-            self.data[i] = f(&self.data[i], &other.data[i])
+            self.data[i] = f(self.data[i].clone(), other.data[i].clone())
         }
     }
 }
@@ -188,9 +188,9 @@ trait GeneralBimap<F,T2,T3> {
 
 impl<F,T1, T2, T3, const R: usize> GeneralBimap<F,T2,T3> for Ndarr<T1, R>
 where
-    T1: Copy + Debug + Clone + Default,
-    T2: Copy + Debug + Clone + Default,
-    T3: Copy + Debug + Clone + Default,
+    T1: Debug + Clone + Default,
+    T2: Debug + Clone + Default,
+    T3: Debug + Clone + Default,
     F: Fn(T1,T2) -> T3,
 {
     type Other = Ndarr<T2,R>;
@@ -199,7 +199,7 @@ where
     fn gen_bimap(self, other: Self::Other, f: F) -> Self::Output {
         let mut out = vec![T3::default(); self.data.len()];
         for i in 0..out.len() {
-            out[i] = f(self.data[i], other.data[i])
+            out[i] = f(self.data[i].clone(), other.data[i].clone())
         }
         Ndarr {
             data: out,
@@ -215,7 +215,7 @@ trait Map<F> {
 }
 
 // Here we need to think about if worth it maybe checking for the same shape and return an option instead or just panic()
-impl<F, T: Copy + Debug + Clone + Default, const R: usize> Map<F> for Ndarr<T, R>
+impl<F, T: Debug + Clone + Default, const R: usize> Map<F> for Ndarr<T, R>
 where
     F: Fn(&T) -> T,
 {
@@ -245,7 +245,7 @@ trait Transpose {
 // Generic transpose for array of rank R
 // the basic idea of a generic transpose of an N-dimensional array is to flip de shape of it like in a mirror.
 // The helper functions use in here can be derive with some maths, but maybe there is a better way to do it.
-impl<T: Default + Copy + Clone, const R: usize> Transpose for Ndarr<T, R>
+impl<T: Default + Clone, const R: usize> Transpose for Ndarr<T, R>
 {
     fn t(self) -> Self {
         let shape = self.shape.clone();
@@ -425,7 +425,13 @@ mod tests {
         let g = |a, b| {if a ==b {1}else{0}};
         let r1 = ops::outer(|x,y| x + y, z.clone(), z.clone());
         let r2 = ops::outer( g , z.clone(), z);
-        print!("{}",r2)
+        print!("{}",r2);
+
+        //let c = Ndarr::from(["a","b","c","d"]);
+        //let d = Ndarr::from(["1","2","3","4"]);
+        //let ap = |x: &str, y: &str| (x.to_owned() + y);
+        //let r3 = ops::outer( ap, c, d);
+        //print!("{}",r3)
     }
 }
 

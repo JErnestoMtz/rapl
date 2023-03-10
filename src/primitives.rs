@@ -21,7 +21,7 @@ pub trait Slice {
 
 impl<T, const R: usize> Slice for Ndarr<T, R>
 where
-    T: Copy + Clone + Default + Debug,
+    T: Clone + Default + Debug,
     [usize;  R - 1 ]: Sized,
 {
     type Output = Vec<Ndarr<T, { R - 1 }>>;
@@ -41,7 +41,7 @@ where
             for j in 0..n {
                 if indexes[j][axis] == i {
                     let ind = get_flat_pos(&indexes[j], &self.shape).unwrap();
-                    this_data.push(self.data[ind])
+                    this_data.push(self.data[ind].clone())
                 }
             }
             out.push(Ndarr::new(&this_data, new_shape).expect("Error initializing"))
@@ -56,8 +56,8 @@ pub trait Reduce<F> {
 
 impl<T, F, const R: usize> Reduce<F> for Ndarr<T, R>
 where
-    F: Fn(&T, &T) -> T + Clone,
-    T: Copy + Clone + Default + Debug,
+    F: Fn(T, T) -> T + Clone,
+    T: Clone + Default + Debug,
     [usize;  R - 1 ]: Sized,
 {
     type Output = Result<Ndarr<T, { R - 1 }>, DimError>;
@@ -85,7 +85,7 @@ pub trait Broadcast<const R2: usize>{
 
 impl <T, const R1: usize, const R2: usize> Broadcast<R2> for Ndarr<T, R1>
     where 
-    T: Copy + Clone + Default + Debug,
+    T: Clone + Default + Debug,
     [usize; {const_max(R1, R2)}]: Sized
     
 {
@@ -105,7 +105,7 @@ impl <T, const R1: usize, const R2: usize> Broadcast<R2> for Ndarr<T, R1>
             let mut new_data = vec![T::default(); n];
             for i in 0..repetitions{
                 for j in 0..n_old{
-                    new_data[i*n_old + j] = self.data[j]
+                    new_data[i*n_old + j] = self.data[j].clone()
                 }
 
             }
@@ -123,7 +123,7 @@ impl <T, const R1: usize, const R2: usize> Broadcast<R2> for Ndarr<T, R1>
         for i in 0..n{
             let indexes = get_indexes(&i, &new_shape);
             let rev_casted_pos = rev_cast_pos(&self.shape, &indexes)?;
-            new_data[i] = self.data[rev_casted_pos];
+            new_data[i] = self.data[rev_casted_pos].clone();
         }
         Ok(Ndarr { data: new_data, shape: new_shape })
 
@@ -136,7 +136,7 @@ pub trait Broadcast_data<T,const R2: usize>{
 
 impl <T, const R1: usize, const R2: usize> Broadcast_data<T,R2> for Ndarr<T, R1>
     where 
-    T: Copy + Clone + Default + Debug,
+    T: Clone + Default + Debug,
     [usize; const_max(R1, R2)]: Sized
 {
     fn broadcast_data(&self, shape: &[usize; R2]) -> Result<Vec<T>, DimError> {
@@ -149,7 +149,7 @@ impl <T, const R1: usize, const R2: usize> Broadcast_data<T,R2> for Ndarr<T, R1>
         for i in 0..n{
             let indexes = get_indexes(&i, &new_shape);
             let rev_casted_pos = rev_cast_pos(&self.shape, &indexes)?;
-            new_data[i] = self.data[rev_casted_pos];
+            new_data[i] = self.data[rev_casted_pos].clone();
         }
         Ok(new_data)
 

@@ -15,16 +15,16 @@ where
     fn add(self, other: P) -> Self {
         //this is temporary, util we att projection por rank polymorphic operations
         let other = other.into_ndarr(&self.shape);
-        self.bimap(other, |x, y| *x + *y)
+        self.bimap(other, |x, y| x + y)
     }
 }
 
 //TODO: this is super cursed but is the only solution I found 
 pub fn poly_diatic<F,T1,T2,T3, const R1: usize, const R2: usize>(arr1: Ndarr<T1,R1>, arr2: Ndarr<T2,R2>, f: F)->Result<Ndarr<T3,{const_max(R1,  R2)}>,DimError>
 where
-    T1: Copy + Clone + Debug + Default,
-    T2: Copy + Clone + Debug + Default,
-    T3: Copy + Clone + Debug + Default,
+    T1: Clone + Debug + Default,
+    T2: Clone + Debug + Default,
+    T3: Clone + Debug + Default,
     F: Fn(T1,T2) -> T3,
     [usize; {const_max(R2, R1)}]: Sized,
 {
@@ -33,7 +33,7 @@ where
     let cast2 = arr2.broadcast(&arr1.shape)?;
     let mut new_data = vec![T3::default(); cast2.len()];
     for i in 0..cast1.len(){
-        new_data[i] = f(cast1.data[i], cast2.data[i])
+        new_data[i] = f(cast1.data[i].clone(), cast2.data[i].clone())
     }
     return Ok(Ndarr { data: new_data , shape: new_shape });
 }
@@ -42,7 +42,7 @@ where
 //TODO: found some way to simplify, this has concerning levels of cursedness!!
 
 pub fn mat_mul<T,const R1: usize, const R2: usize>(arr1: Ndarr<T,R1>, arr2: Ndarr<T,R2>)->Ndarr<T,{const_max(R1 + R2 - 1, R1 + R2 - 1)-1}>
-    where T: Sub<Output = T> + Copy + Clone + Debug + Default + Add<Output = T> + Mul<Output = T>+Display,
+    where T: Sub<Output = T> + Clone + Debug + Default + Add<Output = T> + Mul<Output = T>, 
     [usize; const_max(R1, R1 + R2 - 1)]: Sized,
     [usize; const_max(R2, R2 + R1 - 1)]: Sized, //BUG: Actually a bug with rust compiler that doesn't idintyfy permutations of arithmetic operation.
     [usize; const_max(R2, R1 + R2 - 1)]: Sized,
@@ -62,16 +62,16 @@ pub fn mat_mul<T,const R1: usize, const R2: usize>(arr1: Ndarr<T,R1>, arr2: Ndar
     let r = poly_diatic(arr1, arr2, |x,y| x*y).unwrap();
     //TODO: Not 100% sure if the reduction is always in R-1 axis, I'm like 90% confident but too lazy to do a math proof.
         //seems to work for all test I did
-    let rr = r.reduce(R1-1, |x,y| *x+*y).unwrap();
+    let rr = r.reduce(R1-1, |x,y| x+y).unwrap();
     return rr
 }
 
 
 fn inner<F,G,T1,T2,T3,const R1: usize, const R2: usize>(f: F, g: G, arr1: Ndarr<T1,R1>, arr2: Ndarr<T2,R2>)->Ndarr<T3,{const_max(R1 + R2 - 1, R1 + R2 - 1)-1}>
     where 
-    T1: Copy + Clone + Debug + Default,
-    T2: Copy + Clone + Debug + Default,
-    T3: Copy + Clone + Debug + Default,
+    T1: Clone + Debug + Default,
+    T2: Clone + Debug + Default,
+    T3: Clone + Debug + Default,
     [usize; const_max(R1, R1 + R2 - 1)]: Sized,
     [usize; const_max(R2, R2 + R1 - 1)]: Sized, //BUG: Actually a bug with rust compiler that doesn't idintyfy permutations of arithmetic operation.
     [usize; const_max(R2, R1 + R2 - 1)]: Sized,
@@ -94,7 +94,7 @@ fn inner<F,G,T1,T2,T3,const R1: usize, const R2: usize>(f: F, g: G, arr1: Ndarr<
     let r = poly_diatic(arr1, arr2, f).unwrap();
     //TODO: Not 100% sure if the reduction is always in R-1 axis, I'm like 90% confident but too lazy to do a math proof.
         //seems to work for all test I did
-    let rr = r.reduce(R1-1, |x,y| g(*x,*y)).unwrap();
+    let rr = r.reduce(R1-1, |x,y| g(x,y)).unwrap();
     return rr
 }
 
@@ -102,9 +102,9 @@ fn inner<F,G,T1,T2,T3,const R1: usize, const R2: usize>(f: F, g: G, arr1: Ndarr<
 
 pub fn inner_product<F,G,T1,T2,T3,const R1: usize, const R2: usize>(f: F, g: G)->impl Fn(Ndarr<T1,R1>,Ndarr<T2,R2>)->Ndarr<T3,{const_max(R1 + R2 - 1, R1 + R2 - 1)-1}>
     where 
-    T1: Copy + Clone + Debug + Default,
-    T2: Copy + Clone + Debug + Default,
-    T3: Copy + Clone + Debug + Default,
+    T1: Clone + Debug + Default,
+    T2: Clone + Debug + Default,
+    T3: Clone + Debug + Default,
     [usize; const_max(R1, R1 + R2 - 1)]: Sized,
     [usize; const_max(R2, R2 + R1 - 1)]: Sized, //BUG: Actually a bug with rust compiler that doesn't idintyfy permutations of arithmetic operation.
     [usize; const_max(R2, R1 + R2 - 1)]: Sized,
@@ -124,9 +124,9 @@ pub fn inner_product<F,G,T1,T2,T3,const R1: usize, const R2: usize>(f: F, g: G)-
 
 pub fn outer<F,T1,T2,T3,const R1: usize, const R2: usize>(f: F, arr1: Ndarr<T1,R1>, arr2: Ndarr<T2,R2>)->Ndarr<T3,{const_max(R1 + R2, R1 + R2)}>
     where 
-    T1: Copy + Clone + Debug + Default,
-    T2: Copy + Clone + Debug + Default,
-    T3: Copy + Clone + Debug + Default,
+    T1: Clone + Debug + Default,
+    T2: Clone + Debug + Default,
+    T3: Clone + Debug + Default,
     [usize; const_max(R1, R1 + R2 )]: Sized,
     [usize; const_max(R2, R2 + R1)]: Sized, //BUG: Actually a bug with rust compiler that doesn't idintyfy permutations of arithmetic operation.
     [usize; const_max(R2, R1 + R2)]: Sized,
@@ -152,7 +152,7 @@ pub fn outer<F,T1,T2,T3,const R1: usize, const R2: usize>(f: F, arr1: Ndarr<T1,R
 
 impl<P, T, const R: usize> Sub<P> for Ndarr<T, R>
 where
-    T: Sub<Output = T> + Copy + Clone + Debug + Default,
+    T: Sub<Output = T> + Clone + Debug + Default,
     P: IntoNdarr<T, R>,
 {
     type Output = Self;
@@ -162,14 +162,14 @@ where
         if self.shape != other.shape {
             panic!("Shape mismatch")
         } else {
-            self.bimap(other, |x, y| *x - *y)
+            self.bimap(other, |x, y| x - y)
         }
     }
 }
 
 impl<P, T, const R: usize> Mul<P> for Ndarr<T, R>
 where
-    T: Mul<Output = T> + Copy + Clone + Debug + Default,
+    T: Mul<Output = T>  + Clone + Debug + Default,
     P: IntoNdarr<T, R>,
 {
     type Output = Self;
@@ -179,14 +179,14 @@ where
         if self.shape != other.shape {
             panic!("Shape mismatch")
         } else {
-            self.bimap(other, |x, y| *x * *y)
+            self.bimap(other, |x, y| x * y)
         }
     }
 }
 
 impl<P, T, const R: usize> Div<P> for Ndarr<T, R>
 where
-    T: Div<Output = T> + Copy + Clone + Debug + Default,
+    T: Div<Output = T> +  Clone + Debug + Default ,
     P: IntoNdarr<T, R>,
 {
     type Output = Self;
@@ -196,13 +196,13 @@ where
         if self.shape != other.shape {
             panic!("Shape mismatch")
         } else {
-            self.bimap(other, |x, y| *x / *y)
+            self.bimap(other, |x, y| x / y)
         }
     }
 }
 impl<P, T, const R: usize> Rem<P> for Ndarr<T, R>
 where
-    T: Rem<Output = T> + Copy + Clone + Debug + Default,
+    T: Rem<Output = T> + Clone + Debug + Default ,
     P: IntoNdarr<T, R>,
 {
     type Output = Self;
@@ -212,14 +212,14 @@ where
         if self.shape != other.shape {
             panic!("Shape mismatch")
         } else {
-            self.bimap(other, |x, y| *x % *y)
+            self.bimap(other, |x, y| x % y)
         }
     }
 }
 
 impl<T, const R: usize> Neg for Ndarr<T, R>
 where
-    T: Neg<Output = T> + Copy + Clone + Debug + Default,
+    T: Neg<Output = T> +  Clone + Debug + Default + Copy,
 {
     type Output = Self;
     fn neg(self) -> Self::Output {
@@ -231,12 +231,12 @@ where
 
 impl<P, T, const R: usize> AddAssign<P> for Ndarr<T, R>
 where
-    T: Add<Output = T> + Copy + Clone + Debug + Default,
+    T: Add<Output = T> + Clone + Debug + Default,
     P: Into<T> + Copy,
 {
     //TODO: to be more general es better to converted P into Ndarr<T,N,R> and then use bimap in place. but first we need the casting trait
     fn add_assign(&mut self, other: P) {
-        self.map_in_place(|x| *x + other.into())
+        self.map_in_place(|x| x.clone() + other.into())
     }
 }
 
@@ -244,14 +244,14 @@ where
 
 impl<P, T, const R: usize> Add<&P> for &Ndarr<T, R>
 where
-    T: Add<Output = T> + Copy + Clone + Debug + Default,
+    T: Add<Output = T>  + Clone + Debug + Default,
     P: Clone + IntoNdarr<T, R>,
 {
     type Output = Ndarr<T, R>;
     fn add(self, other: &P) -> Self::Output {
         //this is temporary, util we att projection por rank polymorphic operations
         let other = other.clone().into_ndarr(&self.shape);
-        self.clone().bimap(other, |x, y| *x + *y)
+        self.clone().bimap(other, |x, y| x + y)
     }
 }
 
@@ -269,14 +269,14 @@ where
         if self.shape != other.shape {
             panic!("Shape mismatch")
         } else {
-            self.clone().bimap(other, |x, y| *x - *y)
+            self.clone().bimap(other, |x, y| x - y)
         }
     }
 }
 
 impl<P, T, const R: usize> Mul<&P> for &Ndarr<T, R>
 where
-    T: Mul<Output = T> + Copy + Clone + Debug + Default,
+    T: Mul<Output = T> +  Clone + Debug + Default,
     P: IntoNdarr<T, R> + Clone,
 {
     type Output = Ndarr<T,R>;
@@ -286,14 +286,14 @@ where
         if self.shape != other.shape {
             panic!("Shape mismatch")
         } else {
-            self.clone().bimap(other, |x, y| *x * *y)
+            self.clone().bimap(other, |x, y| x * y)
         }
     }
 }
 
 impl<P, T, const R: usize> Div<&P> for &Ndarr<T, R>
 where
-    T: Div<Output = T> + Copy + Clone + Debug + Default,
+    T: Div<Output = T> +  Clone + Debug + Default,
     P: IntoNdarr<T, R> + Clone,
 {
     type Output = Ndarr<T,R>;
@@ -303,13 +303,13 @@ where
         if self.shape != other.shape {
             panic!("Shape mismatch")
         } else {
-            self.clone().bimap(other, |x, y| *x / *y)
+            self.clone().bimap(other, |x, y| x / y)
         }
     }
 }
 impl<P, T, const R: usize> Rem<&P> for &Ndarr<T, R>
 where
-    T: Rem<Output = T> + Copy + Clone + Debug + Default,
+    T: Rem<Output = T> + Clone + Debug + Default,
     P: IntoNdarr<T, R> + Clone,
 {
     type Output = Ndarr<T,R>;
@@ -319,7 +319,7 @@ where
         if self.shape != other.shape {
             panic!("Shape mismatch")
         } else {
-            self.clone().bimap(other, |x, y| *x % *y)
+            self.clone().bimap(other, |x, y| x % y)
         }
     }
 }

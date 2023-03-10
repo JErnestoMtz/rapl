@@ -18,6 +18,7 @@ impl Scalar for u16 {}
 impl Scalar for u8 {}
 impl Scalar for usize {}
 impl Scalar for char {}
+impl Scalar for &str {}
 
 
 
