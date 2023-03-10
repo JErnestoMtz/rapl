@@ -316,12 +316,20 @@ mod tests {
     }
 
     #[test]
+    fn broadcast_ops() {
+        let a = Ndarr::from([[1,2],[3,4]]);
+        let b = Ndarr::from([1,2]);
+        assert_eq!(&a + &b,Ndarr::from([[2,4],[4,6]]));
+        assert_eq!(&b + &a ,Ndarr::from([[2,4],[4,6]]))
+    }
+
+    #[test]
     fn scalar_ext() {
         let arr1 = Ndarr::new(&[2, 2, 2, 2], [2, 2]).expect("Error initializing");
-        assert_eq!((&arr1 + &1).data, vec![3, 3, 3, 3]);
-        assert_eq!((&arr1 - &2).data, vec![0, 0, 0, 0]);
-        assert_eq!((&arr1 * &3).data, vec![6, 6, 6, 6]);
-        assert_eq!((&arr1 / &2).data, vec![1, 1, 1, 1]);
+        assert_eq!((&arr1 + 1).data, vec![3, 3, 3, 3]);
+        assert_eq!((&arr1 - 2).data, vec![0, 0, 0, 0]);
+        assert_eq!((&arr1 * 3).data, vec![6, 6, 6, 6]);
+        assert_eq!((&arr1 / 2).data, vec![1, 1, 1, 1]);
     }
 
     #[test]
@@ -402,14 +410,14 @@ mod tests {
         let x = Ndarr::from([[1,2,3],[4,5,6]]);
         let y = Ndarr::from([[1,2],[3,4],[5,6]]);
         let z = Ndarr::from([1,2,3,4,5]);
-        let  matmul = ops::inner_product(|x,y| x*y, |x,y| x+y);
+        let  matmul = ops::inner_closure(|x,y| x*y, |x,y| x+y);
         let  r = matmul(x, y);
-        let  matmul = ops::inner_product(|x,y| x*y, |x,y| x+y);
+        let  matmul = ops::inner_closure(|x,y| x*y, |x,y| x+y);
         let r2 = matmul(z.clone(), z);
         let g1 = Ndarr::from("gattaca");
         let g2 = Ndarr::from("tattcag");
         let g = |a: char, b: char| {if a ==b {1}else{0}};
-        let  numequals = ops::inner_product(g, |x,y| x+y);
+        let  numequals = ops::inner_closure(g, |x,y| x+y);
         let ttt = numequals(g1,g2).scalar();
 
         assert_eq!(r,Ndarr::from([[22,28],[49,64]])) ;

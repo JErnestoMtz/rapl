@@ -20,7 +20,7 @@ impl Scalar for usize {}
 impl Scalar for char {}
 impl Scalar for &str {}
 
-
+pub trait Extendable<T: Clone + Debug + Default, const R: usize>: Scalar + IntoNdarr<T, R> {}
 
 pub fn extend_scalar<P, T, const R: usize>(scalar: P, shape: &[usize; R]) -> Ndarr<T, R>
 where
@@ -50,6 +50,7 @@ where
     fn get_rank(&self)->usize {
         0
     }
+    
 }
 
 

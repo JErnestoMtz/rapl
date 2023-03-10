@@ -4,22 +4,6 @@ use super::*;
 use std::ops::*;
 
 
-// Arithmetic operations
-
-impl<P, T, const R: usize> Add<P> for Ndarr<T, R>
-where
-    T: Add<Output = T> + Copy + Clone + Debug + Default + Scalar,
-    P: IntoNdarr<T, R>,
-{
-    type Output = Self;
-    fn add(self, other: P) -> Self {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.into_ndarr(&self.shape);
-        self.bimap(other, |x, y| x + y)
-    }
-}
-
-//TODO: this is super cursed but is the only solution I found 
 pub fn poly_diatic<F,T1,T2,T3, const R1: usize, const R2: usize>(arr1: Ndarr<T1,R1>, arr2: Ndarr<T2,R2>, f: F)->Result<Ndarr<T3,{const_max(R1,  R2)}>,DimError>
 where
     T1: Clone + Debug + Default,
@@ -67,7 +51,9 @@ pub fn mat_mul<T,const R1: usize, const R2: usize>(arr1: Ndarr<T,R1>, arr2: Ndar
 }
 
 
-fn inner<F,G,T1,T2,T3,const R1: usize, const R2: usize>(f: F, g: G, arr1: Ndarr<T1,R1>, arr2: Ndarr<T2,R2>)->Ndarr<T3,{const_max(R1 + R2 - 1, R1 + R2 - 1)-1}>
+
+
+pub fn inner_product<F,G,T1,T2,T3,const R1: usize, const R2: usize>(f: F, g: G, arr1: Ndarr<T1,R1>, arr2: Ndarr<T2,R2>)->Ndarr<T3,{const_max(R1 + R2 - 1, R1 + R2 - 1)-1}>
     where 
     T1: Clone + Debug + Default,
     T2: Clone + Debug + Default,
@@ -100,7 +86,7 @@ fn inner<F,G,T1,T2,T3,const R1: usize, const R2: usize>(f: F, g: G, arr1: Ndarr<
 
 
 
-pub fn inner_product<F,G,T1,T2,T3,const R1: usize, const R2: usize>(f: F, g: G)->impl Fn(Ndarr<T1,R1>,Ndarr<T2,R2>)->Ndarr<T3,{const_max(R1 + R2 - 1, R1 + R2 - 1)-1}>
+pub fn inner_closure<F,G,T1,T2,T3,const R1: usize, const R2: usize>(f: F, g: G)->impl Fn(Ndarr<T1,R1>,Ndarr<T2,R2>)->Ndarr<T3,{const_max(R1 + R2 - 1, R1 + R2 - 1)-1}>
     where 
     T1: Clone + Debug + Default,
     T2: Clone + Debug + Default,
@@ -118,7 +104,7 @@ pub fn inner_product<F,G,T1,T2,T3,const R1: usize, const R2: usize>(f: F, g: G)-
 
 {
 
-    let out = move |arr1, arr2| {inner(f.clone(), g.clone(), arr1, arr2)};
+    let out = move |arr1, arr2| {inner_product(f.clone(), g.clone(), arr1, arr2)};
     return out
 }
 
@@ -150,72 +136,397 @@ pub fn outer<F,T1,T2,T3,const R1: usize, const R2: usize>(f: F, arr1: Ndarr<T1,R
     return r
 }
 
-impl<P, T, const R: usize> Sub<P> for Ndarr<T, R>
+
+
+// Arithmetic operations
+//TODO: a lot of code repetition, need to refactor this
+//////////////////////////////////////////// Add /////////////////////////////////////////////
+
+impl <T1, const R1: usize, const R2: usize> Add<Ndarr<T1,R2>> for Ndarr<T1,R1>
 where
-    T: Sub<Output = T> + Clone + Debug + Default,
-    P: IntoNdarr<T, R>,
+    T1: Clone + Debug + Default + Add<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn add(self, rhs: Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self, rhs, |x,y| x + y).unwrap()
+    }
+}
+
+impl <T1, const R1: usize, const R2: usize> Add<&Ndarr<T1,R2>> for Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Add<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn add(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self, rhs.clone(), |x,y| x + y).unwrap()
+    }
+}
+
+impl <T1, const R1: usize, const R2: usize> Add<Ndarr<T1,R2>> for &Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Add<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn add(self, rhs: Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self.clone(), rhs.clone(), |x,y| x + y).unwrap()
+    }
+}
+
+impl <T1, const R1: usize, const R2: usize> Add<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Add<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn add(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self.clone(), rhs.clone(), |x,y| x + y).unwrap()
+    }
+}
+
+impl<P, T, const R: usize> Add<P> for Ndarr<T, R>
+where
+    T: Add<Output = T> +  Clone + Debug + Default,
+    P: IntoNdarr<T, R> + Scalar,
 {
     type Output = Self;
-    fn sub(self, other: P) -> Self {
-        //this is temporary, util we att projection por rank polymorphic operations
+    fn add(self, other: P) -> Self::Output {
         let other = other.into_ndarr(&self.shape);
-        if self.shape != other.shape {
-            panic!("Shape mismatch")
-        } else {
-            self.bimap(other, |x, y| x - y)
-        }
+        self.bimap(other, |x, y| x + y)
+    }
+}
+
+impl<P, T, const R: usize> Add<P> for &Ndarr<T, R>
+where
+    T: Add<Output = T> +  Clone + Debug + Default,
+    P: IntoNdarr<T, R> + Scalar,
+{
+    type Output = Ndarr<T, R>;
+    fn add(self, other: P) -> Self::Output {
+        let other = other.into_ndarr(&self.shape);
+        self.clone().bimap(other, |x, y| x + y)
+    }
+}
+
+
+//////////////////////////////////////////// Sub /////////////////////////////////////////////
+
+impl <T1, const R1: usize, const R2: usize> Sub<Ndarr<T1,R2>> for Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Sub<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn sub(self, rhs: Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self, rhs, |x,y| x - y).unwrap()
+    }
+}
+
+
+impl <T1, const R1: usize, const R2: usize> Sub<&Ndarr<T1,R2>> for Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Sub<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn sub(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self, rhs.clone(), |x,y| x - y).unwrap()
+    }
+}
+
+impl <T1, const R1: usize, const R2: usize> Sub<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Sub<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn sub(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self.clone(), rhs.clone(), |x,y| x - y).unwrap()
+    }
+}
+
+impl <T1, const R1: usize, const R2: usize> Sub<Ndarr<T1,R2>> for &Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Sub<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn sub(self, rhs: Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self.clone(), rhs.clone(), |x,y| x - y).unwrap()
+    }
+}
+
+impl<P, T, const R: usize> Sub<P> for Ndarr<T, R>
+where
+    T: Sub<Output = T> +  Clone + Debug + Default,
+    P: IntoNdarr<T, R> + Scalar,
+{
+    type Output = Self;
+    fn sub(self, other: P) -> Self::Output {
+        let other = other.into_ndarr(&self.shape);
+        self.bimap(other, |x, y| x - y)
+    }
+}
+
+impl<P, T, const R: usize> Sub<P> for &Ndarr<T, R>
+where
+    T: Sub<Output = T> +  Clone + Debug + Default,
+    P: IntoNdarr<T, R> + Scalar,
+{
+    type Output = Ndarr<T, R>;
+    fn sub(self, other: P) -> Self::Output {
+        let other = other.into_ndarr(&self.shape);
+        self.clone().bimap(other, |x, y| x - y)
+    }
+}
+
+
+
+//////////////////////////////////////////// Mul /////////////////////////////////////////////
+
+impl <T1, const R1: usize, const R2: usize> Mul<Ndarr<T1,R2>> for Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Mul<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn mul(self, rhs: Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self, rhs, |x,y| x * y).unwrap()
+    }
+}
+
+impl <T1, const R1: usize, const R2: usize> Mul<&Ndarr<T1,R2>> for Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Mul<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn mul(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self, rhs.clone(), |x,y| x * y).unwrap()
+    }
+}
+
+impl <T1, const R1: usize, const R2: usize> Mul<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Mul<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn mul(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self.clone(), rhs.clone(), |x,y| x * y).unwrap()
+    }
+}
+
+impl <T1, const R1: usize, const R2: usize> Mul<Ndarr<T1,R2>> for &Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Mul<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn mul(self, rhs: Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self.clone(), rhs, |x,y| x * y).unwrap()
     }
 }
 
 impl<P, T, const R: usize> Mul<P> for Ndarr<T, R>
 where
-    T: Mul<Output = T>  + Clone + Debug + Default,
-    P: IntoNdarr<T, R>,
+    T: Mul<Output = T> +  Clone + Debug + Default,
+    P: IntoNdarr<T, R> + Scalar,
 {
     type Output = Self;
-    fn mul(self, other: P) -> Self {
+    fn mul(self, other: P) -> Self::Output {
         //this is temporary, util we att projection por rank polymorphic operations
         let other = other.into_ndarr(&self.shape);
-        if self.shape != other.shape {
-            panic!("Shape mismatch")
-        } else {
-            self.bimap(other, |x, y| x * y)
-        }
+        self.bimap(other, |x, y| x * y)
+    }
+}
+
+impl<P, T, const R: usize> Mul<P> for &Ndarr<T, R>
+where
+    T: Mul<Output = T> +  Clone + Debug + Default,
+    P: IntoNdarr<T, R> + Scalar,
+{
+    type Output = Ndarr<T, R>;
+    fn mul(self, other: P) -> Self::Output {
+        //this is temporary, util we att projection por rank polymorphic operations
+        let other = other.into_ndarr(&self.shape);
+        self.clone().bimap(other, |x, y| x * y)
+    }
+}
+
+
+
+//////////////////////////////////////////// Div /////////////////////////////////////////////
+
+impl <T1, const R1: usize, const R2: usize> Div<Ndarr<T1,R2>> for Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Div<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn div(self, rhs: Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self, rhs, |x,y| x / y).unwrap()
+    }
+}
+
+impl <T1, const R1: usize, const R2: usize> Div<&Ndarr<T1,R2>> for Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Div<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn div(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self, rhs.clone(), |x,y| x / y).unwrap()
+    }
+}
+
+impl <T1, const R1: usize, const R2: usize> Div<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Div<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn div(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self.clone(), rhs.clone(), |x,y| x / y).unwrap()
+    }
+}
+
+impl <T1, const R1: usize, const R2: usize> Div<Ndarr<T1,R2>> for &Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Div<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn div(self, rhs: Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self.clone(), rhs, |x,y| x / y).unwrap()
     }
 }
 
 impl<P, T, const R: usize> Div<P> for Ndarr<T, R>
 where
-    T: Div<Output = T> +  Clone + Debug + Default ,
-    P: IntoNdarr<T, R>,
+    T: Div<Output = T> +  Clone + Debug + Default,
+    P: IntoNdarr<T, R> + Scalar,
 {
     type Output = Self;
-    fn div(self, other: P) -> Self {
+    fn div(self, other: P) -> Self::Output {
         //this is temporary, util we att projection por rank polymorphic operations
         let other = other.into_ndarr(&self.shape);
-        if self.shape != other.shape {
-            panic!("Shape mismatch")
-        } else {
-            self.bimap(other, |x, y| x / y)
-        }
+        self.bimap(other, |x, y| x / y)
     }
 }
+
+impl<P, T, const R: usize> Div<P> for &Ndarr<T, R>
+where
+    T: Div<Output = T> +  Clone + Debug + Default,
+    P: IntoNdarr<T, R> + Scalar,
+{
+    type Output = Ndarr<T, R>;
+    fn div(self, other: P) -> Self::Output {
+        //this is temporary, util we att projection por rank polymorphic operations
+        let other = other.into_ndarr(&self.shape);
+        self.clone().bimap(other, |x, y| x / y)
+    }
+}
+
+
+//////////////////////////////////////////// Rem /////////////////////////////////////////////
+
+impl <T1, const R1: usize, const R2: usize> Rem<Ndarr<T1,R2>> for Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Rem<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn rem(self, rhs: Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self, rhs, |x,y| x % y).unwrap()
+    }
+}
+
+
+impl <T1, const R1: usize, const R2: usize> Rem<&Ndarr<T1,R2>> for Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Rem<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn rem(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self, rhs.clone(), |x,y| x % y).unwrap()
+    }
+}
+
+
+impl <T1, const R1: usize, const R2: usize> Rem<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Rem<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn rem(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self.clone(), rhs.clone(), |x,y| x % y).unwrap()
+    }
+}
+
+impl <T1, const R1: usize, const R2: usize> Rem<Ndarr<T1,R2>> for &Ndarr<T1,R1>
+where
+    T1: Clone + Debug + Default + Rem<Output = T1>,
+    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; {const_max(R1, R2)}]: Sized,
+{
+    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
+    fn rem(self, rhs: Ndarr<T1,R2>) -> Self::Output {
+        poly_diatic(self.clone(), rhs, |x,y| x % y).unwrap()
+    }
+}
+
 impl<P, T, const R: usize> Rem<P> for Ndarr<T, R>
 where
-    T: Rem<Output = T> + Clone + Debug + Default ,
-    P: IntoNdarr<T, R>,
+    T: Rem<Output = T> +  Clone + Debug + Default,
+    P: IntoNdarr<T, R> + Scalar,
 {
     type Output = Self;
-    fn rem(self, other: P) -> Self {
+    fn rem(self, other: P) -> Self::Output {
         //this is temporary, util we att projection por rank polymorphic operations
         let other = other.into_ndarr(&self.shape);
-        if self.shape != other.shape {
-            panic!("Shape mismatch")
-        } else {
-            self.bimap(other, |x, y| x % y)
-        }
+        self.bimap(other, |x, y| x % y)
     }
 }
+
+impl<P, T, const R: usize> Rem<P> for &Ndarr<T, R>
+where
+    T: Rem<Output = T> +  Clone + Debug + Default,
+    P: IntoNdarr<T, R> + Scalar,
+{
+    type Output = Ndarr<T, R>;
+    fn rem(self, other: P) -> Self::Output {
+        //this is temporary, util we att projection por rank polymorphic operations
+        let other = other.into_ndarr(&self.shape);
+        self.clone().bimap(other, |x, y| x % y)
+    }
+}
+
+
+//////////////////////////////////////////// Neg /////////////////////////////////////////////
 
 impl<T, const R: usize> Neg for Ndarr<T, R>
 where
@@ -227,106 +538,10 @@ where
     }
 }
 
-// Assign traits
-
-impl<P, T, const R: usize> AddAssign<P> for Ndarr<T, R>
-where
-    T: Add<Output = T> + Clone + Debug + Default,
-    P: Into<T> + Copy,
-{
-    //TODO: to be more general es better to converted P into Ndarr<T,N,R> and then use bimap in place. but first we need the casting trait
-    fn add_assign(&mut self, other: P) {
-        self.map_in_place(|x| x.clone() + other.into())
-    }
-}
-
-///////////////////////////// As references
-
-impl<P, T, const R: usize> Add<&P> for &Ndarr<T, R>
-where
-    T: Add<Output = T>  + Clone + Debug + Default,
-    P: Clone + IntoNdarr<T, R>,
-{
-    type Output = Ndarr<T, R>;
-    fn add(self, other: &P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.clone().into_ndarr(&self.shape);
-        self.clone().bimap(other, |x, y| x + y)
-    }
-}
-
-
-
-impl<P, T, const R: usize> Sub<&P> for &Ndarr<T, R>
-where
-    T: Sub<Output = T> + Copy + Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Clone,
-{
-    type Output = Ndarr<T, R>;
-    fn sub(self, other: &P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.clone().into_ndarr(&self.shape);
-        if self.shape != other.shape {
-            panic!("Shape mismatch")
-        } else {
-            self.clone().bimap(other, |x, y| x - y)
-        }
-    }
-}
-
-impl<P, T, const R: usize> Mul<&P> for &Ndarr<T, R>
-where
-    T: Mul<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Clone,
-{
-    type Output = Ndarr<T,R>;
-    fn mul(self, other: &P) -> Self::Output{
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.clone().into_ndarr(&self.shape);
-        if self.shape != other.shape {
-            panic!("Shape mismatch")
-        } else {
-            self.clone().bimap(other, |x, y| x * y)
-        }
-    }
-}
-
-impl<P, T, const R: usize> Div<&P> for &Ndarr<T, R>
-where
-    T: Div<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Clone,
-{
-    type Output = Ndarr<T,R>;
-    fn div(self, other: &P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.clone().into_ndarr(&self.shape);
-        if self.shape != other.shape {
-            panic!("Shape mismatch")
-        } else {
-            self.clone().bimap(other, |x, y| x / y)
-        }
-    }
-}
-impl<P, T, const R: usize> Rem<&P> for &Ndarr<T, R>
-where
-    T: Rem<Output = T> + Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Clone,
-{
-    type Output = Ndarr<T,R>;
-    fn rem(self, other: &P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.clone().into_ndarr(&self.shape);
-        if self.shape != other.shape {
-            panic!("Shape mismatch")
-        } else {
-            self.clone().bimap(other, |x, y| x % y)
-        }
-    }
-}
 
 impl<T, const R: usize> Neg for &Ndarr<T, R>
 where
-    T: Neg<Output = T> + Copy + Clone + Debug + Default,
+    T: Neg<Output = T> +  Clone + Debug + Default + Copy,
 {
     type Output = Ndarr<T,R>;
     fn neg(self) -> Self::Output {
@@ -334,4 +549,65 @@ where
     }
 }
 
-// Assign traits
+//////////////////////////////////////////// AddAssing /////////////////////////////////////////////
+
+
+impl<P, T, const R: usize> AddAssign<&P> for Ndarr<T, R>
+where
+    T: Add<Output = T> + Clone + Debug + Default,
+    P: IntoNdarr<T,R> + Clone,
+{
+    fn add_assign(&mut self, other: &P) {
+        self.bimap_in_place(other.clone().into_ndarr(&self.shape), |x,y| x+y)
+    }
+}
+
+
+////////////////////////////////////////////  SubAssing /////////////////////////////////////////////
+
+impl<P, T, const R: usize> SubAssign<&P> for Ndarr<T, R>
+where
+    T: Sub<Output = T> + Clone + Debug + Default,
+    P: IntoNdarr<T,R> + Clone,
+{
+    fn sub_assign(&mut self, other: &P) {
+        self.bimap_in_place(other.clone().into_ndarr(&self.shape), |x,y| x-y)
+    }
+}
+
+
+////////////////////////////////////////////  MulAssing /////////////////////////////////////////////
+
+impl<P, T, const R: usize> MulAssign<&P> for Ndarr<T, R>
+where
+    T: Mul<Output = T> + Clone + Debug + Default,
+    P: IntoNdarr<T,R> + Clone,
+{
+    fn mul_assign(&mut self, other: &P) {
+        self.bimap_in_place(other.clone().into_ndarr(&self.shape), |x,y| x*y)
+    }
+}
+
+////////////////////////////////////////////  DivAssing /////////////////////////////////////////////
+
+impl<P, T, const R: usize> DivAssign<&P> for Ndarr<T, R>
+where
+    T: Div<Output = T> + Clone + Debug + Default,
+    P: IntoNdarr<T,R> + Clone,
+{
+    fn div_assign(&mut self, other: &P) {
+        self.bimap_in_place(other.clone().into_ndarr(&self.shape), |x,y| x/y)
+    }
+}
+
+////////////////////////////////////////////  RemAssing /////////////////////////////////////////////
+
+impl<P, T, const R: usize> RemAssign<&P> for Ndarr<T, R>
+where
+    T: Rem<Output = T> + Clone + Debug + Default,
+    P: IntoNdarr<T,R> + Clone,
+{
+    fn rem_assign(&mut self, other: &P) {
+        self.bimap_in_place(other.clone().into_ndarr(&self.shape), |x,y| x%y)
+    }
+}
