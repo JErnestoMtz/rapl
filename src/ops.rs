@@ -108,7 +108,7 @@ pub fn inner_closure<F,G,T1,T2,T3,const R1: usize, const R2: usize>(f: F, g: G)-
     return out
 }
 
-pub fn outer<F,T1,T2,T3,const R1: usize, const R2: usize>(f: F, arr1: Ndarr<T1,R1>, arr2: Ndarr<T2,R2>)->Ndarr<T3,{const_max(R1 + R2, R1 + R2)}>
+pub fn outer_product<F,T1,T2,T3,const R1: usize, const R2: usize>(f: F, arr1: Ndarr<T1,R1>, arr2: Ndarr<T2,R2>)->Ndarr<T3,{const_max(R1 + R2, R1 + R2)}>
     where 
     T1: Clone + Debug + Default,
     T2: Clone + Debug + Default,
@@ -139,7 +139,8 @@ pub fn outer<F,T1,T2,T3,const R1: usize, const R2: usize>(f: F, arr1: Ndarr<T1,R
 
 
 // Arithmetic operations
-//TODO: a lot of code repetition, need to refactor this
+//TODO: a lot of code repetition, need to refactor this with a macro. Also there should be a better way to handel the permutations of
+    //owned and reference. But if we want the prioritize flexibility and friendliness we really need to handel this permutations.
 //////////////////////////////////////////// Add /////////////////////////////////////////////
 
 impl <T1, const R1: usize, const R2: usize> Add<Ndarr<T1,R2>> for Ndarr<T1,R1>

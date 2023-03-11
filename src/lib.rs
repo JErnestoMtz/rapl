@@ -429,17 +429,18 @@ mod tests {
     }
     #[test]
     fn outer(){
-        let z = Ndarr::from([1,2,3,4,5]);
+        let z = Ndarr::from([1,2,3]);
         let g = |a, b| {if a ==b {1}else{0}};
-        let r1 = ops::outer(|x,y| x + y, z.clone(), z.clone());
-        let r2 = ops::outer( g , z.clone(), z);
-        print!("{}",r2);
+        let r1 = ops::outer_product(|x,y| x + y, z.clone(), z.clone());
+        let r2 = ops::outer_product(    g , z.clone(), z);
+
+        assert_eq!(r1, Ndarr::from([[2,3,4],[3,4,5],[4,5,6]]));
+        assert_eq!(r2, Ndarr::from([[1,0,0],[0,1,0],[0,0,1]]));
 
         //let c = Ndarr::from(["a","b","c","d"]);
         //let d = Ndarr::from(["1","2","3","4"]);
         //let ap = |x: &str, y: &str| (x.to_owned() + y);
         //let r3 = ops::outer( ap, c, d);
-        //print!("{}",r3)
     }
 }
 
