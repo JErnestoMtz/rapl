@@ -22,12 +22,12 @@ pub trait Slice {
 impl<T, const R: usize> Slice for Ndarr<T, R>
 where
     T: Clone + Default + Debug,
-    [usize;  R - 1 ]: Sized,
+    [usize; R - 1]: Sized,
 {
     type Output = Vec<Ndarr<T, { R - 1 }>>;
     fn slice_at(self, axis: usize) -> Self::Output {
         let n = multiply_list(&self.shape, 1); // number of elements in original array
-        let new_shape: [usize;  R - 1 ] = remove_element(self.shape, axis);
+        let new_shape: [usize; R - 1] = remove_element(self.shape, axis);
         let n_new_arrs = self.shape[axis]; // number of new arrays
 
         let iota = 0..n;
@@ -58,7 +58,7 @@ impl<T, F, const R: usize> Reduce<F> for Ndarr<T, R>
 where
     F: Fn(T, T) -> T + Clone,
     T: Clone + Default + Debug,
-    [usize;  R - 1 ]: Sized,
+    [usize; R - 1]: Sized,
 {
     type Output = Result<Ndarr<T, { R - 1 }>, DimError>;
     fn reduce(self, axis: usize, f: F) -> Self::Output {
@@ -68,7 +68,7 @@ where
             let slices = self.slice_at(axis);
             let n = slices.len();
             let mut out = slices[0].clone();
-            for i in 1..n{
+            for i in 1..n {
                 out.bimap_in_place(slices[i].clone(), f.clone())
             }
 
@@ -77,82 +77,82 @@ where
     }
 }
 
-pub trait Broadcast<const R2: usize>{
+pub trait Broadcast<const R2: usize> {
     type Output;
-    fn broadcast_to(&self, shape: &[usize; R2]) -> Result<Self::Output, DimError>;//try broadcast to shape 
-    fn broadcast(&self, shape: &[usize; R2]) -> Result<Self::Output, DimError>;//try broadcasting to compatible shape between self.shape and shape
+    fn broadcast_to(&self, shape: &[usize; R2]) -> Result<Self::Output, DimError>; //try broadcast to shape
+    fn broadcast(&self, shape: &[usize; R2]) -> Result<Self::Output, DimError>; //try broadcasting to compatible shape between self.shape and shape
 }
 
-impl <T, const R1: usize, const R2: usize> Broadcast<R2> for Ndarr<T, R1>
-    where 
+impl<T, const R1: usize, const R2: usize> Broadcast<R2> for Ndarr<T, R1>
+where
     T: Clone + Default + Debug,
-    [usize; {const_max(R1, R2)}]: Sized
-    
+    [usize;  const_max(R1, R2) ]: Sized,
 {
-    type Output = Ndarr<T, {const_max(R1, R2)}>;
-    fn broadcast_to(&self, shape: &[usize; R2]) -> Result<Self::Output,DimError> {
+    type Output = Ndarr<T, { const_max(R1, R2) }>;
+    fn broadcast_to(&self, shape: &[usize; R2]) -> Result<Self::Output, DimError> {
         //see https://numpy.org/doc/stable/user/basics.broadcasting.html
         //TODO: not sure at all if this implementation is general, but it seems to work for Rank 1 2 array broadcasted up to rank 3. For higher ranks a more rigorous proof is needed.
         let new_shape = helpers::broadcast_shape(&self.shape, shape)?;
 
-        if new_shape.len() > R2{
-            return Err(DimError { details: "Array can not be broadcasted to shape".to_string() });
-        }else{
+        if new_shape.len() > R2 {
+            return Err(DimError {
+                details: "Array can not be broadcasted to shape".to_string(),
+            });
+        } else {
             let n_old = helpers::multiply_list(&self.shape, 1);
             let n = helpers::multiply_list(&new_shape, 1);
             let repetitions = n / n_old;
 
             let mut new_data = vec![T::default(); n];
-            for i in 0..repetitions{
-                for j in 0..n_old{
-                    new_data[i*n_old + j] = self.data[j].clone()
+            for i in 0..repetitions {
+                for j in 0..n_old {
+                    new_data[i * n_old + j] = self.data[j].clone()
                 }
-
             }
 
-                return Ok(Ndarr{data: new_data, shape: new_shape})
+            return Ok(Ndarr {
+                data: new_data,
+                shape: new_shape,
+            });
         }
     }
     fn broadcast(&self, shape: &[usize; R2]) -> Result<Self::Output, DimError> {
-        
         let new_shape = helpers::broadcast_shape(&self.shape, shape)?;
 
         let n = helpers::multiply_list(&new_shape, 1);
 
         let mut new_data = vec![T::default(); n];
-        for i in 0..n{
+        for i in 0..n {
             let indexes = get_indexes(&i, &new_shape);
             let rev_casted_pos = rev_cast_pos(&self.shape, &indexes)?;
             new_data[i] = self.data[rev_casted_pos].clone();
         }
-        Ok(Ndarr { data: new_data, shape: new_shape })
-
+        Ok(Ndarr {
+            data: new_data,
+            shape: new_shape,
+        })
     }
-
 }
-pub trait Broadcast_data<T,const R2: usize>{
-    fn broadcast_data(&self, shape: &[usize; R2]) -> Result<Vec<T>, DimError>;//try broadcasting to compatible shape between self.shape and shape
+pub trait BroadcastData<T, const R2: usize> {
+    fn broadcast_data(&self, shape: &[usize; R2]) -> Result<Vec<T>, DimError>; //try broadcasting to compatible shape between self.shape and shape
 }
 
-impl <T, const R1: usize, const R2: usize> Broadcast_data<T,R2> for Ndarr<T, R1>
-    where 
+impl<T, const R1: usize, const R2: usize> BroadcastData<T, R2> for Ndarr<T, R1>
+where
     T: Clone + Default + Debug,
-    [usize; const_max(R1, R2)]: Sized
+    [usize; const_max(R1, R2)]: Sized,
 {
     fn broadcast_data(&self, shape: &[usize; R2]) -> Result<Vec<T>, DimError> {
-        
         let new_shape = helpers::broadcast_shape(&self.shape, shape)?;
 
         let n = helpers::multiply_list(&new_shape, 1);
 
         let mut new_data = vec![T::default(); n];
-        for i in 0..n{
+        for i in 0..n {
             let indexes = get_indexes(&i, &new_shape);
             let rev_casted_pos = rev_cast_pos(&self.shape, &indexes)?;
             new_data[i] = self.data[rev_casted_pos].clone();
         }
         Ok(new_data)
-
     }
-
 }

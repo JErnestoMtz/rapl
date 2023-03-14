@@ -1,4 +1,4 @@
-use crate::{scalars::Scalar, primitives::{Broadcast, DimError, Reduce, Broadcast_data}, helpers::{const_max}};
+use crate::{scalars::{Scalar, Trig}, primitives::{Broadcast, DimError, Reduce, BroadcastData}, helpers::{const_max}};
 
 use super::*;
 use std::ops::*;
@@ -10,7 +10,7 @@ where
     T2: Clone + Debug + Default,
     T3: Clone + Debug + Default,
     F: Fn(T1,T2) -> T3,
-    [usize; {const_max(R2, R1)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
 {
     let new_shape = helpers::broadcast_shape(&arr1.shape, &arr2.shape)?;
     let cast1 = arr1.broadcast(&arr2.shape)?; 
@@ -146,8 +146,8 @@ pub fn outer_product<F,T1,T2,T3,const R1: usize, const R2: usize>(f: F, arr1: Nd
 impl <T1, const R1: usize, const R2: usize> Add<Ndarr<T1,R2>> for Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Add<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn add(self, rhs: Ndarr<T1,R2>) -> Self::Output {
@@ -158,8 +158,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Add<&Ndarr<T1,R2>> for Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Add<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn add(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
@@ -170,8 +170,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Add<Ndarr<T1,R2>> for &Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Add<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn add(self, rhs: Ndarr<T1,R2>) -> Self::Output {
@@ -182,8 +182,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Add<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Add<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn add(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
@@ -221,8 +221,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Sub<Ndarr<T1,R2>> for Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Sub<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn sub(self, rhs: Ndarr<T1,R2>) -> Self::Output {
@@ -234,8 +234,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Sub<&Ndarr<T1,R2>> for Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Sub<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn sub(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
@@ -246,8 +246,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Sub<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Sub<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn sub(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
@@ -258,8 +258,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Sub<Ndarr<T1,R2>> for &Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Sub<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn sub(self, rhs: Ndarr<T1,R2>) -> Self::Output {
@@ -298,8 +298,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Mul<Ndarr<T1,R2>> for Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Mul<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn mul(self, rhs: Ndarr<T1,R2>) -> Self::Output {
@@ -310,8 +310,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Mul<&Ndarr<T1,R2>> for Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Mul<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn mul(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
@@ -322,8 +322,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Mul<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Mul<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn mul(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
@@ -334,8 +334,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Mul<Ndarr<T1,R2>> for &Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Mul<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn mul(self, rhs: Ndarr<T1,R2>) -> Self::Output {
@@ -376,8 +376,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Div<Ndarr<T1,R2>> for Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Div<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn div(self, rhs: Ndarr<T1,R2>) -> Self::Output {
@@ -388,8 +388,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Div<&Ndarr<T1,R2>> for Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Div<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn div(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
@@ -400,8 +400,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Div<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Div<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn div(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
@@ -412,8 +412,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Div<Ndarr<T1,R2>> for &Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Div<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn div(self, rhs: Ndarr<T1,R2>) -> Self::Output {
@@ -453,8 +453,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Rem<Ndarr<T1,R2>> for Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Rem<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn rem(self, rhs: Ndarr<T1,R2>) -> Self::Output {
@@ -466,8 +466,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Rem<&Ndarr<T1,R2>> for Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Rem<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn rem(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
@@ -479,8 +479,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Rem<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Rem<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn rem(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
@@ -491,8 +491,8 @@ where
 impl <T1, const R1: usize, const R2: usize> Rem<Ndarr<T1,R2>> for &Ndarr<T1,R1>
 where
     T1: Clone + Debug + Default + Rem<Output = T1>,
-    [usize; {const_max(R2, R1)}]: Sized,
-    [usize; {const_max(R1, R2)}]: Sized,
+    [usize; const_max(R2, R1)]: Sized,
+    [usize; const_max(R1, R2)]: Sized,
 {
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn rem(self, rhs: Ndarr<T1,R2>) -> Self::Output {
@@ -610,5 +610,41 @@ where
 {
     fn rem_assign(&mut self, other: &P) {
         self.bimap_in_place(other.clone().into_ndarr(&self.shape), |x,y| x%y)
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////  Trig Functions /////////////////////////////////////////////
+impl <T, const R: usize> Ndarr<T,R> 
+where T: Clone + Copy + Debug + Default + Trig
+{
+    pub fn sin(self)->Self{
+        let out = self.map(|x| x.f_sin());
+        out
+    }
+
+    pub fn cos(self)->Self{
+        let out = self.map(|x| x.f_cos());
+        out
+    }
+
+    pub fn tan(self)->Self{
+        let out = self.map(|x| x.f_tan());
+        out
+    }
+
+    pub fn sinh(self)->Self{
+        let out = self.map(|x| x.f_sinh());
+        out
+    }
+    
+    pub fn cosh(self)->Self{
+        let out = self.map(|x| x.f_cosh());
+        out
+    }
+
+    pub fn tanh(self)->Self{
+        let out = self.map(|x| x.f_tanh());
+        out
     }
 }

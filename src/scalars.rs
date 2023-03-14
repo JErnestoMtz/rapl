@@ -20,14 +20,13 @@ impl Scalar for usize {}
 impl Scalar for char {}
 impl Scalar for &str {}
 
-pub trait Extendable<T: Clone + Debug + Default, const R: usize>: Scalar + IntoNdarr<T, R> {}
 
 pub fn extend_scalar<P, T, const R: usize>(scalar: P, shape: &[usize; R]) -> Ndarr<T, R>
 where
     T: Debug + Copy + Clone + Default,
     P: Into<T> + Clone,
 {
-    let n= multiply_list(shape, 1);
+    let n = multiply_list(shape, 1);
     let s = shape.clone();
     let mut out_data = vec![T::default(); n];
     for i in 0..out_data.len() {
@@ -47,10 +46,58 @@ where
     fn into_ndarr(self, shape: &[usize; R]) -> Ndarr<T, R> {
         extend_scalar(self, shape)
     }
-    fn get_rank(&self)->usize {
+    fn get_rank(&self) -> usize {
         0
     }
-    
 }
 
+pub trait Trig {
+    fn f_sin(self) -> Self;
+    fn f_cos(self) -> Self;
+    fn f_tan(self) -> Self;
+    fn f_sinh(self) -> Self;
+    fn f_cosh(self) -> Self;
+    fn f_tanh(self) -> Self;
+}
 
+impl Trig for f32 {
+    fn f_sin(self) -> Self {
+        self.sin()
+    }
+    fn f_cos(self) -> Self {
+        self.cos()
+    }
+    fn f_tan(self) -> Self {
+        self.tan()
+    }
+    fn f_sinh(self) -> Self {
+        self.sinh()
+    }
+    fn f_cosh(self) -> Self {
+        self.cosh()
+    }
+    fn f_tanh(self) -> Self {
+        self.tanh()
+    }
+}
+
+impl Trig for f64 {
+    fn f_sin(self) -> Self {
+        self.sin()
+    }
+    fn f_cos(self) -> Self {
+        self.cos()
+    }
+    fn f_tan(self) -> Self {
+        self.tan()
+    }
+    fn f_sinh(self) -> Self {
+        self.sinh()
+    }
+    fn f_cosh(self) -> Self {
+        self.cosh()
+    }
+    fn f_tanh(self) -> Self {
+        self.tanh()
+    }
+}
