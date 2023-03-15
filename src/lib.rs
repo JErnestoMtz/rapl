@@ -17,7 +17,7 @@ pub use primitives::DimError;
 pub use scalars::{Scalar, Trig};
 pub use helpers::{broadcast_shape, const_max};
 pub use ops::{poly_diatic, mat_mul, inner_closure, inner_product, outer_product};
-pub use primitives::{Broadcast, Reduce, Slice};
+pub use primitives::{Broadcast, Reduce, Slice, Reshape};
 
 
 // main struct of N Dimensional generic array.
