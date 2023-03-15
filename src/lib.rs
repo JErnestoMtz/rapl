@@ -30,14 +30,9 @@ pub struct Ndarr<T: Clone + Default, const R: usize> {
     pub shape: [usize; R],
 }
 
-//#[derive(Debug, Copy, Clone)]
-//pub struct Ndarr2<T: Copy + Clone + Default, const N: usize, const SHAPE: &'static [usize]> {
-//pub data: [T; N],
-//}
 
 impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
-    //TODO: implement errors
-    pub fn new(data: &[T], shape: [usize; R]) -> Result<Self, String> {
+    pub fn new(data: &[T], shape: [usize; R]) -> Result<Self, DimError> {
         let n = helpers::multiply_list(&shape, 1);
         if data.len() == n {
             Ok(Ndarr {
@@ -45,12 +40,12 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
                 shape: shape,
             })
         } else {
-            Err(format!(
+            Err(DimError::new(&format!(
                 "The number of elements of an Ndarray of shape {:?} is {}, and {} were provided.",
                 shape,
                 n,
                 data.len()
-            ))
+            )))
         }
     }
     pub fn rank(&self) -> usize {
@@ -151,7 +146,7 @@ trait Bimap<F> {
     fn bimap(self, other: Self, f: F) -> Self;
     fn bimap_in_place(&mut self, other: Self, f: F);
 }
-// Here we need to think about if valueble maybe checking for the same shape and return an option instead
+//TODO: Here we need to think about if valueble maybe checking for the same shape and return an option instead
 impl<F, T: Debug + Clone + Default, const R: usize> Bimap<F> for Ndarr<T, R>
 where
     F: Fn(T, T) -> T,
@@ -208,7 +203,6 @@ trait Map<F> {
     fn map_in_place(&mut self, f: F);
 }
 
-// Here we need to think about if worth it maybe checking for the same shape and return an option instead or just panic()
 impl<F, T: Debug + Clone + Default, const R: usize> Map<F> for Ndarr<T, R>
 where
     F: Fn(&T) -> T,
@@ -259,7 +253,7 @@ impl<T: Default + Clone, const R: usize> Transpose for Ndarr<T, R> {
 #[cfg(test)]
 mod tests {
 
-    use crate::primitives::{Broadcast, Reduce, Slice};
+    use crate::primitives::{Broadcast, Reduce, Slice, Reshape};
 
     use super::*;
 
@@ -469,5 +463,11 @@ mod tests {
     fn trig() {
         let a = Ndarr::from([0.1, 0.2]);
         assert_eq!(a.sin(), Ndarr::from([0.1_f64.sin(), 0.2_f64.sin()]))
+    }
+    #[test]
+    fn reshape(){
+        let a = Ndarr::from([1,2,3,4]).reshape(&[2,2]).unwrap();
+        assert_eq!(a, Ndarr::from([[1,2],[3,4]]))
+
     }
 }

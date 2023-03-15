@@ -87,6 +87,68 @@ where
     }
 }
 
+
+impl Into<Ndarr<u32, 1>> for std::ops::Range<u32>
+{
+    fn into(self) -> Ndarr<u32, 1> {
+        let out: Vec<u32> = self.collect();
+        Ndarr {
+            data: out.clone(),
+            shape: [out.len()],
+        }
+    }
+}
+
+impl Into<Ndarr<u64, 1>> for std::ops::Range<u64>
+{
+    fn into(self) -> Ndarr<u64, 1> {
+        let out: Vec<u64> = self.collect();
+        Ndarr {
+            data: out.clone(),
+            shape: [out.len()],
+        }
+    }
+}
+impl Into<Ndarr<i64, 1>> for std::ops::Range<i64>
+{
+    fn into(self) -> Ndarr<i64, 1> {
+        let out: Vec<i64> = self.collect();
+        Ndarr {
+            data: out.clone(),
+            shape: [out.len()],
+        }
+    }
+}
+impl Into<Ndarr<i32, 1>> for std::ops::Range<i32>
+{
+    fn into(self) -> Ndarr<i32, 1> {
+        let out: Vec<i32> = self.collect();
+        Ndarr {
+            data: out.clone(),
+            shape: [out.len()],
+        }
+    }
+}
+impl Into<Ndarr<usize, 1>> for std::ops::Range<usize>
+{
+    fn into(self) -> Ndarr<usize, 1> {
+        let out: Vec<usize> = self.collect();
+        Ndarr {
+            data: out.clone(),
+            shape: [out.len()],
+        }
+    }
+}
+impl Into<Ndarr<isize, 1>> for std::ops::Range<isize>
+{
+    fn into(self) -> Ndarr<isize, 1> {
+        let out: Vec<isize> = self.collect();
+        Ndarr {
+            data: out.clone(),
+            shape: [out.len()],
+        }
+    }
+}
 impl Into<Ndarr<char, 1>> for &str {
     fn into(self) -> Ndarr<char, 1> {
         Ndarr {
