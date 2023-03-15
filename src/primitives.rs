@@ -177,3 +177,30 @@ where
             Ok(Ndarr{data: self.data.clone(), shape: shape.clone()})
         }
     }
+
+
+pub trait Transpose {
+    fn t(self) -> Self;
+}
+
+// Generic transpose for array of rank R
+// the basic idea of a generic transpose of an N-dimensional array is to flip de shape of it like in a mirror.
+// The helper functions use in here can be derive with some maths, but maybe there is a better way to do it.
+impl<T: Default + Clone, const R: usize> Transpose for Ndarr<T, R> {
+    fn t(self) -> Self {
+        let shape = self.shape.clone();
+        let mut out_dim: [usize; R] = self.shape.clone();
+        out_dim.reverse();
+        let mut out_arr = vec![T::default(); self.data.len()];
+        for i in 0..self.data.len() {
+            let mut new_indexes = helpers::get_indexes(&i, &shape);
+            new_indexes.reverse();
+            let new_pos = helpers::get_flat_pos(&new_indexes, &out_dim).unwrap();
+            out_arr[new_pos] = self.data[i].clone();
+        }
+        Ndarr {
+            data: out_arr,
+            shape: out_dim,
+        }
+    }
+}

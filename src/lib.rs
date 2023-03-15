@@ -7,6 +7,8 @@ mod ops;
 mod primitives;
 mod scalars;
 mod utils;
+mod maps;
+mod display;
 use std::{
     fmt::Debug,
     fmt::{Display},
@@ -17,7 +19,8 @@ pub use primitives::DimError;
 pub use scalars::{Scalar, Trig};
 pub use helpers::{broadcast_shape, const_max};
 pub use ops::{poly_diatic, mat_mul, inner_closure, inner_product, outer_product};
-pub use primitives::{Broadcast, Reduce, Slice, Reshape};
+pub use primitives::{Broadcast, Reduce, Slice, Reshape, Transpose};
+pub use maps::{Bimap, Map};
 
 
 // main struct of N Dimensional generic array.
@@ -74,45 +77,7 @@ impl<T: Copy + Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     }
 }
 
-impl<T: Clone + Debug + Default + Display, const R: usize> Display for Ndarr<T, R> {
-    // Kind of nasty function, it can be imprube a lot, but I think there is no scape from recursion.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        //convert to string
-        let strs: Vec<String> = self.data.iter().map(|x| x.to_string()).collect();
-        // len of each strings
-        let binding: Vec<usize> = strs.clone().iter().map(|s| s.len()).collect();
-        // max len ( for formatting)
-        let max_size = binding.iter().max().unwrap();
-        //format each string
-        let mut fmt_str: Vec<String> = strs
-            .iter()
-            .map(|s| helpers::format_vla(s.to_string(), max_size))
-            .collect();
 
-        let mut splits = self.shape.clone();
-        //splits.reverse();
-
-        fn slip_format<'a>(strings: &'a mut [String], splits: &'a [usize]) -> () {
-            if splits.len() == 0 {
-                return;
-            }
-            let l = helpers::multiply_list(splits, 1);
-            let n_splits = strings.len() / l;
-            for i in 0..n_splits {
-                let new_s: &mut [String] = &mut strings[i * l..(i + 1) * l];
-                new_s[0].insert_str(0, "[");
-                new_s[l - 1].push_str("]");
-                slip_format(new_s, &splits[1..]);
-            }
-            return;
-        }
-        // TODO: add new lines in the correct places to display it more numpy like
-        slip_format(&mut fmt_str[0..], &mut splits[..]);
-
-        let out = fmt_str.clone().join(" ");
-        write!(f, "Ndarr({})", out)
-    }
-}
 
 pub trait IntoNdarr<T, const R: usize>
 where
@@ -142,118 +107,12 @@ where
     }
 }
 
-trait Bimap<F> {
-    fn bimap(self, other: Self, f: F) -> Self;
-    fn bimap_in_place(&mut self, other: Self, f: F);
-}
-//TODO: Here we need to think about if valueble maybe checking for the same shape and return an option instead
-impl<F, T: Debug + Clone + Default, const R: usize> Bimap<F> for Ndarr<T, R>
-where
-    F: Fn(T, T) -> T,
-{
-    fn bimap(self, other: Self, f: F) -> Self {
-        let mut out = vec![T::default(); self.data.len()];
-        for i in 0..out.len() {
-            out[i] = f(self.data[i].clone(), other.data[i].clone())
-        }
-        Ndarr {
-            data: out,
-            shape: self.shape,
-        }
-    }
 
-    fn bimap_in_place(&mut self, other: Self, f: F) {
-        for i in 0..self.data.len() {
-            self.data[i] = f(self.data[i].clone(), other.data[i].clone())
-        }
-    }
-}
 
-trait GeneralBimap<F, T2, T3> {
-    type Other;
-    type Output;
-    fn gen_bimap(self, other: Self::Other, f: F) -> Self::Output;
-}
 
-impl<F, T1, T2, T3, const R: usize> GeneralBimap<F, T2, T3> for Ndarr<T1, R>
-where
-    T1: Debug + Clone + Default,
-    T2: Debug + Clone + Default,
-    T3: Debug + Clone + Default,
-    F: Fn(T1, T2) -> T3,
-{
-    type Other = Ndarr<T2, R>;
-    type Output = Ndarr<T3, R>;
-
-    fn gen_bimap(self, other: Self::Other, f: F) -> Self::Output {
-        let mut out = vec![T3::default(); self.data.len()];
-        for i in 0..out.len() {
-            out[i] = f(self.data[i].clone(), other.data[i].clone())
-        }
-        Ndarr {
-            data: out,
-            shape: self.shape,
-        }
-    }
-}
-
-trait Map<F> {
-    fn map(self, f: F) -> Self;
-
-    fn map_in_place(&mut self, f: F);
-}
-
-impl<F, T: Debug + Clone + Default, const R: usize> Map<F> for Ndarr<T, R>
-where
-    F: Fn(&T) -> T,
-{
-    fn map(self, f: F) -> Self {
-        let mut out = vec![T::default(); self.data.len()];
-        for i in 0..out.len() {
-            out[i] = f(&self.data[i])
-        }
-        Ndarr {
-            data: out,
-            shape: self.shape,
-        }
-    }
-    fn map_in_place(&mut self, f: F) {
-        for i in 0..self.data.len() {
-            self.data[i] = f(&self.data[i])
-        }
-    }
-}
-
-trait Transpose {
-    fn t(self) -> Self;
-}
-
-// Generic transpose for array of rank R
-// the basic idea of a generic transpose of an N-dimensional array is to flip de shape of it like in a mirror.
-// The helper functions use in here can be derive with some maths, but maybe there is a better way to do it.
-impl<T: Default + Clone, const R: usize> Transpose for Ndarr<T, R> {
-    fn t(self) -> Self {
-        let shape = self.shape.clone();
-        let mut out_dim: [usize; R] = self.shape.clone();
-        out_dim.reverse();
-        let mut out_arr = vec![T::default(); self.data.len()];
-        for i in 0..self.data.len() {
-            let mut new_indexes = helpers::get_indexes(&i, &shape);
-            new_indexes.reverse();
-            let new_pos = helpers::get_flat_pos(&new_indexes, &out_dim).unwrap();
-            out_arr[new_pos] = self.data[i].clone();
-        }
-        Ndarr {
-            data: out_arr,
-            shape: out_dim,
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
-
-    use crate::primitives::{Broadcast, Reduce, Slice, Reshape};
 
     use super::*;
 
