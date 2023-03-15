@@ -156,3 +156,24 @@ where
         Ok(new_data)
     }
 }
+
+
+pub trait Reshape<T, const R2: usize> {
+    type Output;
+    fn reshape(&self, shape: &[usize; R2]) -> Self::Output;
+}
+
+//TODO: this is basically equivalent to arr.flatten().reshape() in numpy, not sure if is the way it works in all cases
+impl<T, const R1: usize, const R2: usize> Reshape<T, R2> for Ndarr<T, R1>
+where
+    T: Clone + Default + Debug,
+    [usize; const_max(R1, R2)]: Sized,
+    {
+        type Output = Result<Ndarr<T,R2>,DimError>;
+        fn reshape(&self, shape: &[usize; R2]) -> Self::Output {
+            if multiply_list(&self.shape, 1) != multiply_list(shape, 1){
+                return Err(DimError::new(&format!("Can not reshape array with shape {:?} to {:?}.",&self.shape, shape)))
+            }
+            Ok(Ndarr{data: self.data.clone(), shape: shape.clone()})
+        }
+    }
