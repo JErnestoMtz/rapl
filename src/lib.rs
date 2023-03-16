@@ -329,4 +329,10 @@ mod tests {
         assert_eq!(a, Ndarr::from([[1,2],[3,4]]))
 
     }
+
+    #[test]
+    fn ranges(){
+        let a = Ndarr::from(0..4);
+        assert_eq!(a, Ndarr::from([0,1,2,3]))
+    }
 }
