@@ -648,3 +648,24 @@ where T: Clone + Copy + Debug + Default + Trig
         out
     }
 }
+
+// TODO: find a better way
+pub fn abs_num<T>(n: T)->T
+where T: From<i8> + Mul<Output = T> + PartialOrd
+{
+    if n < Into::<T>::into(0) {
+        return Into::<T>::into(-1) * n;
+    }else{
+        return n;
+    }
+
+}
+
+impl <T, const R: usize> Ndarr<T,R> 
+where T: Clone + Debug + Default + From<i8> + Mul<Output = T> + PartialOrd
+{
+    pub fn abs(self)->Self{
+       let out = self.map(|x| abs_num(x.clone()));
+       out
+    }
+}

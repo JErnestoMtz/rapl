@@ -335,4 +335,10 @@ mod tests {
         let a = Ndarr::from(0..4);
         assert_eq!(a, Ndarr::from([0,1,2,3]))
     }
+
+    #[test]
+    fn abs(){
+        let a = Ndarr::from([-1, -3, 4]);
+        assert_eq!(a.abs(), Ndarr::from([1,3,4]))
+    }
 }

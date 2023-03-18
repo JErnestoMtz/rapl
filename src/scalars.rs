@@ -101,3 +101,4 @@ impl Trig for f64 {
         self.tanh()
     }
 }
+
