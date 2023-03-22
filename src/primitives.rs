@@ -51,7 +51,7 @@ where
 }
 pub trait Reduce<F> {
     type Output;
-    fn reduce(self, axis: usize, f: F) -> Self::Output;
+    fn reduce(&self, axis: usize, f: F) -> Self::Output;
 }
 
 impl<T, F, const R: usize> Reduce<F> for Ndarr<T, R>
@@ -61,11 +61,11 @@ where
     [usize; R - 1]: Sized,
 {
     type Output = Result<Ndarr<T, { R - 1 }>, DimError>;
-    fn reduce(self, axis: usize, f: F) -> Self::Output {
+    fn reduce(&self, axis: usize, f: F) -> Self::Output {
         if axis >= R {
             Err(DimError::new("Axis grater than rank"))
         } else {
-            let slices = self.slice_at(axis);
+            let slices = self.clone().slice_at(axis);
             let n = slices.len();
             let mut out = slices[0].clone();
             for i in 1..n {

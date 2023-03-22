@@ -618,33 +618,33 @@ where
 impl <T, const R: usize> Ndarr<T,R> 
 where T: Clone + Copy + Debug + Default + Trig
 {
-    pub fn sin(self)->Self{
-        let out = self.map(|x| x.f_sin());
+    pub fn sin(&self)->Self{
+        let out = self.clone().map(|x| x.f_sin());
         out
     }
 
-    pub fn cos(self)->Self{
-        let out = self.map(|x| x.f_cos());
+    pub fn cos(&self)->Self{
+        let out = self.clone().map(|x| x.f_cos());
         out
     }
 
-    pub fn tan(self)->Self{
-        let out = self.map(|x| x.f_tan());
+    pub fn tan(&self)->Self{
+        let out = self.clone().map(|x| x.f_tan());
         out
     }
 
-    pub fn sinh(self)->Self{
-        let out = self.map(|x| x.f_sinh());
+    pub fn sinh(&self)->Self{
+        let out = self.clone().map(|x| x.f_sinh());
         out
     }
     
-    pub fn cosh(self)->Self{
-        let out = self.map(|x| x.f_cosh());
+    pub fn cosh(&self)->Self{
+        let out = self.clone().map(|x| x.f_cosh());
         out
     }
 
-    pub fn tanh(self)->Self{
-        let out = self.map(|x| x.f_tanh());
+    pub fn tanh(&self)->Self{
+        let out = self.clone().map(|x| x.f_tanh());
         out
     }
 }
@@ -664,8 +664,8 @@ where T: From<i8> + Mul<Output = T> + PartialOrd
 impl <T, const R: usize> Ndarr<T,R> 
 where T: Clone + Debug + Default + From<i8> + Mul<Output = T> + PartialOrd
 {
-    pub fn abs(self)->Self{
-       let out = self.map(|x| abs_num(x.clone()));
+    pub fn abs(&self)->Self{
+       let out = self.clone().map(|x| abs_num(x.clone()));
        out
     }
 }

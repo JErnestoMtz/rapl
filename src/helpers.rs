@@ -18,8 +18,8 @@ where
 pub(crate) fn get_indexes<const N: usize>(n: &usize, shape: &[usize; N]) -> [usize; N] {
     let mut ind: [usize; N] = [0; N];
     for i in (0..N).rev() {
-        let carry = multiply_list(&shape[i + 1..], 1 as usize);
-        ind[i] = ((n - (n % carry)) / carry) % shape[i]
+        let n_block = multiply_list(&shape[i + 1..], 1 as usize);
+        ind[i] = ((n - (n % n_block)) / n_block) % shape[i]
     }
     return ind;
 }
@@ -27,16 +27,16 @@ pub(crate) fn get_indexes<const N: usize>(n: &usize, shape: &[usize; N]) -> [usi
 
 
 // given the indexes of an element in a N rank array of shape shape return the position of such element if the array was flattened
-pub(crate) fn get_flat_pos<const N: usize>(
-    indexes: &[usize; N],
-    shape: &[usize; N],
+pub(crate) fn get_flat_pos<const R: usize>(
+    indexes: &[usize; R],
+    shape: &[usize; R],
 ) -> Result<usize, String> {
     let mut ind: usize = 0;
-    for i in 0..N {
+    for i in 0..R {
         if indexes[i] >= shape[i] {
             return Err("Error: Index out of bounds".into());
         }
-        ind += indexes[N - i - 1] * multiply_list(&shape[N - i..], 1);
+        ind += indexes[R - i - 1] * multiply_list(&shape[R - i..], 1);
     }
     Ok(ind)
 }
@@ -81,6 +81,8 @@ pub fn path_shape<const N: usize, const M: usize>(
     Ok(out)
 }
 
+// Given a indexes of an element in broadcasted broadcasted array and a shape of the array before broadcasting, 
+// returns the position of the element in the array before broadcasting
 pub fn rev_cast_pos<const N: usize, const M: usize>(
     small_shape: &[usize; N],
     indexes: &[usize; M],

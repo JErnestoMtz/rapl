@@ -1,9 +1,10 @@
 #![feature(generic_const_exprs)]
 #![feature(const_trait_impl)]
 
+
+pub mod ops;
 mod helpers;
 mod natives;
-mod ops;
 mod primitives;
 mod scalars;
 mod utils;
@@ -18,7 +19,6 @@ use std::{
 pub use primitives::DimError;
 pub use scalars::{Scalar, Trig};
 pub use helpers::{broadcast_shape, const_max};
-pub use ops::{poly_diatic, mat_mul, inner_closure, inner_product, outer_product};
 pub use primitives::{Broadcast, Reduce, Slice, Reshape, Transpose};
 pub use maps::{Bimap, Map};
 
@@ -32,6 +32,7 @@ pub struct Ndarr<T: Clone + Default, const R: usize> {
     pub data: Vec<T>,
     pub shape: [usize; R],
 }
+
 
 
 impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
@@ -56,6 +57,9 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     }
     pub fn shape(&self) -> [usize; R] {
         self.shape
+    }
+    pub fn flatten(self)->Vec<T>{
+        self.data
     }
 
     pub fn len(&self) -> usize {
@@ -115,6 +119,7 @@ where
 mod tests {
 
     use super::*;
+    use ops::*;
 
     #[test]
     fn constructor_test() {

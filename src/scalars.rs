@@ -52,52 +52,52 @@ where
 }
 
 pub trait Trig {
-    fn f_sin(self) -> Self;
-    fn f_cos(self) -> Self;
-    fn f_tan(self) -> Self;
-    fn f_sinh(self) -> Self;
-    fn f_cosh(self) -> Self;
-    fn f_tanh(self) -> Self;
+    fn f_sin(&self) -> Self;
+    fn f_cos(&self) -> Self;
+    fn f_tan(&self) -> Self;
+    fn f_sinh(&self) -> Self;
+    fn f_cosh(&self) -> Self;
+    fn f_tanh(&self) -> Self;
 }
 
 impl Trig for f32 {
-    fn f_sin(self) -> Self {
+    fn f_sin(&self) -> Self {
         self.sin()
     }
-    fn f_cos(self) -> Self {
+    fn f_cos(&self) -> Self {
         self.cos()
     }
-    fn f_tan(self) -> Self {
+    fn f_tan(&self) -> Self {
         self.tan()
     }
-    fn f_sinh(self) -> Self {
+    fn f_sinh(&self) -> Self {
         self.sinh()
     }
-    fn f_cosh(self) -> Self {
+    fn f_cosh(&self) -> Self {
         self.cosh()
     }
-    fn f_tanh(self) -> Self {
+    fn f_tanh(&self) -> Self {
         self.tanh()
     }
 }
 
 impl Trig for f64 {
-    fn f_sin(self) -> Self {
+    fn f_sin(&self) -> Self {
         self.sin()
     }
-    fn f_cos(self) -> Self {
+    fn f_cos(&self) -> Self {
         self.cos()
     }
-    fn f_tan(self) -> Self {
+    fn f_tan(&self) -> Self {
         self.tan()
     }
-    fn f_sinh(self) -> Self {
+    fn f_sinh(&self) -> Self {
         self.sinh()
     }
-    fn f_cosh(self) -> Self {
+    fn f_cosh(&self) -> Self {
         self.cosh()
     }
-    fn f_tanh(self) -> Self {
+    fn f_tanh(&self) -> Self {
         self.tanh()
     }
 }
