@@ -120,3 +120,17 @@ let matmul = mat_mul(a, b))
     let deck = ops::outer_product( add_str, ranks, suits).flatten(); //All cards in a deck
 ```
 
+### Features in development:
+- Port to stable Rust
+- Line space and meshigrid initialization
+- Range support for floating types.
+- Random array creation.
+- 1D and 2D FFT.
+- Matrix inversion.
+- Image to array conversion.
+- APL-inspired rotate function.
+- Change Inner and Outer products to be higher-order functions.
+- Add generalized diatic functions between scaler types.
+- Commonly use ML functions like Relu, Softmax etc.
+- Native support for complex numbers.
+- Support for existing plotting libraries in rust.
