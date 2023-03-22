@@ -1,6 +1,21 @@
 #![feature(generic_const_exprs)]
 #![feature(const_trait_impl)]
 
+//!*NOTE*: `rapl`  requires Nightly and is strictly intended for non-production purposes only. `rapl` utilizes certain unstable features that may result in unexpected behavior, and is not optimized for performance.
+//! 
+//!`rapl` is an experimental numerical computing Rust that provides an simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomic and user-friendliness while maintaining generality. Notably, it offers automatic Rank Polymorphic broadcasting between arrays of varying shapes and scalars as a built-in feature.
+
+//!```
+//!#![feature(generic_const_exprs)]
+//!use rapl::*;
+//!fn main() {
+//!     let a = Ndarr::from([1, 2, 3]);
+//!     let b = Ndarr::from([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+//!     let r = a + b - 1;
+//!     assert_eq!(r, Ndarr::from([[1, 3, 5], [4, 6, 8], [7, 9, 11]]));
+//!}
+//!```
+
 
 pub mod ops;
 mod helpers;
@@ -23,9 +38,7 @@ pub use primitives::{Broadcast, Reduce, Slice, Reshape, Transpose};
 pub use maps::{Bimap, Map};
 
 
-// main struct of N Dimensional generic array.
-//the shape is denoted by the `shape` array where the length is the Rank of the Ndarray
-//the actual values are stored in a flattened state in a rank 1 array
+///Main struct of N Dimensional generic array. The shape is denoted by the `shape` array where the length is the Rank of the Ndarray the actual values are stored in a flattened state in a rank 1 array.
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ndarr<T: Clone + Default, const R: usize> {
