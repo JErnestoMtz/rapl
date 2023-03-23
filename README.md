@@ -2,7 +2,7 @@
 
 *NOTE*: `rapl`  requires Nightly and is strictly intended for non-production purposes only. `rapl` utilizes certain unstable features that may result in unexpected behavior, and is not optimized for performance.
 
-`rapl` is an experimental numerical computing Rust that provides an simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomic and user-friendliness while maintaining generality. Notably, it offers automatic Rank Polymorphic broadcasting between arrays of varying shapes and scalars as a built-in feature.
+`rapl` is an experimental numerical computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomic and user-friendliness while maintaining generality. Notably, it offers automatic Rank Polymorphic broadcasting between arrays of varying shapes and scalars as a built-in feature.
 
 ```Rust
 #![feature(generic_const_exprs)]
