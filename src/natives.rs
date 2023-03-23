@@ -25,7 +25,7 @@ where
             }
         }
         Ndarr {
-            data: data,
+            data,
             shape: [N2, N1],
         }
     }
@@ -45,7 +45,7 @@ where
             }
         }
         Ndarr {
-            data: data,
+            data,
             shape: [N3, N2, N1],
         }
     }
@@ -68,7 +68,7 @@ where
             }
         }
         Ndarr {
-            data: data,
+            data,
             shape: [N4, N3, N2, N1],
         }
     }
