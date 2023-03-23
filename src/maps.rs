@@ -11,8 +11,8 @@ where
 {
     fn bimap(self, other: Self, f: F) -> Self {
         let mut out = vec![T::default(); self.data.len()];
-        for i in 0..out.len() {
-            out[i] = f(self.data[i].clone(), other.data[i].clone())
+        for (i, val) in out.iter_mut().enumerate() {
+            *val = f(self.data[i].clone(), other.data[i].clone())
         }
         Ndarr {
             data: out,
@@ -45,8 +45,8 @@ where
 
     fn gen_bimap(self, other: Self::Other, f: F) -> Self::Output {
         let mut out = vec![T3::default(); self.data.len()];
-        for i in 0..out.len() {
-            out[i] = f(self.data[i].clone(), other.data[i].clone())
+        for (i, val) in out.iter_mut().enumerate() {
+            *val = f(self.data[i].clone(), other.data[i].clone())
         }
         Ndarr {
             data: out,
@@ -67,8 +67,8 @@ where
 {
     fn map(self, f: F) -> Self {
         let mut out = vec![T::default(); self.data.len()];
-        for i in 0..out.len() {
-            out[i] = f(&self.data[i])
+        for (i, val) in out.iter_mut().enumerate() {
+            *val = f(&self.data[i])
         }
         Ndarr {
             data: out,
@@ -76,8 +76,8 @@ where
         }
     }
     fn map_in_place(&mut self, f: F) {
-        for i in 0..self.data.len() {
-            self.data[i] = f(&self.data[i])
+        for val in self.data.iter_mut() {
+            *val = f(val)
         }
     }
 }

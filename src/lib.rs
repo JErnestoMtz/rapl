@@ -53,7 +53,7 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
         if data.len() == n {
             Ok(Ndarr {
                 data: data.to_vec(),
-                shape: shape,
+                shape,
             })
         } else {
             Err(DimError::new(&format!(
@@ -76,6 +76,10 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
 
     pub fn len(&self) -> usize {
         self.data.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     pub fn from<P: Into<Self>>(p: P) -> Self {

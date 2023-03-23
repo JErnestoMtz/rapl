@@ -21,7 +21,7 @@ pub(crate) fn get_indexes<const N: usize>(n: &usize, shape: &[usize; N]) -> [usi
         let n_block = multiply_list(&shape[i + 1..], 1 as usize);
         ind[i] = ((n - (n % n_block)) / n_block) % shape[i]
     }
-    return ind;
+    ind
 }
 
 
@@ -46,7 +46,7 @@ pub(crate) fn get_flat_pos<const R: usize>(
 pub(crate) fn format_vla(val: String, size: &usize) -> String {
     let mut s = val.clone();
     let l = val.len();
-    s += &",";
+    s += ",";
     s += &" ".repeat(size - l);
     s
 }
@@ -55,9 +55,9 @@ pub fn remove_element<T: Copy, const N: usize>(arr: [T; N], index: usize) -> [T;
     assert!(index < N);
     let mut result = [arr[0]; N - 1];
     let mut j = 0;
-    for i in 0..N {
+        for (i, &item) in arr.iter().enumerate().take(N) {
         if i != index {
-            result[j] = arr[i];
+            result[j] = item;
             j += 1;
         }
     }
@@ -87,8 +87,8 @@ pub fn rev_cast_pos<const N: usize, const M: usize>(
     small_shape: &[usize; N],
     indexes: &[usize; M],
 ) -> Result<usize, DimError> {
-    let padded: [usize; M] = path_shape(&small_shape)?;
-    let mut indexes = indexes.clone();
+    let padded: [usize; M] = path_shape(small_shape)?;
+    let mut indexes = *indexes;
     let mut rev_casted_ind: [usize; N] = [0; N];
     for i in 0..M {
         if padded[i] <= indexes[i] {
@@ -99,7 +99,7 @@ pub fn rev_cast_pos<const N: usize, const M: usize>(
         rev_casted_ind[N - i - 1] = indexes[M - i - 1]
     }
     let pos = get_flat_pos(&rev_casted_ind, small_shape).unwrap();
-    return Ok(pos);
+    Ok(pos)
 }
 
 fn index_or(arr: &[usize], index: usize, or: usize) -> usize {
@@ -140,5 +140,5 @@ pub fn broadcast_shape<const N: usize, const M: usize>(
         }
         out_shape[l - i - 1] = max(size1, size2)
     }
-    return Ok(out_shape);
+    Ok(out_shape)
 }

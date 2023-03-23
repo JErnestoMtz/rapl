@@ -10,7 +10,7 @@ where
     pub fn zeros(shape: &[usize; R]) -> Self {
         let data: Vec<T> = vec![T::from(0); multiply_list(shape, 1)];
         Ndarr {
-            data: data,
+            data,
             shape: shape.clone(),
         }
     }
@@ -18,7 +18,7 @@ where
     pub fn ones(shape: &[usize; R]) -> Self {
         let data: Vec<T> = vec![T::from(1); multiply_list(shape, 1)];
         Ndarr {
-            data: data,
+            data,
             shape: shape.clone(),
         }
     }
@@ -31,7 +31,7 @@ where
     pub fn fill(with: T, shape: &[usize; R]) -> Self {
         let data: Vec<T> = vec![with; multiply_list(shape, 1)];
         Ndarr {
-            data: data,
+            data,
             shape: shape.clone(),
         }
     }
