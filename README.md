@@ -65,7 +65,7 @@ let abs_x = x.abs();
 - Map function
 ```Rust
 let a = Ndarr::from([[1,2],[3,4]]);
-let mapped = a.map(|x| x**2-1);
+let mapped = a.map(|x| x*2-1);
 ```
 ### Monadic tensor operations
 - Transpose
