@@ -1,99 +1,93 @@
 use super::*;
 use crate::scalars::Scalar;
 
-impl<T, const N: usize> Into<Ndarr<T, 1>> for [T; N]
+impl<T, const N: usize> From<[T; N]> for Ndarr<T, 1>
 where
     T: Clone + Debug + Copy + Default + Scalar,
 {
-    fn into(self) -> Ndarr<T, 1> {
+    fn from(value: [T; N]) -> Self {
         Ndarr {
-            data: self.to_vec(),
+            data: value.to_vec(),
             shape: [N],
         }
     }
 }
 
-impl<T, const N1: usize, const N2: usize> Into<Ndarr<T, 2>> for [[T; N1]; N2]
+impl<T, const N1: usize, const N2: usize> From<[[T; N1]; N2]> for Ndarr<T, 2>
 where
     T: Clone + Debug + Copy + Default + Scalar,
 {
-    fn into(self) -> Ndarr<T, 2> {
-        let mut data = Vec::new();
-        for i in 0..N2 {
-            for j in 0..N1 {
-                data.push(self[i][j])
-            }
+    fn from(value: [[T; N1]; N2]) -> Self {
+        let mut data = Vec::with_capacity(N1*N2);
+        for row in value.iter() {
+            data.extend_from_slice(row);
         }
         Ndarr {
-            data: data,
+            data,
             shape: [N2, N1],
         }
     }
 }
 
-impl<T, const N1: usize, const N2: usize, const N3: usize> Into<Ndarr<T, 3>> for [[[T; N1]; N2]; N3]
+impl<T, const N1: usize, const N2: usize, const N3: usize> From<[[[T; N1]; N2]; N3]> for Ndarr<T, 3>
 where
     T: Clone + Debug + Copy + Default + Scalar,
 {
-    fn into(self) -> Ndarr<T, 3> {
-        let mut data = Vec::new();
-        for i in 0..N3 {
-            for j in 0..N2 {
-                for k in 0..N1 {
-                    data.push(self[i][j][k]);
-                }
+    fn from(value: [[[T; N1]; N2]; N3]) -> Self {
+        let mut data = Vec::with_capacity(N1*N2*N3);
+        for row in value.iter() {
+            for column in row.iter() {
+                data.extend_from_slice(column)
             }
         }
         Ndarr {
-            data: data,
+            data,
             shape: [N3, N2, N1],
         }
     }
 }
 
-impl<T, const N1: usize, const N2: usize, const N3: usize, const N4: usize> Into<Ndarr<T, 4>>
-    for [[[[T; N1]; N2]; N3]; N4]
+impl<T, const N1: usize, const N2: usize, const N3: usize, const N4: usize> From<[[[[T; N1]; N2]; N3]; N4]>
+    for Ndarr<T, 4>
 where
     T: Clone + Debug + Copy + Default + Scalar,
 {
-    fn into(self) -> Ndarr<T, 4> {
-        let mut data = Vec::new();
-        for i in 0..N4 {
-            for j in 0..N3 {
-                for k in 0..N2 {
-                    for l in 0..N1 {
-                        data.push(self[i][j][k][l]);
-                    }
+    fn from(value: [[[[T; N1]; N2]; N3]; N4]) -> Self {
+        let mut data = Vec::with_capacity(N1*N2*N3*N4);
+        for axis1 in value.iter() {
+            for axis2 in axis1.iter() {
+                for axis3 in axis2.iter() {
+                    data.extend_from_slice(axis3)
                 }
             }
         }
         Ndarr {
-            data: data,
+            data,
             shape: [N4, N3, N2, N1],
         }
     }
 }
 
-impl<T> Into<Ndarr<T, 1>> for Vec<T>
+impl<T> From<Vec<T>> for Ndarr<T, 1>
 where
     T: Clone + Debug + Copy + Default + Scalar,
 {
-    fn into(self) -> Ndarr<T, 1> {
-        let l = &self.len();
+    fn from(value: Vec<T>) -> Self {
+        let l = &value.len();
         Ndarr {
-            data: self,
+            data: value,
             shape: [*l],
         }
     }
 }
 
-impl<T> Into<Ndarr<T, 1>> for std::ops::Range<T>
+impl<T> From<std::ops::Range<T>> for Ndarr<T, 1>
 where T: Copy + Clone + Debug + Default + Scalar,
 std::ops::Range<T>: Iterator,
 Vec<T>: FromIterator<<std::ops::Range<T> as Iterator>::Item>
 {
-    fn into(self) -> Ndarr<T, 1> {
-        let out: Vec<T> = self.collect();
+    fn from(value: std::ops::Range<T>) -> Self {
+        let out: Vec<T> = value.collect();
         Ndarr {
             data: out.clone(),
             shape: [out.len()],
@@ -102,11 +96,11 @@ Vec<T>: FromIterator<<std::ops::Range<T> as Iterator>::Item>
 }
 
 
-impl Into<Ndarr<char, 1>> for &str {
-    fn into(self) -> Ndarr<char, 1> {
+impl From<&str> for Ndarr<char, 1> {
+    fn from(value: &str) -> Self {
         Ndarr {
-            data: self.chars().collect(),
-            shape: [self.len()],
+            data: value.chars().collect(),
+            shape: [value.len()],
         }
     }
 }
