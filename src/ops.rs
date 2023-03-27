@@ -1,4 +1,4 @@
-use crate::{scalars::{Scalar, Trig}, primitives::{Broadcast, DimError, Reduce, BroadcastData}, helpers::{const_max}};
+use crate::{scalars::{Scalar, Float}, primitives::{Broadcast, DimError, Reduce, BroadcastData}, helpers::{const_max}};
 
 use super::*;
 use std::ops::*;
@@ -616,7 +616,7 @@ where
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////  Trig Functions /////////////////////////////////////////////
 impl <T, const R: usize> Ndarr<T,R> 
-where T: Clone + Copy + Debug + Default + Trig
+where T: Clone + Debug + Default + Float
 {
     pub fn sin(&self)->Self{
         let out = self.clone().map(|x| x.f_sin());
@@ -647,6 +647,29 @@ where T: Clone + Copy + Debug + Default + Trig
         let out = self.clone().map(|x| x.f_tanh());
         out
     }
+
+    pub fn log(&self, base: T)->Self{
+        let out = self.clone().map(|x| x.f_log(base));
+        out
+    }
+    
+    pub fn ln(&self)->Self{
+        let out = self.clone().map(|x| x.f_ln());
+        out
+    }
+
+    pub fn log2(&self)->Self{
+        let out = self.clone().map(|x| x.f_log2());
+        out
+    }
+
+    pub fn log10(&self)->Self{
+        let out = self.clone().map(|x| x.f_log10());
+        out
+    }
+    
+   
+
 }
 
 // TODO: find a better way
