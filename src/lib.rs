@@ -31,7 +31,7 @@ use std::{
 
 
 pub use primitives::DimError;
-pub use scalars::{Scalar, Trig};
+pub use scalars::{Scalar, Float};
 pub use helpers::{broadcast_shape, const_max};
 pub use primitives::{Broadcast, Reduce, Slice, Reshape, Transpose};
 pub use maps::{Bimap, Map};
@@ -340,9 +340,16 @@ mod tests {
     }
 
     #[test]
-    fn trig() {
-        let a = Ndarr::from([0.1, 0.2]);
-        assert_eq!(a.sin(), Ndarr::from([0.1_f64.sin(), 0.2_f64.sin()]))
+    fn float_ops() {
+        let a = Ndarr::from([0.1]);
+        assert_eq!(a.sin(), Ndarr::from([0.1_f64.sin()]));
+        assert_eq!(a.cos(), Ndarr::from([0.1_f64.cos()]));
+        assert_eq!(a.tan(), Ndarr::from([0.1_f64.tan()]));
+        assert_eq!(a.sinh(), Ndarr::from([0.1_f64.sinh()]));
+        assert_eq!(a.cosh(), Ndarr::from([0.1_f64.cosh()]));
+        assert_eq!(a.ln(), Ndarr::from([0.1_f64.ln()]));
+        assert_eq!(a.log2(), Ndarr::from([0.1_f64.log2()]));
+        assert_eq!(a.log(3.0), Ndarr::from([0.1_f64.log(3.0)]));
     }
     #[test]
     fn reshape(){
