@@ -34,7 +34,6 @@ pub use primitives::DimError;
 pub use scalars::{Scalar, Float};
 pub use helpers::{broadcast_shape, const_max};
 pub use primitives::{Broadcast, Reduce, Slice, Reshape, Transpose};
-pub use maps::{Bimap, Map};
 
 
 ///Main struct of N Dimensional generic array. The shape is denoted by the `shape` array where the length is the Rank of the Ndarray the actual values are stored in a flattened state in a rank 1 array.
@@ -103,7 +102,7 @@ pub trait IntoNdarr<T, const R: usize>
 where
     T: Debug + Clone + Default,
 {
-    fn into_ndarr(self, shape: &[usize; R]) -> Ndarr<T, R>;
+    fn into_ndarr(&self, shape: &[usize; R]) -> Ndarr<T, R>;
     fn get_rank(&self) -> usize;
 }
 
@@ -111,7 +110,7 @@ impl<T, const R: usize> IntoNdarr<T, R> for Ndarr<T, R>
 where
     T: Debug + Clone + Default,
 {
-    fn into_ndarr(self, shape: &[usize; R]) -> Ndarr<T, R> {
+    fn into_ndarr(&self, shape: &[usize; R]) -> Ndarr<T, R> {
         if self.shape != *shape {
             let err = format!(
                 "self is shape {:?}, and ndarr is shape {:?}",
@@ -119,7 +118,7 @@ where
             );
             panic!("Mismatch shape: {}", err)
         } else {
-            self
+            self.clone()
         }
     }
     fn get_rank(&self) -> usize {
@@ -159,7 +158,7 @@ mod tests {
     fn bimap_test() {
         let arr1 = Ndarr::new(&[0, 1, 2, 3], [2, 2]).expect("Error initializing");
         let arr2 = Ndarr::new(&[4, 5, 6, 7], [2, 2]).expect("Error initializing");
-        assert_eq!(arr1.bimap(arr2, |x, y| x + y).data, vec![4, 6, 8, 10])
+        assert_eq!(arr1.bimap(&arr2, |x, y| x + y).data, vec![4, 6, 8, 10])
     }
 
     #[test]
@@ -368,5 +367,18 @@ mod tests {
     fn abs(){
         let a = Ndarr::from([-1, -3, 4]);
         assert_eq!(a.abs(), Ndarr::from([1,3,4]))
+    }
+    #[test]
+    fn map_between_types_test() {
+        let x: Ndarr<i16, 1> = Ndarr::from([1,2,3]);
+        println!("x: {:#?}", x.data);
+        println!("x shape: {:#?}", x.shape);
+        let res: Ndarr<f32, 1> = x.map_types(|x| *x as f32);
+        println!("res: {:#?}", res);
+        assert!(res.data[0] == 1.0_f32);
+        let a_string: Ndarr<String, 1> = x.map_types(|x| x.to_string());
+        assert_eq!(a_string.data, vec!["1".to_owned(), "2".to_owned(), "3".to_owned()]);
+
+        println!("a_string: {:#?}", a_string); // ["1","2","3"]
     }
 }

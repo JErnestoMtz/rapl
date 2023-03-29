@@ -23,7 +23,7 @@ impl Scalar for char {}
 impl Scalar for &str {}
 
 
-pub fn extend_scalar<P, T, const R: usize>(scalar: P, shape: &[usize; R]) -> Ndarr<T, R>
+pub fn extend_scalar<P, T, const R: usize>(scalar: &P, shape: &[usize; R]) -> Ndarr<T, R>
 where
     T: Debug + Copy + Clone + Default,
     P: Into<T> + Clone,
@@ -45,7 +45,7 @@ where
     T: Debug + Copy + Clone + Default,
     P: Into<T> + Clone + Scalar,
 {
-    fn into_ndarr(self, shape: &[usize; R]) -> Ndarr<T, R> {
+    fn into_ndarr(&self, shape: &[usize; R]) -> Ndarr<T, R> {
         extend_scalar(self, shape)
     }
     fn get_rank(&self) -> usize {
