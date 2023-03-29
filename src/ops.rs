@@ -199,7 +199,7 @@ where
     type Output = Self;
     fn add(self, other: P) -> Self::Output {
         let other = other.into_ndarr(&self.shape);
-        self.bimap(other, |x, y| x + y)
+        self.bimap(&other, |x, y| x + y)
     }
 }
 
@@ -211,7 +211,7 @@ where
     type Output = Ndarr<T, R>;
     fn add(self, other: P) -> Self::Output {
         let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(other, |x, y| x + y)
+        self.clone().bimap(&other, |x, y| x + y)
     }
 }
 
@@ -275,7 +275,7 @@ where
     type Output = Self;
     fn sub(self, other: P) -> Self::Output {
         let other = other.into_ndarr(&self.shape);
-        self.bimap(other, |x, y| x - y)
+        self.bimap(&other, |x, y| x - y)
     }
 }
 
@@ -287,7 +287,7 @@ where
     type Output = Ndarr<T, R>;
     fn sub(self, other: P) -> Self::Output {
         let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(other, |x, y| x - y)
+        self.clone().bimap(&other, |x, y| x - y)
     }
 }
 
@@ -352,7 +352,7 @@ where
     fn mul(self, other: P) -> Self::Output {
         //this is temporary, util we att projection por rank polymorphic operations
         let other = other.into_ndarr(&self.shape);
-        self.bimap(other, |x, y| x * y)
+        self.bimap(&other, |x, y| x * y)
     }
 }
 
@@ -365,7 +365,7 @@ where
     fn mul(self, other: P) -> Self::Output {
         //this is temporary, util we att projection por rank polymorphic operations
         let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(other, |x, y| x * y)
+        self.clone().bimap(&other, |x, y| x * y)
     }
 }
 
@@ -430,7 +430,7 @@ where
     fn div(self, other: P) -> Self::Output {
         //this is temporary, util we att projection por rank polymorphic operations
         let other = other.into_ndarr(&self.shape);
-        self.bimap(other, |x, y| x / y)
+        self.bimap(&other, |x, y| x / y)
     }
 }
 
@@ -443,7 +443,7 @@ where
     fn div(self, other: P) -> Self::Output {
         //this is temporary, util we att projection por rank polymorphic operations
         let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(other, |x, y| x / y)
+        self.clone().bimap(&other, |x, y| x / y)
     }
 }
 
@@ -509,7 +509,7 @@ where
     fn rem(self, other: P) -> Self::Output {
         //this is temporary, util we att projection por rank polymorphic operations
         let other = other.into_ndarr(&self.shape);
-        self.bimap(other, |x, y| x % y)
+        self.bimap(&other, |x, y| x % y)
     }
 }
 
@@ -522,7 +522,7 @@ where
     fn rem(self, other: P) -> Self::Output {
         //this is temporary, util we att projection por rank polymorphic operations
         let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(other, |x, y| x % y)
+        self.clone().bimap(&other, |x, y| x % y)
     }
 }
 
@@ -559,7 +559,7 @@ where
     P: IntoNdarr<T,R> + Clone,
 {
     fn add_assign(&mut self, other: &P) {
-        self.bimap_in_place(other.clone().into_ndarr(&self.shape), |x,y| x+y)
+        self.bimap_in_place(&other.into_ndarr(&self.shape), |x,y| x+y)
     }
 }
 
@@ -572,7 +572,7 @@ where
     P: IntoNdarr<T,R> + Clone,
 {
     fn sub_assign(&mut self, other: &P) {
-        self.bimap_in_place(other.clone().into_ndarr(&self.shape), |x,y| x-y)
+        self.bimap_in_place(&other.into_ndarr(&self.shape), |x,y| x-y)
     }
 }
 
@@ -585,7 +585,7 @@ where
     P: IntoNdarr<T,R> + Clone,
 {
     fn mul_assign(&mut self, other: &P) {
-        self.bimap_in_place(other.clone().into_ndarr(&self.shape), |x,y| x*y)
+        self.bimap_in_place(&other.into_ndarr(&self.shape), |x,y| x*y)
     }
 }
 
@@ -597,7 +597,7 @@ where
     P: IntoNdarr<T,R> + Clone,
 {
     fn div_assign(&mut self, other: &P) {
-        self.bimap_in_place(other.clone().into_ndarr(&self.shape), |x,y| x/y)
+        self.bimap_in_place(&other.into_ndarr(&self.shape), |x,y| x/y)
     }
 }
 
@@ -609,14 +609,14 @@ where
     P: IntoNdarr<T,R> + Clone,
 {
     fn rem_assign(&mut self, other: &P) {
-        self.bimap_in_place(other.clone().into_ndarr(&self.shape), |x,y| x%y)
+        self.bimap_in_place(&other.into_ndarr(&self.shape), |x,y| x%y)
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////  Trig Functions /////////////////////////////////////////////
 impl <T, const R: usize> Ndarr<T,R> 
-where T: Clone + Debug + Default + Float
+where T: Clone + Copy + Debug + Default + Float
 {
     pub fn sin(&self)->Self{
         let out = self.clone().map(|x| x.f_sin());
@@ -663,10 +663,6 @@ where T: Clone + Debug + Default + Float
         out
     }
 
-    pub fn log10(&self)->Self{
-        let out = self.clone().map(|x| x.f_log10());
-        out
-    }
     
    
 

@@ -1,32 +1,5 @@
 use super::*;
 
-pub trait Bimap<F> {
-    fn bimap(self, other: Self, f: F) -> Self;
-    fn bimap_in_place(&mut self, other: Self, f: F);
-}
-//TODO: Here we need to think about if valueble maybe checking for the same shape and return an option instead
-impl<F, T: Debug + Clone + Default, const R: usize> Bimap<F> for Ndarr<T, R>
-where
-    F: Fn(T, T) -> T,
-{
-    fn bimap(self, other: Self, f: F) -> Self {
-        let mut out = vec![T::default(); self.data.len()];
-        for (i, val) in out.iter_mut().enumerate() {
-            *val = f(self.data[i].clone(), other.data[i].clone())
-        }
-        Ndarr {
-            data: out,
-            shape: self.shape,
-        }
-    }
-
-    fn bimap_in_place(&mut self, other: Self, f: F) {
-        for i in 0..self.data.len() {
-            self.data[i] = f(self.data[i].clone(), other.data[i].clone())
-        }
-    }
-}
-
 trait GeneralBimap<F, T2, T3> {
     type Other;
     type Output;
@@ -55,18 +28,12 @@ where
     }
 }
 
-pub trait Map<F> {
-    fn map(self, f: F) -> Self;
 
-    fn map_in_place(&mut self, f: F);
-}
 
-impl<F, T: Debug + Clone + Default, const R: usize> Map<F> for Ndarr<T, R>
-where
-    F: Fn(&T) -> T,
-{
-    fn map(self, f: F) -> Self {
-        let mut out = vec![T::default(); self.data.len()];
+
+impl<T1: Debug + Clone + Default, const R: usize> Ndarr<T1, R>{
+    pub fn map<F1: Fn(&T1)->T1>(&self, f: F1) -> Self{
+        let mut out = vec![T1::default(); self.data.len()];
         for (i, val) in out.iter_mut().enumerate() {
             *val = f(&self.data[i])
         }
@@ -75,9 +42,38 @@ where
             shape: self.shape,
         }
     }
-    fn map_in_place(&mut self, f: F) {
+    pub fn map_in_place<F1: Fn(&T1)->T1>(&mut self, f: F1) {
         for val in self.data.iter_mut() {
             *val = f(val)
         }
     }
+    pub fn map_types<T2: Clone + Debug + Default, F2: Fn(&T1)->T2>(&self, f: F2)->Ndarr<T2,R>{
+        let mut out = vec![T2::default(); self.data.len()];
+        for (i, val) in out.iter_mut().enumerate() {
+            *val = f(&self.data[i])
+        }
+        Ndarr {
+            data: out,
+            shape: self.shape,
+        }
+    }
+    // Bimap: is the same as Zip then map, is just a convenient way for doing diadic operations between Ndarrs
+    pub fn bimap<F: Fn(T1,T1)->T1>(&self, other: &Self, f: F) -> Self {
+        let mut out = vec![T1::default(); self.data.len()];
+        for (i, val) in out.iter_mut().enumerate() {
+            *val = f(self.data[i].clone(), other.data[i].clone())
+        }
+        Ndarr {
+            data: out,
+            shape: self.shape,
+        }
+    }
+
+    pub fn bimap_in_place<F: Fn(T1,T1)->T1>(&mut self, other: &Self, f: F) {
+        for i in 0..self.data.len() {
+            self.data[i] = f(self.data[i].clone(), other.data[i].clone())
+        }
+    }
+
+
 }

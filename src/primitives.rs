@@ -71,7 +71,7 @@ where
             let n = slices.len();
             let mut out = slices[0].clone();
             for i in 1..n {
-                out.bimap_in_place(slices[i].clone(), f.clone())
+                out.bimap_in_place(&slices[i], f.clone())
             }
 
             Ok(out)
