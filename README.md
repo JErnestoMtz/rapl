@@ -57,7 +57,7 @@ Note: If the shapes are not equal `rapl` will automatically broadcast the arrays
 ```Rust
 let x = Ndarr::from([-1.0 , -0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6, 0.8, 1.0]);
 let sin_x = &x.sin();
-let cos_x = &x.con();
+let cos_x = &x.cos();
 let tanh_x = &x.tanh();
 
 let abs_x = x.abs();
@@ -90,7 +90,7 @@ let sum_axis = arr.clone().reduce(1, |x,y| x + y).unwrap();
 assert_eq!(sum_axis, Ndarr::from([6, 15])); //sum reduction
 ```
 
-### Diatic tensor operations
+### Dyatic tensor operations
 - Generalized matrix multiplication between compatible arrays
 ```Rust
 use rapl::*
