@@ -401,22 +401,24 @@ where
 //////////////////////////////// Scalars ////////////////////////////////////
 macro_rules! scalar_op {
     ($Op:tt, $f_name:tt, $f:tt) => {
-        impl<P, T, const R: usize> $Op<P> for Ndarr<T, R>
+        impl<L,P, T, const R: usize> $Op<P> for Ndarr<T, R>
         where
-            T: Clone + Debug + Default + $Op<P, Output = T>,
+            L: Clone + Debug + Default,
+            T: Clone + Debug + Default + $Op<P, Output = L>,
             P: Scalar + Copy,
         {
-            type Output = Self;
+            type Output = Ndarr<L,R>;
             fn $f_name(self, other: P) -> Self::Output {
                 self.map_types(|x| x.clone() $f other)
             }
         }
-        impl<P, T, const R: usize> $Op<P> for &Ndarr<T, R>
+        impl<L,P, T, const R: usize> $Op<P> for &Ndarr<T, R>
         where
-            T: Clone + Debug + Default + $Op<P, Output = T>,
+            L: Clone + Debug + Default,
+            T: Clone + Debug + Default + $Op<P, Output = L>,
             P: Scalar + Copy,
         {
-            type Output = Ndarr<T, R>;
+            type Output = Ndarr<L, R>;
             fn $f_name(self, other: P) -> Self::Output {
                 self.map_types(|x| x.clone() $f other)
             }

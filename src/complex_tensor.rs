@@ -122,9 +122,17 @@ where T: Clone + Debug + Default + Float
 #[cfg(test)]
 mod complex_tensor_test{
     use super::*;
+
+    #[test]
+    fn test(){
+        let x = Ndarr::from([1, 2, 3]);
+        assert_eq!(x + 1.i(), Ndarr::from([1 + 1.i(), 2 + 1.i(), 3 + 1.i()]))
+    }
+
     #[test]
     fn exp_test(){
         let quads =  Ndarr::from([1. + 0_f64.i(), 1.0.i(), -1. + 0_f64.i(), -1.0.i()]);
         println!("{:?}",  quads * (PI/2.).i().exp() )
     }
+
 }
