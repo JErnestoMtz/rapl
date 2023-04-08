@@ -10,3 +10,6 @@ license = "MIT"
 
 [dependencies]
 num-traits = "0.2.15"
+
+[feature]
+complex = []
