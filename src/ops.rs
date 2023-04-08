@@ -1,4 +1,5 @@
-use crate::{scalars::{Scalar, Float}, primitives::{Broadcast, DimError, Reduce, BroadcastData}, helpers::{const_max}};
+use crate::{scalars::{Scalar}, primitives::{Broadcast, DimError, Reduce, BroadcastData}, helpers::{const_max}};
+use num_traits::Float;
 
 use super::*;
 use std::ops::*;
@@ -191,30 +192,6 @@ where
     }
 }
 
-impl<P, T, const R: usize> Add<P> for Ndarr<T, R>
-where
-    T: Add<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Self;
-    fn add(self, other: P) -> Self::Output {
-        let other = other.into_ndarr(&self.shape);
-        self.bimap(&other, |x, y| x + y)
-    }
-}
-
-impl<P, T, const R: usize> Add<P> for &Ndarr<T, R>
-where
-    T: Add<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Ndarr<T, R>;
-    fn add(self, other: P) -> Self::Output {
-        let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(&other, |x, y| x + y)
-    }
-}
-
 
 //////////////////////////////////////////// Sub /////////////////////////////////////////////
 
@@ -264,30 +241,6 @@ where
     type Output = Ndarr<T1,{const_max(R1,  R2)}>;
     fn sub(self, rhs: Ndarr<T1,R2>) -> Self::Output {
         poly_diatic(self.clone(), rhs.clone(), |x,y| x - y).unwrap()
-    }
-}
-
-impl<P, T, const R: usize> Sub<P> for Ndarr<T, R>
-where
-    T: Sub<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Self;
-    fn sub(self, other: P) -> Self::Output {
-        let other = other.into_ndarr(&self.shape);
-        self.bimap(&other, |x, y| x - y)
-    }
-}
-
-impl<P, T, const R: usize> Sub<P> for &Ndarr<T, R>
-where
-    T: Sub<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Ndarr<T, R>;
-    fn sub(self, other: P) -> Self::Output {
-        let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(&other, |x, y| x - y)
     }
 }
 
@@ -343,33 +296,6 @@ where
     }
 }
 
-impl<P, T, const R: usize> Mul<P> for Ndarr<T, R>
-where
-    T: Mul<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Self;
-    fn mul(self, other: P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.into_ndarr(&self.shape);
-        self.bimap(&other, |x, y| x * y)
-    }
-}
-
-impl<P, T, const R: usize> Mul<P> for &Ndarr<T, R>
-where
-    T: Mul<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Ndarr<T, R>;
-    fn mul(self, other: P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(&other, |x, y| x * y)
-    }
-}
-
-
 
 //////////////////////////////////////////// Div /////////////////////////////////////////////
 
@@ -420,34 +346,6 @@ where
         poly_diatic(self.clone(), rhs, |x,y| x / y).unwrap()
     }
 }
-
-impl<P, T, const R: usize> Div<P> for Ndarr<T, R>
-where
-    T: Div<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Self;
-    fn div(self, other: P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.into_ndarr(&self.shape);
-        self.bimap(&other, |x, y| x / y)
-    }
-}
-
-impl<P, T, const R: usize> Div<P> for &Ndarr<T, R>
-where
-    T: Div<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Ndarr<T, R>;
-    fn div(self, other: P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(&other, |x, y| x / y)
-    }
-}
-
-
 //////////////////////////////////////////// Rem /////////////////////////////////////////////
 
 impl <T1, const R1: usize, const R2: usize> Rem<Ndarr<T1,R2>> for Ndarr<T1,R1>
@@ -500,31 +398,37 @@ where
     }
 }
 
-impl<P, T, const R: usize> Rem<P> for Ndarr<T, R>
-where
-    T: Rem<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Self;
-    fn rem(self, other: P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.into_ndarr(&self.shape);
-        self.bimap(&other, |x, y| x % y)
-    }
+//////////////////////////////// Scalars ////////////////////////////////////
+macro_rules! scalar_op {
+    ($Op:tt, $f_name:tt, $f:tt) => {
+        impl<P, T, const R: usize> $Op<P> for Ndarr<T, R>
+        where
+            T: Clone + Debug + Default + $Op<P, Output = T>,
+            P: Scalar + Copy,
+        {
+            type Output = Self;
+            fn $f_name(self, other: P) -> Self::Output {
+                self.map_types(|x| x.clone() $f other)
+            }
+        }
+        impl<P, T, const R: usize> $Op<P> for &Ndarr<T, R>
+        where
+            T: Clone + Debug + Default + $Op<P, Output = T>,
+            P: Scalar + Copy,
+        {
+            type Output = Ndarr<T, R>;
+            fn $f_name(self, other: P) -> Self::Output {
+                self.map_types(|x| x.clone() $f other)
+            }
+        }
+    };
 }
 
-impl<P, T, const R: usize> Rem<P> for &Ndarr<T, R>
-where
-    T: Rem<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Ndarr<T, R>;
-    fn rem(self, other: P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(&other, |x, y| x % y)
-    }
-}
+scalar_op!(Add, add, +);
+scalar_op!(Sub, sub, -);
+scalar_op!(Mul, mul, *);
+scalar_op!(Div, div, /);
+scalar_op!(Rem, rem, %);
 
 
 //////////////////////////////////////////// Neg /////////////////////////////////////////////
@@ -619,47 +523,47 @@ impl <T, const R: usize> Ndarr<T,R>
 where T: Clone + Copy + Debug + Default + Float
 {
     pub fn sin(&self)->Self{
-        let out = self.clone().map(|x| x.f_sin());
+        let out = self.clone().map(|x| x.sin());
         out
     }
 
     pub fn cos(&self)->Self{
-        let out = self.clone().map(|x| x.f_cos());
+        let out = self.clone().map(|x| x.cos());
         out
     }
 
     pub fn tan(&self)->Self{
-        let out = self.clone().map(|x| x.f_tan());
+        let out = self.clone().map(|x| x.tan());
         out
     }
 
     pub fn sinh(&self)->Self{
-        let out = self.clone().map(|x| x.f_sinh());
+        let out = self.clone().map(|x| x.sinh());
         out
     }
     
     pub fn cosh(&self)->Self{
-        let out = self.clone().map(|x| x.f_cosh());
+        let out = self.clone().map(|x| x.cosh());
         out
     }
 
     pub fn tanh(&self)->Self{
-        let out = self.clone().map(|x| x.f_tanh());
+        let out = self.clone().map(|x| x.tanh());
         out
     }
 
     pub fn log(&self, base: T)->Self{
-        let out = self.clone().map(|x| x.f_log(base));
+        let out = self.clone().map(|x| x.log(base));
         out
     }
     
     pub fn ln(&self)->Self{
-        let out = self.clone().map(|x| x.f_ln());
+        let out = self.clone().map(|x| x.ln());
         out
     }
 
     pub fn log2(&self)->Self{
-        let out = self.clone().map(|x| x.f_log2());
+        let out = self.clone().map(|x| x.log2());
         out
     }
 
