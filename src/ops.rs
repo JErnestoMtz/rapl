@@ -5,7 +5,7 @@ use super::*;
 use std::ops::*;
 
 
-pub fn poly_diatic<F,T1,T2,T3, const R1: usize, const R2: usize>(arr1: Ndarr<T1,R1>, arr2: Ndarr<T2,R2>, f: F)->Result<Ndarr<T3,{const_max(R1,  R2)}>,DimError>
+pub fn poly_diatic<F,T1,T2,T3, const R1: usize, const R2: usize>(arr1: &Ndarr<T1,R1>, arr2: &Ndarr<T2,R2>, f: F)->Result<Ndarr<T3,{const_max(R1,  R2)}>,DimError>
 where
     T1: Clone + Debug + Default,
     T2: Clone + Debug + Default,
@@ -44,7 +44,7 @@ pub fn mat_mul<T,const R1: usize, const R2: usize>(arr1: Ndarr<T,R1>, arr2: Ndar
     let padded2: [usize; R1+ R2 -1] = helpers::path_shape(&arr2.shape).unwrap();
     let bdata2 = arr2.broadcast_data(&padded2).unwrap();
     let arr2 = Ndarr{data: bdata2, shape: padded2};
-    let r = poly_diatic(arr1, arr2, |x,y| x*y).unwrap();
+    let r = poly_diatic(&arr1, &arr2, |x,y| x*y).unwrap();
     //TODO: Not 100% sure if the reduction is always in R-1 axis, I'm like 90% confident but too lazy to do a math proof.
         //seems to work for all test I did
     let rr = r.reduce(R1-1, |x,y| x+y).unwrap();
@@ -78,7 +78,7 @@ pub fn inner_product<F,G,T1,T2,T3,const R1: usize, const R2: usize>(f: F, g: G, 
     let padded2: [usize; R1+ R2 -1] = helpers::path_shape(&arr2.shape).unwrap();
     let bdata2 = arr2.broadcast_data(&padded2).unwrap();
     let arr2 = Ndarr{data: bdata2, shape: padded2};
-    let r = poly_diatic(arr1, arr2, f).unwrap();
+    let r = poly_diatic(&arr1, &arr2, f).unwrap();
     //TODO: Not 100% sure if the reduction is always in R-1 axis, I'm like 90% confident but too lazy to do a math proof.
         //seems to work for all test I did
     let rr = r.reduce(R1-1, |x,y| g(x,y)).unwrap();
@@ -131,7 +131,7 @@ pub fn outer_product<F,T1,T2,T3,const R1: usize, const R2: usize>(f: F, arr1: Nd
     let padded2: [usize; R1+ R2] = helpers::path_shape(&arr2.shape).unwrap();
     let bdata2 = arr2.broadcast_data(&padded2).unwrap();
     let arr2 = Ndarr{data: bdata2, shape: padded2};
-    let r = poly_diatic(arr1, arr2, f).unwrap();
+    let r = poly_diatic(&arr1, &arr2, f).unwrap();
     //TODO: Not 100% sure if the reduction is always in R-1 axis, I'm like 90% confident but too lazy to do a math proof.
         //seems to work for all test I did
     return r
@@ -139,264 +139,58 @@ pub fn outer_product<F,T1,T2,T3,const R1: usize, const R2: usize>(f: F, arr1: Nd
 
 
 
-// Arithmetic operations
-//TODO: a lot of code repetition, need to refactor this with a macro. Also there should be a better way to handel the permutations of
-    //owned and reference. But if we want the prioritize flexibility and friendliness we really need to handel this permutations.
+macro_rules!  ndarr_op{
+    ($Ty1:ty, $Ty2:ty, $Trait:tt, $F:tt, $Op:tt) => {
+        
+        impl <T1, T2, T3, const R1: usize, const R2: usize> $Trait<$Ty2> for $Ty1
+        where
+            T1: Clone + Debug + Default + $Trait<T2, Output = T3>,
+            T2: Clone + Debug + Default,
+            T3: Clone + Debug + Default,
+            [usize; const_max(R2, R1)]: Sized,
+            [usize; const_max(R1, R2)]: Sized,
+        {
+            type Output = Ndarr<T3,{const_max(R1,  R2)}>;
+            fn $F(self, rhs: $Ty2) -> Self::Output {
+                poly_diatic(&self, &rhs, |x,y| x $Op y).unwrap()
+            }
+        }
+    };
+}
 //////////////////////////////////////////// Add /////////////////////////////////////////////
-
-impl <T1, const R1: usize, const R2: usize> Add<Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Add<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn add(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs, |x,y| x + y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Add<&Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Add<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn add(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs.clone(), |x,y| x + y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Add<Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Add<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn add(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs.clone(), |x,y| x + y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Add<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Add<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn add(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs.clone(), |x,y| x + y).unwrap()
-    }
-}
-
+ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Add, add, +);
+ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Add, add, +);
+ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Add, add, +);
+ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Add, add, +);
 
 //////////////////////////////////////////// Sub /////////////////////////////////////////////
 
-impl <T1, const R1: usize, const R2: usize> Sub<Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Sub<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn sub(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs, |x,y| x - y).unwrap()
-    }
-}
-
-
-impl <T1, const R1: usize, const R2: usize> Sub<&Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Sub<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn sub(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs.clone(), |x,y| x - y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Sub<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Sub<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn sub(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs.clone(), |x,y| x - y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Sub<Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Sub<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn sub(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs.clone(), |x,y| x - y).unwrap()
-    }
-}
-
-
+ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Sub, sub, -);
+ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Sub, sub, -);
+ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Sub, sub, -);
+ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Sub, sub, -);
 
 //////////////////////////////////////////// Mul /////////////////////////////////////////////
 
-impl <T1, const R1: usize, const R2: usize> Mul<Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Mul<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn mul(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs, |x,y| x * y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Mul<&Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Mul<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn mul(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs.clone(), |x,y| x * y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Mul<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Mul<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn mul(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs.clone(), |x,y| x * y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Mul<Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Mul<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn mul(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs, |x,y| x * y).unwrap()
-    }
-}
+ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Mul, mul, *);
+ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Mul, mul, *);
+ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Mul, mul, *);
+ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Mul, mul, *);
 
 
 //////////////////////////////////////////// Div /////////////////////////////////////////////
 
-impl <T1, const R1: usize, const R2: usize> Div<Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Div<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn div(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs, |x,y| x / y).unwrap()
-    }
-}
+ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Div, div, /);
+ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Div, div, /);
+ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Div, div, /);
+ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Div, div, /);
 
-impl <T1, const R1: usize, const R2: usize> Div<&Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Div<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn div(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs.clone(), |x,y| x / y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Div<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Div<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn div(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs.clone(), |x,y| x / y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Div<Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Div<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn div(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs, |x,y| x / y).unwrap()
-    }
-}
 //////////////////////////////////////////// Rem /////////////////////////////////////////////
 
-impl <T1, const R1: usize, const R2: usize> Rem<Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Rem<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn rem(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs, |x,y| x % y).unwrap()
-    }
-}
-
-
-impl <T1, const R1: usize, const R2: usize> Rem<&Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Rem<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn rem(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs.clone(), |x,y| x % y).unwrap()
-    }
-}
-
-
-impl <T1, const R1: usize, const R2: usize> Rem<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Rem<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn rem(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs.clone(), |x,y| x % y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Rem<Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Rem<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn rem(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs, |x,y| x % y).unwrap()
-    }
-}
+ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Rem, rem, %);
+ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Rem, rem, %);
+ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Rem, rem, %);
+ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Rem, rem, %);
 
 //////////////////////////////// Scalars ////////////////////////////////////
 macro_rules! scalar_op {
@@ -452,7 +246,7 @@ where
 {
     type Output = Ndarr<T,R>;
     fn neg(self) -> Self::Output {
-        self.clone().map(|x| -*x)
+        self.map(|x| -*x)
     }
 }
 

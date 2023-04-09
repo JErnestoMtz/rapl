@@ -287,11 +287,11 @@ mod tests {
         let arr1 = Ndarr::from([[1, 2], [3, 4]]);
         let arr2 = Ndarr::from([1, 1]);
         assert_eq!(
-            ops::poly_diatic(arr2.clone(), arr1.clone(), |x, y| x + y).unwrap(),
+            ops::poly_diatic(&arr2, &arr1, |x, y| x + y).unwrap(),
             Ndarr::from([[2, 3], [4, 5]])
         );
         assert_eq!(
-            ops::poly_diatic(arr1, arr2, |x, y| x + y).unwrap(),
+            ops::poly_diatic(&arr1, &arr2, |x, y| x + y).unwrap(),
             Ndarr::from([[2, 3], [4, 5]])
         );
     }
