@@ -157,36 +157,31 @@ macro_rules!  ndarr_op{
         }
     };
 }
-//////////////////////////////////////////// Add /////////////////////////////////////////////
+//--------------------------------- Add --------------------------------------
 ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Add, add, +);
 ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Add, add, +);
 ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Add, add, +);
 ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Add, add, +);
 
-//////////////////////////////////////////// Sub /////////////////////////////////////////////
-
+//--------------------------------- Sub --------------------------------------
 ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Sub, sub, -);
 ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Sub, sub, -);
 ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Sub, sub, -);
 ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Sub, sub, -);
 
-//////////////////////////////////////////// Mul /////////////////////////////////////////////
-
+//--------------------------------- Mul --------------------------------------
 ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Mul, mul, *);
 ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Mul, mul, *);
 ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Mul, mul, *);
 ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Mul, mul, *);
 
-
-//////////////////////////////////////////// Div /////////////////////////////////////////////
-
+//--------------------------------- Div --------------------------------------
 ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Div, div, /);
 ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Div, div, /);
 ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Div, div, /);
 ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Div, div, /);
 
-//////////////////////////////////////////// Rem /////////////////////////////////////////////
-
+//--------------------------------- Rem --------------------------------------
 ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Rem, rem, %);
 ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Rem, rem, %);
 ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Rem, rem, %);
@@ -313,7 +308,6 @@ where
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////  Trig Functions /////////////////////////////////////////////
 impl <T, const R: usize> Ndarr<T,R> 
 where T: Clone + Copy + Debug + Default + Float

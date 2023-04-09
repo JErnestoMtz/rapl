@@ -126,7 +126,8 @@ mod complex_tensor_test{
     #[test]
     fn test(){
         let x = Ndarr::from([1, 2, 3]);
-        assert_eq!(x + 1.i(), Ndarr::from([1 + 1.i(), 2 + 1.i(), 3 + 1.i()]))
+        let y = Ndarr::from([1.i(), 1.i(), 1.i()]);
+        assert_eq!(&x + 1.i(), x + y);
     }
 
     #[test]
