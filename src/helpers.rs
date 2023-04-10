@@ -1,7 +1,7 @@
 use std::cmp::max;
 use std::ops;
 
-use crate::primitives::DimError;
+use crate::errors::DimError;
 
 pub(crate) fn multiply_list<T>(list: &[T], init: T) -> T
 where
