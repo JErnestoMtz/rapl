@@ -46,26 +46,26 @@ where
 #[cfg(test)]
 mod tests {
 
-    use std::f32::consts::PI;
+    use std::f32::consts::{PI, FRAC_PI_2, LN_2};
 
     use super::*;
 
     #[test]
-    fn test_add() {
+    fn add() {
         assert_eq!(1 + 1.i(), C(1, 1));
         assert_eq!(1.i() + 1, C(1, 1));
         assert_eq!(C(0., 2.) + C(2., 3.), C(2., 5.));
     }
 
     #[test]
-    fn test_sub() {
+    fn sub() {
         assert_eq!(1 - 1.i(), C(1, -1));
         assert_eq!(1.i() - 1, C(-1, 1));
         assert_eq!(C(0., 2.) - C(2., 3.), C(-2., -1.));
     }
 
     #[test]
-    fn test_mul() {
+    fn mul() {
         let c1 = 2 + 3.i();
         let c2 = 4 + 5.i();
         let expected = -7 + 22.i();
@@ -73,7 +73,7 @@ mod tests {
     }
 
     #[test]
-    fn test_division() {
+    fn division() {
         let c1 = C(2., 3.);
         let c2 = C(4., 5.);
         let expected = C(23. / 41., 2./ 41.);
@@ -81,9 +81,36 @@ mod tests {
     }
 
     #[test]
-    fn test_conj(){
+    fn conj() {
         let a: C<i32> = 2 + 3.i();
         assert!((a * a.conj()).re() == a.r_square())
     }
 
+    #[test]
+    fn from_num() {
+        let a: u8 = 42;
+        let a_complex = C::from(a);
+        assert_eq!(a_complex, C(42,0));
+
+        let a: f32 = 42.0;
+        let a_complex = C::from(a);
+        assert_eq!(a_complex, C(42.0,0.0));
+
+        let a: i32 = -42;
+        let a_complex = C::from(a);
+        assert_eq!(a_complex, C(-42,0));
+    }
+
+    #[test]
+    fn ln() {
+        let a = C(0.0, 1.0);
+        assert_eq!(a.ln(), C(0.0, FRAC_PI_2));
+
+        let a = C(2.0, 0.0);
+        assert_eq!(a.ln(), C(LN_2, 0.0));
+
+        let a = C(-1.0, 0.0);
+        assert_eq!(a.ln(), C(0.0, PI));
+    }
 }
+ 

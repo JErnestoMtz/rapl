@@ -9,12 +9,17 @@ impl<T: Float> C<T> {
     pub fn arg(&self) -> T {
         // theta
         //(self.1 / self.0).atan()
-        self.0.atan2(self.1)
+        self.1.atan2(self.0)
     }
     pub fn exp(&self) -> Self {
         C(self.0.exp() * self.1.cos(), self.0.exp() * self.1.sin())
     }
     pub fn ln(&self) -> Self {
+        // Main branch complex logarithm with ln(-1)=iπ (as in numpy)
+        // Note this function is not continous since the complex logarithm is only continous
+        // if no closed curve around 0 exists. To make the complex logarithm continous,
+        // typically, a curve from 0 to infinity is removed from the input domain.
+        // Commonly this curve is the negative real axis. Then ln(-1) is no longer defined.
         C(self.abs().ln(), self.arg())
     }
     pub fn sin(&self) -> Self {

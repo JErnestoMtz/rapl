@@ -1,4 +1,5 @@
 use super::*;
+use num_traits::{Num, identities::zero};
 //impl<T,P> From<C<P>> for C<T> 
 //where T: Copy + PartialEq + From<P>,
 //P: Copy + PartialEq
@@ -7,6 +8,14 @@ use super::*;
         //C(value.0.into(), value.1.into())     
    //} 
 //}
+
+impl<T> From<T> for C<T> 
+where T: Num + Copy
+{
+   fn from(value: T) -> Self {
+        C(value, zero())
+   } 
+}
 
 macro_rules!  cast_complex{
     ($T:tt, $P:tt) => {
