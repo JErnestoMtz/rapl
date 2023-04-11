@@ -25,13 +25,13 @@ mod utils;
 mod maps;
 mod display;
 
-//#[cfg(feature = "complex")]
+#[cfg(feature = "complex")]
 mod complex_tensor;
 use std::{
     fmt::Debug,
     fmt::{Display},
 };
-//#[cfg(feature = "complex")]
+#[cfg(feature = "complex")]
 pub mod complex;
 
 pub use primitives::DimError;
