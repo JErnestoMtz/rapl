@@ -14,6 +14,15 @@ impl<T: Float> C<T> {
     pub fn exp(&self) -> Self {
         C(self.0.exp() * self.1.cos(), self.0.exp() * self.1.sin())
     }
+    pub fn sqrt(&self)->Self{
+        //z = a + bi -> z = re^{iθ}
+        //sqrt(z) = z^{1/2}
+        //sqrt(z) = sqrt(r)e^{iθ/2}
+        //The square root of z generally has two solutions, this functions has a branch cut that satisfy -pi/2 <= arg(sqrt(z)) <= pi/2.
+        let two = T::one() + T::one();
+        let (r, arg) = self.to_polar();
+        C(r.sqrt(),T::zero())*C(T::zero(),arg/two).exp()
+    }
     pub fn ln(&self) -> Self {
         // Main branch complex logarithm with ln(-1)=iπ (as in numpy)
         // Note this function is not continous since the complex logarithm is only continous

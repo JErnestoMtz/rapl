@@ -135,5 +135,6 @@ mod complex_tensor_test{
         let quads =  Ndarr::from([1. + 0_f64.i(), 1.0.i(), -1. + 0_f64.i(), -1.0.i()]);
         println!("{:?}",  quads * (PI/2.).i().exp() )
     }
+    
 
 }

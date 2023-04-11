@@ -45,11 +45,34 @@ where
 
 #[cfg(test)]
 mod tests {
-
+    #![allow(non_upper_case_globals)]
     use std::f32::consts::{PI, FRAC_PI_2, LN_2};
+    use std::f64::consts::{FRAC_1_SQRT_2};
 
     use super::*;
 
+    pub const _0_0: C<f64> = C(0.0, 0.0);
+    pub const _1_0: C<f64> = C(1.0, 0.0);
+    pub const _0_1: C<f64> = C(0.0, 1.0);
+    pub const _n1_0: C<f64> = C(-1.0, 0.0);
+    pub const _0_n1: C<f64> = C(-1.0, 0.0);
+    pub const _1_1: C<f64> = C(-1.0, 0.0);
+    pub const _2_n1: C<f64> = C(-2.0, -1.0);
+    pub const unit: C<f64> = C(FRAC_1_SQRT_2, FRAC_1_SQRT_2);
+    pub const all_z: [C<f64>; 8] = [_0_0, _1_0, _0_1, _n1_0, _0_n1, _1_1, _2_n1, unit];
+
+
+    fn approx_epsilon(a: C<f64>, b:C<f64>, epsilon: f64) -> bool {
+        let approx = (a == b) || (a - b).abs() < epsilon;
+        if !approx{
+            println!("Error: {:?} !+ {:?}", a, b)
+        }
+        approx
+    }
+
+    fn approx(a: C<f64>, b:C<f64>) -> bool {
+        approx_epsilon(a, b, 1e-10)
+    }
     #[test]
     fn add() {
         assert_eq!(1 + 1.i(), C(1, 1));
@@ -111,6 +134,33 @@ mod tests {
 
         let a = C(-1.0, 0.0);
         assert_eq!(a.ln(), C(0.0, PI));
+    }
+
+    #[test]
+    fn abs(){
+        assert_eq!(_0_1.abs(), 1.0);
+        assert_eq!(_1_0.abs(), 1.0);
+        assert_eq!(_n1_0.abs(), 1.0);
+        assert_eq!(_0_n1.abs(), 1.0);
+        assert_eq!(unit.abs(), 1.0);
+    }
+
+    #[test]
+    fn sqrt(){
+        for n in (0..100).map(f64::from){
+            let n2 = n * n;
+            assert!(approx(C(n2,0.).sqrt(), C(n,0.)));
+            assert!(approx(C(-n2,0.).sqrt(), C(0.,n)));
+            assert!(approx(C(-n2,-0.).sqrt(), C(0.0,-n)));
+        }
+        let z2: C<f64> = 0.25 + 0.0.i();
+        assert_eq!(z2.sqrt(), C(0.5,0.));
+        for c in all_z{
+            assert!(approx(c.conj().sqrt(), c.sqrt().conj()));
+            assert!(approx(c.sqrt() * c.sqrt(), c));
+            assert!(-std::f64::consts::FRAC_PI_2 <= c.sqrt().arg()&& c.sqrt().arg() <= std::f64::consts::FRAC_PI_2);
+        }
+
     }
 }
  
