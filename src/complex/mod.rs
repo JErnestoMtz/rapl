@@ -1,5 +1,5 @@
 use num_traits::{Float, MulAddAssign, Num};
-use std::{ops::{Add, Div, Mul, Neg, AddAssign, MulAssign}, fmt::Debug};
+use std::{ops::{Add, Div, Mul, Neg, AddAssign, MulAssign}, fmt::{Debug, Display, write}};
 mod floats;
 mod ops;
 mod primitives;
@@ -9,6 +9,12 @@ pub use crate::complex::primitives::Imag;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct C<T: Copy + PartialEq>(pub T, pub T);
+
+impl <T: Copy + PartialEq + Display> Display for  C<T>{
+   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+       write!(f, "C({},{})", self.0, self.1)
+   } 
+}
 
 impl<T: Copy + PartialEq> C<T> {
     pub fn re(&self) -> T {
