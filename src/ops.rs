@@ -1,6 +1,6 @@
 
 use num_traits::Float;
-use crate::{scalars::{Scalar, Float}, helpers::{const_max}};
+use crate::{scalars::{Scalar}, helpers::{const_max}};
 use super::*;
 use std::ops::*;
 
