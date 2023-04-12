@@ -286,8 +286,9 @@ impl <T: Copy + PartialEq + Sub<T, Output = T>> SubAssign<T> for C<T>  {
 //-------------------------------- Mul ------------------------------
 impl<T: Copy + PartialEq + Mul<T, Output = T> + Add<Output = T> + Sub<Output = T>> MulAssign<C<T>> for C<T> {
    fn mul_assign(&mut self, rhs: Self) {
-    self.0 = self.0 * rhs.0 - self.1 * rhs.1;
-    self.1 = self.0 * rhs.1 + self.1 * rhs.0;
+    let out = self.clone() * rhs;
+    self.0 = out.0;
+    self.1 = out.1;
    } 
 }
 impl <T: Copy + PartialEq + Mul<T, Output = T>> MulAssign<T> for C<T>  {
@@ -300,9 +301,9 @@ impl <T: Copy + PartialEq + Mul<T, Output = T>> MulAssign<T> for C<T>  {
 //-------------------------------- Div ------------------------------
 impl<T: Copy + PartialEq + Div<Output = T> + Mul<T, Output = T> + Add<Output = T> + Sub<Output = T>> DivAssign<C<T>> for C<T> {
    fn div_assign(&mut self, rhs: Self) {
-    let den = rhs.0 * rhs.0 + rhs.1 * rhs.1;
-    self.0 = (self.0 * rhs.0 + self.1 * rhs.1) / den;
-    self.1 = (self.1 * rhs.0 - self.0 * rhs.1) / den;
+    let out = self.clone() / rhs;
+    self.0 = out.0;
+    self.1 = out.1;
    } 
 }
 impl <T: Copy + PartialEq + Div<T, Output = T>> DivAssign<T> for C<T>  {

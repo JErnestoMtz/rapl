@@ -1,5 +1,5 @@
-use num_traits::Float;
-use std::ops::{Add, Div, Mul, Neg};
+use num_traits::{Float, MulAddAssign, Num};
+use std::{ops::{Add, Div, Mul, Neg, AddAssign, MulAssign}, fmt::Debug};
 mod floats;
 mod ops;
 mod primitives;
@@ -41,6 +41,31 @@ where
     }
 }
 
+impl<T> C<T>
+where
+    C<T>: MulAssign + Debug,
+    T: Copy + PartialEq + Num
+{
+    // this seems to to be relatively fast for n < 100, but we should find a better way for larger n's
+    pub fn powi(&self, n: i32) -> Self {
+        if n == 0{
+            return C(T::one(), T::zero())
+        }else if n > 0{
+            let mut out = self.clone();
+            for _ in  1..n{
+                out *= self.clone();
+            }
+            return out
+        }else{
+            let mut out = self.clone();
+            for _ in  1..-n{
+                out *= self.clone();
+            }
+            let out = C(T::one(), T::zero()) / out;
+            return  out;
+        }
+    }
+}
 
 
 #[cfg(test)]
@@ -172,6 +197,25 @@ mod tests {
             assert!(-std::f64::consts::FRAC_PI_2 <= c.sqrt().arg()&& c.sqrt().arg() <= std::f64::consts::FRAC_PI_2);
         }
 
+    }
+
+    #[test]
+    fn powi(){
+        let z1 = C(2,0);
+        assert_eq!(z1.powi(3), C(8,0));
+        let z2 = 2.i();
+        assert_eq!(z2.powi(4), C(16,0));
+        let z3 = C(3,-5);
+        assert_eq!(z3.clone().powi(3), z3.clone() * z3.clone() * z3);
+        assert_eq!(_2_n1.powi(2), _2_n1 * _2_n1);
+        assert_eq!(C(5,10).powi(0), C(1,0));
+        assert_eq!(2.0.i().powi(-2), C(- 1. / 4., 0.));
+    }
+    #[test]
+    fn powf(){
+        assert!(approx(_2_n1.powf(2.), _2_n1 * _2_n1));
+        assert!(approx(_2_n1.powf(0.), C(1., 0.)));
+        assert!(approx(_0_1.powf(4.), C(1.,0.)))
     }
 }
  
