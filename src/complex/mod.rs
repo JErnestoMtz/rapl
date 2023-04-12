@@ -221,8 +221,11 @@ mod tests {
     fn powc(){
         assert!(approx(_2_n1.powc(C(2.,0.)), _2_n1 * _2_n1));
         assert!(approx(_2_n1.powc(C(0., 0.)), C(1., 0.)));
-        let z: C<f64> = 2.0 + 0.5.i();
         //form python 
+        //>>> z = 2.0 + 0.5j
+        //>>> z**z
+        //(2.4767939208048335+2.8290270856372506j)
+        let z: C<f64> = 2.0 + 0.5.i();
         assert!(approx(z.powc(z.clone()),C(2.4767939208048335,2.8290270856372506)))
     }
     
