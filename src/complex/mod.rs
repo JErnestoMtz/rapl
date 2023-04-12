@@ -102,7 +102,18 @@ mod tests {
         let expected = C(23. / 41., 2./ 41.);
         assert_eq!(c1 / c2, expected);
     }
-
+    #[test]
+    fn assing(){
+        let mut z = C(0,0);
+        z += 2;
+        assert_eq!(z, C(2,0));
+        z -= 4.i();
+        assert_eq!(z, C(2,-4));
+        z *= 3;
+        assert_eq!(z, C(6,-12));
+        z /= C(2,0);
+        assert_eq!(z, C(3,-6));
+    }
     #[test]
     fn conj() {
         let a: C<i32> = 2 + 3.i();
