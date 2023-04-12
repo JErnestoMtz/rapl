@@ -1,10 +1,11 @@
-use crate::{scalars::{Scalar, Float}, helpers::{const_max}};
 
+use num_traits::Float;
+use crate::{scalars::{Scalar, Float}, helpers::{const_max}};
 use super::*;
 use std::ops::*;
 
 
-pub fn poly_diatic<F,T1,T2,T3, const R1: usize, const R2: usize>(arr1: Ndarr<T1,R1>, arr2: Ndarr<T2,R2>, f: F)->Result<Ndarr<T3,{const_max(R1,  R2)}>,DimError>
+pub fn poly_diatic<F,T1,T2,T3, const R1: usize, const R2: usize>(arr1: &Ndarr<T1,R1>, arr2: &Ndarr<T2,R2>, f: F)->Result<Ndarr<T3,{const_max(R1,  R2)}>,DimError>
 where
     T1: Clone + Debug + Default,
     T2: Clone + Debug + Default,
@@ -43,7 +44,7 @@ pub fn mat_mul<T,const R1: usize, const R2: usize>(arr1: Ndarr<T,R1>, arr2: Ndar
     let padded2: [usize; R1+ R2 -1] = helpers::path_shape(&arr2.shape).unwrap();
     let bdata2 = arr2.broadcast_data(&padded2).unwrap();
     let arr2 = Ndarr{data: bdata2, shape: padded2};
-    let r = poly_diatic(arr1, arr2, |x,y| x*y).unwrap();
+    let r = poly_diatic(&arr1, &arr2, |x,y| x*y).unwrap();
     //TODO: Not 100% sure if the reduction is always in R-1 axis, I'm like 90% confident but too lazy to do a math proof.
         //seems to work for all test I did
     let rr = r.reduce(R1-1, |x,y| x+y).unwrap();
@@ -77,7 +78,7 @@ pub fn inner_product<F,G,T1,T2,T3,const R1: usize, const R2: usize>(f: F, g: G, 
     let padded2: [usize; R1+ R2 -1] = helpers::path_shape(&arr2.shape).unwrap();
     let bdata2 = arr2.broadcast_data(&padded2).unwrap();
     let arr2 = Ndarr{data: bdata2, shape: padded2};
-    let r = poly_diatic(arr1, arr2, f).unwrap();
+    let r = poly_diatic(&arr1, &arr2, f).unwrap();
     //TODO: Not 100% sure if the reduction is always in R-1 axis, I'm like 90% confident but too lazy to do a math proof.
         //seems to work for all test I did
     let rr = r.reduce(R1-1, |x,y| g(x,y)).unwrap();
@@ -130,7 +131,7 @@ pub fn outer_product<F,T1,T2,T3,const R1: usize, const R2: usize>(f: F, arr1: Nd
     let padded2: [usize; R1+ R2] = helpers::path_shape(&arr2.shape).unwrap();
     let bdata2 = arr2.broadcast_data(&padded2).unwrap();
     let arr2 = Ndarr{data: bdata2, shape: padded2};
-    let r = poly_diatic(arr1, arr2, f).unwrap();
+    let r = poly_diatic(&arr1, &arr2, f).unwrap();
     //TODO: Not 100% sure if the reduction is always in R-1 axis, I'm like 90% confident but too lazy to do a math proof.
         //seems to work for all test I did
     return r
@@ -138,393 +139,87 @@ pub fn outer_product<F,T1,T2,T3,const R1: usize, const R2: usize>(f: F, arr1: Nd
 
 
 
-// Arithmetic operations
-//TODO: a lot of code repetition, need to refactor this with a macro. Also there should be a better way to handel the permutations of
-    //owned and reference. But if we want the prioritize flexibility and friendliness we really need to handel this permutations.
-//////////////////////////////////////////// Add /////////////////////////////////////////////
+macro_rules!  ndarr_op{
+    ($Ty1:ty, $Ty2:ty, $Trait:tt, $F:tt, $Op:tt) => {
+        
+        impl <T1, T2, T3, const R1: usize, const R2: usize> $Trait<$Ty2> for $Ty1
+        where
+            T1: Clone + Debug + Default + $Trait<T2, Output = T3>,
+            T2: Clone + Debug + Default,
+            T3: Clone + Debug + Default,
+            [usize; const_max(R2, R1)]: Sized,
+            [usize; const_max(R1, R2)]: Sized,
+        {
+            type Output = Ndarr<T3,{const_max(R1,  R2)}>;
+            fn $F(self, rhs: $Ty2) -> Self::Output {
+                poly_diatic(&self, &rhs, |x,y| x $Op y).unwrap()
+            }
+        }
+    };
+}
+//--------------------------------- Add --------------------------------------
+ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Add, add, +);
+ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Add, add, +);
+ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Add, add, +);
+ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Add, add, +);
 
-impl <T1, const R1: usize, const R2: usize> Add<Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Add<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn add(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs, |x,y| x + y).unwrap()
-    }
+//--------------------------------- Sub --------------------------------------
+ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Sub, sub, -);
+ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Sub, sub, -);
+ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Sub, sub, -);
+ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Sub, sub, -);
+
+//--------------------------------- Mul --------------------------------------
+ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Mul, mul, *);
+ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Mul, mul, *);
+ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Mul, mul, *);
+ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Mul, mul, *);
+
+//--------------------------------- Div --------------------------------------
+ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Div, div, /);
+ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Div, div, /);
+ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Div, div, /);
+ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Div, div, /);
+
+//--------------------------------- Rem --------------------------------------
+ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Rem, rem, %);
+ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Rem, rem, %);
+ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Rem, rem, %);
+ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Rem, rem, %);
+
+//////////////////////////////// Scalars ////////////////////////////////////
+macro_rules! scalar_op {
+    ($Op:tt, $f_name:tt, $f:tt) => {
+        impl<L,P, T, const R: usize> $Op<P> for Ndarr<T, R>
+        where
+            L: Clone + Debug + Default,
+            T: Clone + Debug + Default + $Op<P, Output = L>,
+            P: Scalar + Copy,
+        {
+            type Output = Ndarr<L,R>;
+            fn $f_name(self, other: P) -> Self::Output {
+                self.map_types(|x| x.clone() $f other)
+            }
+        }
+        impl<L,P, T, const R: usize> $Op<P> for &Ndarr<T, R>
+        where
+            L: Clone + Debug + Default,
+            T: Clone + Debug + Default + $Op<P, Output = L>,
+            P: Scalar + Copy,
+        {
+            type Output = Ndarr<L, R>;
+            fn $f_name(self, other: P) -> Self::Output {
+                self.map_types(|x| x.clone() $f other)
+            }
+        }
+    };
 }
 
-impl <T1, const R1: usize, const R2: usize> Add<&Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Add<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn add(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs.clone(), |x,y| x + y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Add<Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Add<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn add(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs.clone(), |x,y| x + y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Add<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Add<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn add(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs.clone(), |x,y| x + y).unwrap()
-    }
-}
-
-impl<P, T, const R: usize> Add<P> for Ndarr<T, R>
-where
-    T: Add<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Self;
-    fn add(self, other: P) -> Self::Output {
-        let other = other.into_ndarr(&self.shape);
-        self.bimap(&other, |x, y| x + y)
-    }
-}
-
-impl<P, T, const R: usize> Add<P> for &Ndarr<T, R>
-where
-    T: Add<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Ndarr<T, R>;
-    fn add(self, other: P) -> Self::Output {
-        let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(&other, |x, y| x + y)
-    }
-}
-
-
-//////////////////////////////////////////// Sub /////////////////////////////////////////////
-
-impl <T1, const R1: usize, const R2: usize> Sub<Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Sub<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn sub(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs, |x,y| x - y).unwrap()
-    }
-}
-
-
-impl <T1, const R1: usize, const R2: usize> Sub<&Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Sub<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn sub(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs.clone(), |x,y| x - y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Sub<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Sub<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn sub(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs.clone(), |x,y| x - y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Sub<Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Sub<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn sub(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs.clone(), |x,y| x - y).unwrap()
-    }
-}
-
-impl<P, T, const R: usize> Sub<P> for Ndarr<T, R>
-where
-    T: Sub<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Self;
-    fn sub(self, other: P) -> Self::Output {
-        let other = other.into_ndarr(&self.shape);
-        self.bimap(&other, |x, y| x - y)
-    }
-}
-
-impl<P, T, const R: usize> Sub<P> for &Ndarr<T, R>
-where
-    T: Sub<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Ndarr<T, R>;
-    fn sub(self, other: P) -> Self::Output {
-        let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(&other, |x, y| x - y)
-    }
-}
-
-
-
-//////////////////////////////////////////// Mul /////////////////////////////////////////////
-
-impl <T1, const R1: usize, const R2: usize> Mul<Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Mul<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn mul(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs, |x,y| x * y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Mul<&Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Mul<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn mul(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs.clone(), |x,y| x * y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Mul<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Mul<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn mul(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs.clone(), |x,y| x * y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Mul<Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Mul<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn mul(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs, |x,y| x * y).unwrap()
-    }
-}
-
-impl<P, T, const R: usize> Mul<P> for Ndarr<T, R>
-where
-    T: Mul<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Self;
-    fn mul(self, other: P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.into_ndarr(&self.shape);
-        self.bimap(&other, |x, y| x * y)
-    }
-}
-
-impl<P, T, const R: usize> Mul<P> for &Ndarr<T, R>
-where
-    T: Mul<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Ndarr<T, R>;
-    fn mul(self, other: P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(&other, |x, y| x * y)
-    }
-}
-
-
-
-//////////////////////////////////////////// Div /////////////////////////////////////////////
-
-impl <T1, const R1: usize, const R2: usize> Div<Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Div<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn div(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs, |x,y| x / y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Div<&Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Div<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn div(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs.clone(), |x,y| x / y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Div<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Div<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn div(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs.clone(), |x,y| x / y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Div<Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Div<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn div(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs, |x,y| x / y).unwrap()
-    }
-}
-
-impl<P, T, const R: usize> Div<P> for Ndarr<T, R>
-where
-    T: Div<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Self;
-    fn div(self, other: P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.into_ndarr(&self.shape);
-        self.bimap(&other, |x, y| x / y)
-    }
-}
-
-impl<P, T, const R: usize> Div<P> for &Ndarr<T, R>
-where
-    T: Div<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Ndarr<T, R>;
-    fn div(self, other: P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(&other, |x, y| x / y)
-    }
-}
-
-
-//////////////////////////////////////////// Rem /////////////////////////////////////////////
-
-impl <T1, const R1: usize, const R2: usize> Rem<Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Rem<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn rem(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs, |x,y| x % y).unwrap()
-    }
-}
-
-
-impl <T1, const R1: usize, const R2: usize> Rem<&Ndarr<T1,R2>> for Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Rem<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn rem(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self, rhs.clone(), |x,y| x % y).unwrap()
-    }
-}
-
-
-impl <T1, const R1: usize, const R2: usize> Rem<&Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Rem<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn rem(self, rhs: &Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs.clone(), |x,y| x % y).unwrap()
-    }
-}
-
-impl <T1, const R1: usize, const R2: usize> Rem<Ndarr<T1,R2>> for &Ndarr<T1,R1>
-where
-    T1: Clone + Debug + Default + Rem<Output = T1>,
-    [usize; const_max(R2, R1)]: Sized,
-    [usize; const_max(R1, R2)]: Sized,
-{
-    type Output = Ndarr<T1,{const_max(R1,  R2)}>;
-    fn rem(self, rhs: Ndarr<T1,R2>) -> Self::Output {
-        poly_diatic(self.clone(), rhs, |x,y| x % y).unwrap()
-    }
-}
-
-impl<P, T, const R: usize> Rem<P> for Ndarr<T, R>
-where
-    T: Rem<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Self;
-    fn rem(self, other: P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.into_ndarr(&self.shape);
-        self.bimap(&other, |x, y| x % y)
-    }
-}
-
-impl<P, T, const R: usize> Rem<P> for &Ndarr<T, R>
-where
-    T: Rem<Output = T> +  Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Scalar,
-{
-    type Output = Ndarr<T, R>;
-    fn rem(self, other: P) -> Self::Output {
-        //this is temporary, util we att projection por rank polymorphic operations
-        let other = other.into_ndarr(&self.shape);
-        self.clone().bimap(&other, |x, y| x % y)
-    }
-}
+scalar_op!(Add, add, +);
+scalar_op!(Sub, sub, -);
+scalar_op!(Mul, mul, *);
+scalar_op!(Div, div, /);
+scalar_op!(Rem, rem, %);
 
 
 //////////////////////////////////////////// Neg /////////////////////////////////////////////
@@ -546,7 +241,7 @@ where
 {
     type Output = Ndarr<T,R>;
     fn neg(self) -> Self::Output {
-        self.clone().map(|x| -*x)
+        self.map(|x| -*x)
     }
 }
 
@@ -613,53 +308,52 @@ where
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////  Trig Functions /////////////////////////////////////////////
 impl <T, const R: usize> Ndarr<T,R> 
 where T: Clone + Copy + Debug + Default + Float
 {
     pub fn sin(&self)->Self{
-        let out = self.clone().map(|x| x.f_sin());
+        let out = self.clone().map(|x| x.sin());
         out
     }
 
     pub fn cos(&self)->Self{
-        let out = self.clone().map(|x| x.f_cos());
+        let out = self.clone().map(|x| x.cos());
         out
     }
 
     pub fn tan(&self)->Self{
-        let out = self.clone().map(|x| x.f_tan());
+        let out = self.clone().map(|x| x.tan());
         out
     }
 
     pub fn sinh(&self)->Self{
-        let out = self.clone().map(|x| x.f_sinh());
+        let out = self.clone().map(|x| x.sinh());
         out
     }
     
     pub fn cosh(&self)->Self{
-        let out = self.clone().map(|x| x.f_cosh());
+        let out = self.clone().map(|x| x.cosh());
         out
     }
 
     pub fn tanh(&self)->Self{
-        let out = self.clone().map(|x| x.f_tanh());
+        let out = self.clone().map(|x| x.tanh());
         out
     }
 
     pub fn log(&self, base: T)->Self{
-        let out = self.clone().map(|x| x.f_log(base));
+        let out = self.clone().map(|x| x.log(base));
         out
     }
     
     pub fn ln(&self)->Self{
-        let out = self.clone().map(|x| x.f_ln());
+        let out = self.clone().map(|x| x.ln());
         out
     }
 
     pub fn log2(&self)->Self{
-        let out = self.clone().map(|x| x.f_log2());
+        let out = self.clone().map(|x| x.log2());
         out
     }
 

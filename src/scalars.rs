@@ -9,11 +9,13 @@ use super::*;
 pub trait Scalar {}
 impl Scalar for f64 {}
 impl Scalar for f32 {}
+impl Scalar for i128 {}
 impl Scalar for i64 {}
 impl Scalar for i32 {}
 impl Scalar for i16 {}
 impl Scalar for i8 {}
 impl Scalar for isize {}
+impl Scalar for u128 {}
 impl Scalar for u64 {}
 impl Scalar for u32 {}
 impl Scalar for u16 {}
@@ -52,85 +54,3 @@ where
         0
     }
 }
-
-pub trait Float: Copy + PartialOrd + Neg<Output = Self> {
-    fn f_sin(self) -> Self;
-    fn f_cos(self) -> Self;
-    fn f_tan(self) -> Self;
-    fn f_sinh(self) -> Self;
-    fn f_cosh(self) -> Self;
-    fn f_tanh(self) -> Self;
-    // logs
-    fn f_log(self, base: Self)->Self;
-    fn f_ln(self)->Self;
-    fn f_log2(self)->Self;
-    fn f_log10(self)->Self;
-}
-
-
-impl Float for f32 {
-    fn f_sin(self) -> Self {
-        self.sin()
-    }
-    fn f_cos(self) -> Self {
-        self.cos()
-    }
-    fn f_tan(self) -> Self {
-        self.tan()
-    }
-    fn f_sinh(self) -> Self {
-        self.sinh()
-    }
-    fn f_cosh(self) -> Self {
-        self.cosh()
-    }
-    fn f_tanh(self) -> Self {
-        self.tanh()
-    }
-    fn f_log(self, base: Self)->Self{
-        self.log(base)
-    }
-    fn f_ln(self)->Self{
-        self.ln()
-    }
-    fn f_log2(self)->Self{
-        self.log2()
-    }
-    fn f_log10(self)->Self{
-        self.log10()
-    }
-}
-
-impl Float for f64 {
-    fn f_sin(self) -> Self {
-        self.sin()
-    }
-    fn f_cos(self) -> Self {
-        self.cos()
-    }
-    fn f_tan(self) -> Self {
-        self.tan()
-    }
-    fn f_sinh(self) -> Self {
-        self.sinh()
-    }
-    fn f_cosh(self) -> Self {
-        self.cosh()
-    }
-    fn f_tanh(self) -> Self {
-        self.tanh()
-    }
-    fn f_log(self, base: Self)->Self{
-        self.log(base)
-    }
-    fn f_ln(self)->Self{
-        self.ln()
-    }
-    fn f_log2(self)->Self{
-        self.log2()
-    }
-    fn f_log10(self)->Self{
-        self.log10()
-    }
-}
-
