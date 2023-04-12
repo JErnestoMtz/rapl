@@ -90,7 +90,7 @@ mod tests {
     fn approx_epsilon(a: C<f64>, b:C<f64>, epsilon: f64) -> bool {
         let approx = (a == b) || (a - b).abs() < epsilon;
         if !approx{
-            println!("Error: {:?} !+ {:?}", a, b)
+            println!("Error: {:?} != {:?}", a, b)
         }
         approx
     }
@@ -217,5 +217,14 @@ mod tests {
         assert!(approx(_2_n1.powf(0.), C(1., 0.)));
         assert!(approx(_0_1.powf(4.), C(1.,0.)))
     }
+    #[test]
+    fn powc(){
+        assert!(approx(_2_n1.powc(C(2.,0.)), _2_n1 * _2_n1));
+        assert!(approx(_2_n1.powc(C(0., 0.)), C(1., 0.)));
+        let z: C<f64> = 2.0 + 0.5.i();
+        //form python 
+        assert!(approx(z.powc(z.clone()),C(2.4767939208048335,2.8290270856372506)))
+    }
+    
 }
  

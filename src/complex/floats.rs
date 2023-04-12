@@ -47,6 +47,16 @@ impl<T: Float> C<T> {
             return C(pow_r * pow_c.0, pow_r * pow_c.1)
         }
     }
+    pub fn powc(&self, c: Self)->Self{
+        //z = r*exp(iθ) = e^{ln(r) + iθ}
+        //Z = (c + id)
+        //z^Z = (r*exp(iθ))^{c + id}
+        // z^Z = e ^ {ln(r)(c + id) + iθ(c + id)}
+        let (r, arg1) = self.to_polar();
+        let p1 = C(r.ln() * c.0, r.ln() * c.1);
+        let p2 = C(T::zero(), arg1) * c;
+        (p1 + p2).exp()
+    }
     pub fn sin(&self) -> Self {
         let nom = C(-self.1, self.0).exp() - C(self.1, -self.0).exp();
         let den = C(T::from(0).unwrap(), T::from(2).unwrap());
