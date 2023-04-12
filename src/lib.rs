@@ -17,9 +17,9 @@
 
 
 pub mod ops;
+mod errors;
 mod helpers;
 mod natives;
-mod primitives;
 mod scalars;
 mod utils;
 mod maps;
@@ -34,10 +34,11 @@ use std::{
 #[cfg(feature = "complex")]
 pub mod complex;
 
-pub use primitives::DimError;
+
 pub use scalars::{Scalar};
+pub use errors::DimError;
+
 pub use helpers::{broadcast_shape, const_max};
-pub use primitives::{Broadcast, Reduce, Slice, Reshape, Transpose};
 
 #[cfg(feature = "complex")]
 pub use complex::*;
@@ -90,6 +91,145 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     pub fn from<P: Into<Self>>(p: P) -> Self {
         p.into()
     }
+
+    pub fn reshape<const R2: usize>(&self, shape: &[usize; R2]) -> Result<Ndarr<T,R2>,DimError>
+    where
+        [usize; const_max(R, R2)]: Sized,
+    {
+        if helpers::multiply_list(&self.shape, 1) != helpers::multiply_list(shape, 1){
+            return Err(DimError::new(&format!("Can not reshape array with shape {:?} to {:?}.",&self.shape, shape)))
+        }
+        Ok(Ndarr{data: self.data.clone(), shape: shape.clone()})
+    }
+
+    pub fn slice_at(self, axis: usize) -> Vec<Ndarr<T, { R - 1 }>>
+    where
+        [usize; R - 1]: Sized,
+    {
+        let n = helpers::multiply_list(&self.shape, 1); // number of elements in original array
+        let new_shape: [usize; R - 1] = helpers::remove_element(self.shape, axis);
+        let n_new_arrs = self.shape[axis]; // number of new arrays
+
+        let iota = 0..n;
+
+        let indexes: Vec<[usize; R]> = iota.map(|i| helpers::get_indexes(&i, &self.shape)).collect(); //indexes of each element
+
+        let mut out: Vec<Ndarr<T, { R - 1 }>> = Vec::new(); // to sore
+
+        for i in 0..n_new_arrs {
+            let mut this_data: Vec<T> = Vec::new();
+            for j in 0..n {
+                if indexes[j][axis] == i {
+                    let ind = helpers::get_flat_pos(&indexes[j], &self.shape).unwrap();
+                    this_data.push(self.data[ind].clone())
+                }
+            }
+            out.push(Ndarr::new(&this_data, new_shape).expect("Error initializing"))
+        }
+        out
+    }
+
+    pub fn reduce<F: Fn(T, T) -> T + Clone>(&self, axis: usize, f: F) -> Result<Ndarr<T, { R - 1 }>, DimError>
+    where
+        [usize; R - 1]: Sized,
+    {
+        if axis >= R {
+            Err(DimError::new("Axis grater than rank"))
+        } else {
+            let slices = self.clone().slice_at(axis);
+            let n = slices.len();
+            let mut out = slices[0].clone();
+            for i in 1..n {
+                out.bimap_in_place(&slices[i], f.clone())
+            }
+
+            Ok(out)
+        }
+    }
+
+    pub fn broadcast_to<const R2: usize>(&self, shape: &[usize; R2]) -> Result<Ndarr<T, { const_max(R, R2) }>, DimError>
+    where
+        [usize;  const_max(R, R2) ]: Sized,
+    {
+        //see https://numpy.org/doc/stable/user/basics.broadcasting.html
+        //TODO: not sure at all if this implementation is general, but it seems to work for Rank 1 2 array broadcasted up to rank 3. For higher ranks a more rigorous proof is needed.
+        let new_shape = helpers::broadcast_shape(&self.shape, shape)?;
+
+        if new_shape.len() > R2 {
+            return Err(DimError::new("Array can not be broadcasted to shape"));
+        } else {
+            let n_old = helpers::multiply_list(&self.shape, 1);
+            let n = helpers::multiply_list(&new_shape, 1);
+            let repetitions = n / n_old;
+
+            let mut new_data = vec![T::default(); n];
+            for i in 0..repetitions {
+                for j in 0..n_old {
+                    new_data[i * n_old + j] = self.data[j].clone()
+                }
+            }
+
+            return Ok(Ndarr {
+                data: new_data,
+                shape: new_shape,
+            });
+        }
+    }
+
+    
+    pub fn broadcast<const R2: usize>(&self, shape: &[usize; R2]) -> Result<Ndarr<T, { const_max(R, R2) }>, DimError>
+    where
+        [usize;  const_max(R, R2) ]: Sized,
+    {
+        let new_shape = helpers::broadcast_shape(&self.shape, shape)?;
+
+        let n = helpers::multiply_list(&new_shape, 1);
+
+        let mut new_data = vec![T::default(); n];
+        for i in 0..n {
+            let indexes = helpers::get_indexes(&i, &new_shape);
+            let rev_casted_pos = helpers::rev_cast_pos(&self.shape, &indexes)?;
+            new_data[i] = self.data[rev_casted_pos].clone();
+        }
+        Ok(Ndarr {
+            data: new_data,
+            shape: new_shape,
+        })
+    }
+
+    pub fn broadcast_data<const R2: usize>(&self, shape: &[usize; R2]) -> Result<Vec<T>, DimError>
+    where
+        [usize; const_max(R, R2)]: Sized,
+    {
+        let new_shape = helpers::broadcast_shape(&self.shape, shape)?;
+
+        let n = helpers::multiply_list(&new_shape, 1);
+
+        let mut new_data = vec![T::default(); n];
+        for i in 0..n {
+            let indexes = helpers::get_indexes(&i, &new_shape);
+            let rev_casted_pos = helpers::rev_cast_pos(&self.shape, &indexes)?;
+            new_data[i] = self.data[rev_casted_pos].clone();
+        }
+        Ok(new_data)
+    }
+
+    fn t(self) -> Self {
+        let shape = self.shape.clone();
+        let mut out_dim: [usize; R] = self.shape.clone();
+        out_dim.reverse();
+        let mut out_arr = vec![T::default(); self.data.len()];
+        for i in 0..self.data.len() {
+            let mut new_indexes = helpers::get_indexes(&i, &shape);
+            new_indexes.reverse();
+            let new_pos = helpers::get_flat_pos(&new_indexes, &out_dim).unwrap();
+            out_arr[new_pos] = self.data[i].clone();
+        }
+        Ndarr {
+            data: out_arr,
+            shape: out_dim,
+        }
+    }
 }
 
 impl<T: Copy + Clone + Debug + Default, const R: usize> Ndarr<T, R> {
@@ -101,8 +241,6 @@ impl<T: Copy + Clone + Debug + Default, const R: usize> Ndarr<T, R> {
         }
     }
 }
-
-
 
 pub trait IntoNdarr<T, const R: usize>
 where

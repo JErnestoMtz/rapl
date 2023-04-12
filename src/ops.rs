@@ -1,6 +1,6 @@
-use crate::{scalars::{Scalar}, primitives::{Broadcast, DimError, Reduce, BroadcastData}, helpers::{const_max}};
-use num_traits::Float;
 
+use num_traits::Float;
+use crate::{scalars::{Scalar, Float}, helpers::{const_max}};
 use super::*;
 use std::ops::*;
 
