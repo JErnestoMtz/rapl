@@ -25,13 +25,13 @@ mod utils;
 mod maps;
 mod display;
 
-//#[cfg(feature = "complex")]
+#[cfg(feature = "complex")]
 mod complex_tensor;
 use std::{
     fmt::Debug,
     fmt::{Display},
 };
-//#[cfg(feature = "complex")]
+#[cfg(feature = "complex")]
 pub mod complex;
 
 pub use primitives::DimError;
@@ -39,7 +39,7 @@ pub use scalars::{Scalar};
 pub use helpers::{broadcast_shape, const_max};
 pub use primitives::{Broadcast, Reduce, Slice, Reshape, Transpose};
 
-//#[cfg(feature = "complex")]
+#[cfg(feature = "complex")]
 pub use complex::*;
 
 ///Main struct of N Dimensional generic array. The shape is denoted by the `shape` array where the length is the Rank of the Ndarray the actual values are stored in a flattened state in a rank 1 array.
