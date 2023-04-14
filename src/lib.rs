@@ -25,13 +25,13 @@ mod utils;
 mod maps;
 mod display;
 
-#[cfg(feature = "complex")]
+//#[cfg(feature = "complex")]
 mod complex_tensor;
 use std::{
     fmt::Debug,
     fmt::{Display},
 };
-#[cfg(feature = "complex")]
+//#[cfg(feature = "complex")]
 pub mod complex;
 
 
@@ -40,7 +40,7 @@ pub use errors::DimError;
 
 pub use helpers::{broadcast_shape, const_max};
 
-#[cfg(feature = "complex")]
+//#[cfg(feature = "complex")]
 pub use complex::*;
 
 ///Main struct of N Dimensional generic array. The shape is denoted by the `shape` array where the length is the Rank of the Ndarray the actual values are stored in a flattened state in a rank 1 array.
@@ -99,7 +99,7 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
         if helpers::multiply_list(&self.shape, 1) != helpers::multiply_list(shape, 1){
             return Err(DimError::new(&format!("Can not reshape array with shape {:?} to {:?}.",&self.shape, shape)))
         }
-        Ok(Ndarr{data: self.data.clone(), shape: shape.clone()})
+        Ok(Ndarr{data: self.data.clone(), shape: *shape})
     }
 
     pub fn slice_at(self, axis: usize) -> Vec<Ndarr<T, { R - 1 }>>
@@ -215,8 +215,8 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     }
 
     fn t(self) -> Self {
-        let shape = self.shape.clone();
-        let mut out_dim: [usize; R] = self.shape.clone();
+        let shape = self.shape;
+        let mut out_dim: [usize; R] = self.shape;
         out_dim.reverse();
         let mut out_arr = vec![T::default(); self.data.len()];
         for i in 0..self.data.len() {

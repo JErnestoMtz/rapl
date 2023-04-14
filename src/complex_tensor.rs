@@ -1,8 +1,8 @@
-use std::{ops::{Neg, Mul, Add}, clone, f64::consts::PI};
+use std::{ops::{Neg, Mul, Add, Div, MulAssign}, clone, f64::consts::PI};
 
 use super::*;
 use crate::complex::*;
-use num_traits::Float;
+use num_traits::{Float, Num};
 use crate::scalars::Scalar;
 
     
@@ -23,97 +23,131 @@ impl Scalar for C<usize> {}
 
 impl<T: Copy + PartialEq + Clone + Debug + Default, const R: usize> Ndarr<C<T>,R>{
     pub fn re(&self) -> Ndarr<T,R>{
-        let out = self.clone().map_types(|z| z.re());
+        let out = self.map_types(|z| z.re());
         out
     }
     pub fn im(&self) -> Ndarr<T,R> {
-        let out = self.clone().map_types(|z| z.im());
+        let out = self.map_types(|z| z.im());
         out
     }
 }
 
 impl<T: Copy + PartialEq + Neg<Output = T> + Clone + Debug + Default, const R: usize> Ndarr<C<T>,R> {
     pub fn conj(&self) -> Self {
-        let out = self.clone().map(|z| z.conj());
+        let out = self.map(|z| z.conj());
+        out
+    }
+}
+
+impl<T, const R: usize> Ndarr<C<T>,R> 
+where T: Copy + PartialEq + Neg<Output = T> + Clone + Debug + Default + Div<Output =T> + Mul<Output = T> + Add<Output = T>
+{
+    pub fn inv(&self) -> Self {
+        let out = self.map(|z| z.inv());
         out
     }
 }
 
 impl<T: Copy + PartialEq + Add<Output = T> + Mul<Output = T>+ Clone + Debug + Default , const R: usize> Ndarr<C<T>,R> {
     pub fn r_square(&self) -> Ndarr<T,R> {
-        let out = self.clone().map_types(|z| z.r_square());
+        let out = self.map_types(|z| z.r_square());
         out
     }
 }
 
+impl<T, const R: usize> Ndarr<C<T>,R>
+where C<T>: MulAssign + Debug,
+      T: Clone + Default + Debug + Copy + PartialEq + Num
+{
+   pub fn powi(&self, n: i32)->Self{
+      let out = self.map(|z| z.powi(n));
+      out
+   }
+}
 
+
+
+
+//---------------Complex Float Tensors
 
 impl <T, const R: usize> Ndarr<C<T>,R> 
 where T: Clone + Debug + Default + Float
 {
 
     pub fn abs(&self)->Ndarr<T, R>{
-       let out = self.clone().map_types(|z| z.abs() );
+       let out = self.map_types(|z| z.abs() );
        out
     }
     pub fn exp(&self)->Self{
-       let out = self.clone().map(|z| z.exp() );
+       let out = self.map(|z| z.exp() );
        out
     }
     pub fn arg(&self)->Ndarr<T,R>{
-       let out = self.clone().map_types(|z| z.arg() );
+       let out = self.map_types(|z| z.arg() );
        out
     }
     pub fn ln(&self)->Self{
-       let out = self.clone().map(|z| z.ln() );
+       let out = self.map(|z| z.ln() );
        out
     }
+    pub fn sqrt(&self)->Self{
+       let out = self.map(|z| z.sqrt() );
+       out
+    }
+    pub fn powf(&self, n: T)->Self{
+       let out = self.map(|z| z.powf(n) );
+       out
+    }
+   pub fn powc(&self, z: C<T>)->Self{
+       let out = self.map(|z| z.powc(*z) );
+       out
+    }
+    
     pub fn sin(&self)->Self{
-       let out = self.clone().map(|z| z.sin() );
+       let out = self.map(|z| z.sin() );
        out
     }
     pub fn cos(&self)->Self{
-       let out = self.clone().map(|z| z.cos() );
+       let out = self.map(|z| z.cos() );
        out
     }
     pub fn tan(&self)->Self{
-       let out = self.clone().map(|z| z.tan() );
+       let out = self.map(|z| z.tan() );
 
        out
     }
     pub fn csc(&self)->Self{
-       let out = self.clone().map(|z| z.csc() );
+       let out = self.map(|z| z.csc() );
        out
     }
     pub fn sec(&self)->Self{
-       let out = self.clone().map(|z| z.sec() );
+       let out = self.map(|z| z.sec() );
        out
     }
     pub fn cot(&self)->Self{
-       let out = self.clone().map(|z| z.cot() );
+       let out = self.map(|z| z.cot() );
        out
     }
-
     pub fn to_polar(&self) -> Ndarr<(T, T),R> {
-       let out = self.clone().map_types(|z| z.to_polar() );
+       let out = self.map_types(|z| z.to_polar() );
        out
     }
 
     pub fn is_infinite(&self) -> Ndarr<bool,R> {
-       let out = self.clone().map_types(|z| z.is_infinite() );
+       let out = self.map_types(|z| z.is_infinite() );
        out
     }
     pub fn is_finite(&self) -> Ndarr<bool,R> {
-       let out = self.clone().map_types(|z| z.is_finite() );
+       let out = self.map_types(|z| z.is_finite() );
        out
     }
     pub fn is_normal(&self) -> Ndarr<bool, R> {
-       let out = self.clone().map_types(|z| z.is_normal() );
+       let out = self.map_types(|z| z.is_normal() );
        out
 
     }
     pub fn is_nan(&self) -> Ndarr<bool,R>{
-       let out = self.clone().map_types(|z| z.is_nan() );
+       let out = self.map_types(|z| z.is_nan() );
        out
     }
 
@@ -135,6 +169,6 @@ mod complex_tensor_test{
         let quads =  Ndarr::from([1. + 0_f64.i(), 1.0.i(), -1. + 0_f64.i(), -1.0.i()]);
         println!("{:?}",  quads * (PI/2.).i().exp() )
     }
-    
+
 
 }
