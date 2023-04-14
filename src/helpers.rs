@@ -64,6 +64,23 @@ pub fn remove_element<T: Copy, const N: usize>(arr: [T; N], index: usize) -> [T;
     result
 }
 
+
+pub fn insert_element<T: Copy, const N: usize>(arr: [T; N], index: usize, element: T) -> [T; N + 1] {
+    let mut result = [arr[0]; N + 1];
+    let mut inserted = false;
+    for i in 0..result.len(){
+        if ! inserted && i == index{
+            result[i] = element;
+            inserted = true
+        }else if ! inserted{
+            result[i] = arr[i]
+        }else{
+            result[i] = arr[i-1]
+        }
+    }
+    return  result;
+}
+
 // paths a shape of rank N with ones in the left until is rank M
 pub fn path_shape<const N: usize, const M: usize>(
     shape: &[usize; N],

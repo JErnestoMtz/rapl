@@ -102,7 +102,7 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
         Ok(Ndarr{data: self.data.clone(), shape: *shape})
     }
 
-    pub fn slice_at(self, axis: usize) -> Vec<Ndarr<T, { R - 1 }>>
+    pub fn slice_at(&self, axis: usize) -> Vec<Ndarr<T, { R - 1 }>>
     where
         [usize; R - 1]: Sized,
     {
@@ -124,6 +124,7 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
                     this_data.push(self.data[ind].clone())
                 }
             }
+            //TODO: remove push, with allocation size
             out.push(Ndarr::new(&this_data, new_shape).expect("Error initializing"))
         }
         out
@@ -146,6 +147,8 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
             Ok(out)
         }
     }
+
+
 
     pub fn broadcast_to<const R2: usize>(&self, shape: &[usize; R2]) -> Result<Ndarr<T, { const_max(R, R2) }>, DimError>
     where
@@ -232,6 +235,24 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     }
 }
 
+pub fn de_slice<T: Clone + Debug + Default, const R: usize>(slices: &Vec<Ndarr<T,R>>, axis: usize)->Ndarr<T,{R+1}>{
+    let l_slice = slices[0].len();
+    let shape_slice = slices[0].shape();
+
+    let out_shape : [usize; R + 1]= helpers::insert_element(shape_slice, axis, slices.len());
+    let mut  new_data: Vec<T> = vec![T::default(); helpers::multiply_list(&out_shape, 1)];
+    for i in 0..slices.len(){
+        for j in 0..l_slice{
+            //calculate the flat position of element j of slice i
+            let ind = helpers::get_indexes(&j, &shape_slice);
+            let new_pos = helpers::get_flat_pos(&helpers::insert_element( ind, axis, i), &out_shape).unwrap();
+            new_data[new_pos] = slices[i].data[j].clone()
+        }
+    }
+    Ndarr { data: new_data, shape: out_shape }
+}
+
+
 impl<T: Copy + Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     pub fn scalar(self) -> T {
         if R == 0 {
@@ -297,7 +318,10 @@ mod tests {
         assert_eq!(b, Ndarr::from([[1, 1], [1, 1]]));
         assert_eq!(c, Ndarr::from([5, 5, 5, 5]));
     }
-
+    #[test]
+    fn helpers(){
+        assert_eq!(helpers::insert_element([1,2,3], 0, 0),[0,1,2,3])
+    }
     #[test]
     fn bimap_test() {
         let arr1 = Ndarr::new(&[0, 1, 2, 3], [2, 2]).expect("Error initializing");
@@ -371,6 +395,15 @@ mod tests {
             slices_2[0],
             Ndarr::new(&[0, 3, 6, 9, 12, 15], [2, 3]).unwrap()
         );
+    }
+
+    #[test]
+    fn deslice(){
+        let arr = Ndarr::from([[1,2],[3,4]]);
+        let slices0 = arr.slice_at(0);
+        let slices1 = arr.slice_at(1);
+        assert_eq!(arr, de_slice(&slices0, 0));
+        assert_eq!(arr, de_slice(&slices1, 1));
     }
 
     #[test]

@@ -59,13 +59,13 @@ where
         }else if n > 0{
             let mut out = self.clone();
             for _ in  1..n{
-                out *= self.clone();
+                out *= *self;
             }
             return out
         }else{
-            let mut out = self.clone();
+            let mut out = *self;
             for _ in  1..-n{
-                out *= self.clone();
+                out *= *self;
             }
             let out = C(T::one(), T::zero()) / out;
             return  out;

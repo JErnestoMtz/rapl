@@ -68,10 +68,24 @@ impl<T1: Debug + Clone + Default, const R: usize> Ndarr<T1, R>{
             shape: self.shape,
         }
     }
-
+    
     pub fn bimap_in_place<F: Fn(T1,T1)->T1>(&mut self, other: &Self, f: F) {
         for i in 0..self.data.len() {
             self.data[i] = f(self.data[i].clone(), other.data[i].clone())
+        }
+    }
+
+    pub fn cum_map<F: Fn(T1,T1)->T1>(&self,axis: usize, f: F) -> Self {
+        let mut out = vec![T1::default(); self.data.len()];
+        let shape = self.shape;
+        let dim = self.shape[axis];
+        for i in 0..dim{
+            
+        }
+
+        Ndarr {
+            data: out,
+            shape: self.shape,
         }
     }
 
