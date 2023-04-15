@@ -405,6 +405,18 @@ mod tests {
         assert_eq!(arr, de_slice(&slices0, 0));
         assert_eq!(arr, de_slice(&slices1, 1));
     }
+    #[test]
+    fn scan(){
+        let arr = Ndarr::from([[1,2],[3,4]]);
+        let cumsum_r0 = arr.scanr(0, |x, y| x + y);
+        let cumsum_r1 = arr.scanr(1, |x, y| x + y);
+        let cumsum_l0 = arr.scanl(0, |x, y| x + y);
+        let cumsum_l1 = arr.scanl(1, |x, y| x + y);
+        assert_eq!(cumsum_r0, Ndarr::from([[1, 2],[4, 6]]));
+        assert_eq!(cumsum_r1, Ndarr::from([[1, 3],[3, 7]]));
+        assert_eq!(cumsum_l0, Ndarr::from([[4, 6],[3, 4]]));
+        assert_eq!(cumsum_l1, Ndarr::from([[3, 2],[7, 4]]));
+    }
 
     #[test]
     fn reduce() {

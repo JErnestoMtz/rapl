@@ -75,19 +75,31 @@ impl<T1: Debug + Clone + Default, const R: usize> Ndarr<T1, R>{
         }
     }
 
-    pub fn cum_map<F: Fn(T1,T1)->T1>(&self,axis: usize, f: F) -> Self {
-        let mut out = vec![T1::default(); self.data.len()];
-        let shape = self.shape;
-        let dim = self.shape[axis];
-        for i in 0..dim{
-            
+    pub fn scanr<F: Fn(T1,T1)->T1>(&self,axis: usize, f: F) -> Self
+        where [usize; R -1]: Sized,
+        [usize; R - 1 + 1]: Sized, // lol const generics still too dum, we need this or it else breaks
+        [usize; R + 1 - 1]: Sized, 
+    {
+        let mut slices = self.slice_at(axis);
+        for i in 0..slices.len()-1{
+            slices[i + 1] = slices[i+1].bimap(&slices[i], &f)
         }
-
-        Ndarr {
-            data: out,
-            shape: self.shape,
-        }
+        let out = de_slice(&slices, axis);
+        Ndarr{data: out.data, shape: self.shape}
     }
 
+    pub fn scanl<F: Fn(T1,T1)->T1>(&self,axis: usize, f: F) -> Self
+        where [usize; R -1]: Sized,
+        [usize; R - 1 + 1]: Sized, // lol const generics still too dum, we need this or it else breaks
+        [usize; R + 1 - 1]: Sized,
+    {
+        let mut slices = self.slice_at(axis);
+        let l = slices.len();
+        for i in 0..slices.len()-1{
+            slices[l - 2 -i] = slices[l- 2 -i].bimap(&slices[l - 1 - i], &f)
+        }
+        let out = de_slice(&slices, axis);
+        Ndarr{data: out.data, shape: self.shape}
+    }
 
 }
