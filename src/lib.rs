@@ -416,6 +416,9 @@ mod tests {
         assert_eq!(cumsum_r1, Ndarr::from([[1, 3],[3, 7]]));
         assert_eq!(cumsum_l0, Ndarr::from([[4, 6],[3, 4]]));
         assert_eq!(cumsum_l1, Ndarr::from([[3, 2],[7, 4]]));
+        let arr2 = Ndarr::from([0.1, 0.2, 0.3]);
+        let sump = arr2.scanr(0,|x,y| x + y);
+        println!("{}", sump)
     }
 
     #[test]

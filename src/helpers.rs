@@ -65,8 +65,8 @@ pub fn remove_element<T: Copy, const N: usize>(arr: [T; N], index: usize) -> [T;
 }
 
 
-pub fn insert_element<T: Copy, const N: usize>(arr: [T; N], index: usize, element: T) -> [T; N + 1] {
-    let mut result = [arr[0]; N + 1];
+pub fn insert_element<T: Copy + Default, const N: usize>(arr: [T; N], index: usize, element: T) -> [T; N + 1] {
+    let mut result = [T::default(); N + 1];
     let mut inserted = false;
     for i in 0..result.len(){
         if ! inserted && i == index{
