@@ -1,5 +1,5 @@
 
-use num_traits::Float;
+use num_traits::{Float, Signed};
 use crate::{scalars::{Scalar}, helpers::{const_max}};
 use super::*;
 use std::ops::*;
@@ -375,23 +375,34 @@ where T: Clone + Copy + Debug + Default + Float
     }
 }
 
-// TODO: find a better way
-pub fn abs_num<T>(n: T)->T
-where T: From<i8> + Mul<Output = T> + PartialOrd
+//---------------------- Signed ---------------------
+impl <T, const R: usize> Ndarr<T,R> 
+where T: Clone + Debug + Default + Signed + PartialOrd
 {
-    if n < Into::<T>::into(0) {
-        return Into::<T>::into(-1) * n;
-    }else{
-        return n;
+    pub fn abs(&self)->Self{
+       let out = self.map(|x| x.abs());
+       out
+    }
+    pub fn is_positive(&self)->Ndarr<bool, R>{
+       let out = self.map_types(|x| x.is_positive());
+       out
     }
 
+    pub fn is_negative(&self)->Ndarr<bool, R>{
+       let out = self.map_types(|x| x.is_negative());
+       out
+    }
 }
 
 impl <T, const R: usize> Ndarr<T,R> 
-where T: Clone + Debug + Default + From<i8> + Mul<Output = T> + PartialOrd
+where T: Clone + Debug + Default + Add<Output = T> + PartialOrd
 {
-    pub fn abs(&self)->Self{
-       let out = self.clone().map(|x| abs_num(x.clone()));
-       out
+    pub fn sum(&self)->T{
+        let data = self.data.clone();
+        let mut sum = data[0].clone();
+        for t in data{
+            sum = sum + t;
+        }
+        return sum;
     }
 }
