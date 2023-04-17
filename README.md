@@ -160,7 +160,6 @@ assert_eq!(arr_z.im(), Ndarr::from([2,2,2]));
 - Matrix inversion.
 - Image to array conversion.
 - APL-inspired rotate function.
-- Change Inner and Outer products to be higher-order functions.
 - Add generalized diatic functions between scaler types.
 - Commonly use ML functions like Relu, Softmax etc.
 - Support for existing plotting libraries in rust.
