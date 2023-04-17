@@ -89,6 +89,12 @@ assert_eq!(arr.slice_at(1)[0], Ndarr::from([1,3]))
 let sum_axis = arr.clone().reduce(1, |x,y| x + y).unwrap();
 assert_eq!(sum_axis, Ndarr::from([6, 15])); //sum reduction
 ```
+- Scan right an left
+```Rust
+ let s = Ndarr::from([1,2,3]);
+ let cumsum = s.scanr( 0, |x,y| x + y);
+ assert_eq!(cumsum, Ndarr::from([1,3,6]));
+```
 
 ### Dyatic tensor operations
 - Generalized matrix multiplication between compatible arrays
@@ -119,6 +125,31 @@ let matmul = mat_mul(a, b))
 
     let deck = ops::outer_product( add_str, ranks, suits).flatten(); //All cards in a deck
 ```
+### Complex numbers
+```toml
+rapl = {git = "https://github.com/JErnestoMtz/rapl", features = ["complex"]}
+```
+
+You can ergonomically do operations between native numeric types and complex types `C<T>` with a simple and clean interface. 
+``` Rust
+use rapl::*;
+// Complex sclars
+    let z = 1 + 2.i();
+    assert_eq!(z, C(1,2));
+    assert_eq!(z - 3, -2 + 2.i());
+```
+
+Seamlessly work with complex numbers, and complex tensors.
+```Rust
+use rapl::*;
+// Complex tensors
+let arr = Ndarr::from([1, 2, 3]);
+let arr_z = arr + -1 + 2.i();
+assert_eq!(arr_z, Ndarr::from([C(0,2), C(1,2), C(2,2)]));
+assert_eq!(arr_z.im(), Ndarr::from([2,2,2]));
+```
+
+
 
 ### Features in development:
 - Port to stable Rust
@@ -132,5 +163,4 @@ let matmul = mat_mul(a, b))
 - Change Inner and Outer products to be higher-order functions.
 - Add generalized diatic functions between scaler types.
 - Commonly use ML functions like Relu, Softmax etc.
-- Native support for complex numbers.
 - Support for existing plotting libraries in rust.
