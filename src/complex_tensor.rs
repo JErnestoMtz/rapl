@@ -34,9 +34,15 @@ impl<T: Copy + PartialEq + Clone + Debug + Default, const R: usize> Ndarr<C<T>,R
 
 impl<T: Copy + PartialEq + Neg<Output = T> + Clone + Debug + Default, const R: usize> Ndarr<C<T>,R> {
     pub fn conj(&self) -> Self {
+      /// Element wise complex conjugate.
         let out = self.map(|z| z.conj());
         out
     }
+    pub fn conj_t(&self)->Self{
+      let out = self.map(|z| z.conj());
+      out.t()
+    }
+
 }
 
 impl<T, const R: usize> Ndarr<C<T>,R> 

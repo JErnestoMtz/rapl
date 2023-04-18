@@ -347,6 +347,13 @@ mod tests {
         assert_eq!((&arr3 / &arr3).data, vec![1, 1, 1, 1]);
         assert_eq!((-arr1).data, vec![-1, -1, -1, -1]);
     }
+    #[test]
+    fn assing_ops(){
+        let mut arr = Ndarr::from([1,2,3]);
+        arr += &1;
+        arr += &Ndarr::from([-1,-1,-3]);
+        assert_eq!(arr, Ndarr::from([1,2,1]))
+    }
 
     #[test]
     fn broadcast_ops() {
@@ -418,7 +425,6 @@ mod tests {
         assert_eq!(cumsum_l1, Ndarr::from([[3, 2],[7, 4]]));
         let arr2 = Ndarr::from([0.1, 0.2, 0.3]);
         let sump = arr2.scanr(0,|x,y| x + y);
-        println!("{}", sump)
     }
 
     #[test]
