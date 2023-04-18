@@ -1,6 +1,6 @@
-use crate::helpers::multiply_list;
 
 use super::*;
+use super::helpers::multiply_list;
 
 //// zeros and ones
 impl<T, const R: usize> Ndarr<T, R>

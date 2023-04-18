@@ -22,7 +22,6 @@ mod helpers;
 mod natives;
 mod scalars;
 mod utils;
-mod maps;
 mod display;
 
 #[cfg(feature = "complex")]

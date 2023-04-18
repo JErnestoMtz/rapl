@@ -6,5 +6,6 @@ mod arithmetics;
 mod floats;
 mod extras;
 mod dyadic;
+mod maps;
 
 pub use dyadic::*;
