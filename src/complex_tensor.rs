@@ -39,6 +39,7 @@ impl<T: Copy + PartialEq + Neg<Output = T> + Clone + Debug + Default, const R: u
         out
     }
     pub fn conj_t(&self)->Self{
+      /// Conjugate or Hermitian transpose.
       let out = self.map(|z| z.conj());
       out.t()
     }
@@ -49,6 +50,7 @@ impl<T, const R: usize> Ndarr<C<T>,R>
 where T: Copy + PartialEq + Neg<Output = T> + Clone + Debug + Default + Div<Output =T> + Mul<Output = T> + Add<Output = T>
 {
     pub fn inv(&self) -> Self {
+      /// Applies inv element wise.
         let out = self.map(|z| z.inv());
         out
     }
