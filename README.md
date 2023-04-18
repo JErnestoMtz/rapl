@@ -42,8 +42,8 @@ let fold = Ndarr::new(data: &[0, 1, 2, 3], shape: [2, 2]).expect("Error initiali
 - Arithmetic operation with with scalars
 ```Rust
 let ones: Ndarr<i32, 2> = Ndarr::ones(&[4,4]);
-let twos = &ones + 1;
-let sixes = &twos * 3;
+let twos = ones + 1;
+let sixes = twos * 3;
 ```
 - Arithmetic operation between `Ndarr`s,
 ```Rust
