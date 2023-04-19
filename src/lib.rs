@@ -21,9 +21,8 @@ mod errors;
 mod helpers;
 mod natives;
 mod scalars;
-mod utils;
+pub mod utils;
 mod display;
-
 
 #[cfg(feature = "complex")]
 mod complex_tensor;
