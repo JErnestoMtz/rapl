@@ -4,6 +4,7 @@ use super::Ndarr;
 use num_traits::Signed;
 use std::{env, path::Path};
 
+pub use image::ImageFormat;
 
 ///Open an image as RGB represented as  `Ndarr<u8,3>` where the axis dimensions are (width, height, 3), were the depth represent each color channel. 
 pub fn open_rgbu8(path: &dyn AsRef<Path>)->Result<Ndarr<u8,3>,ImageError>{
