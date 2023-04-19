@@ -14,5 +14,5 @@ num-traits = "0.2.15"
 
 [features]
 default = ["complex", "rapl_image"]
-rapl_image = ["dep:image"]
 complex = []
+rapl_image = ["dep:image"]
