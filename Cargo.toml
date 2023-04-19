@@ -13,6 +13,6 @@ image = {version = "0.24.6", optional = true}
 num-traits = "0.2.15"
 
 [features]
-default = ["complex", "rapl_image"]
+default = ["complex"]
 complex = []
 rapl_image = ["dep:image"]

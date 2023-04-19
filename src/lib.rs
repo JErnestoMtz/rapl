@@ -298,8 +298,6 @@ where
 #[cfg(test)]
 mod tests {
 
-    use crate::utils::rapl_img::open_lumaf32;
-
     use super::*;
     use ops::*;
 
@@ -580,10 +578,5 @@ mod tests {
         assert_eq!(a_string.data, vec!["1".to_owned(), "2".to_owned(), "3".to_owned()]);
 
         println!("a_string: {:#?}", a_string); // ["1","2","3"]
-    }
-
-    #[test]
-    fn imag_t(){
-        let img = open_lumaf32(&"test_img.jpg");
     }
 }
