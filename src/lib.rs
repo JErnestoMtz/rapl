@@ -578,4 +578,9 @@ mod tests {
 
         println!("a_string: {:#?}", a_string); // ["1","2","3"]
     }
+
+    #[test]
+    fn image_t(){
+        let img = open_rgb8(&"test_img.jpg");
+    }
 }
