@@ -3,5 +3,5 @@ use super::Ndarr;
 
 mod fill_arr;
 
-#[cfg(feature = "image")]
+#[cfg(feature = "rapl_image")]
 mod rapl_img;
