@@ -3,15 +3,21 @@ use num_traits::Float;
 use super::*;
 
 impl <T: Float + Default + Clone + Debug, const R: usize> Ndarr<T,R> {
+    //Sigmoid function
     pub fn sigmoid(&self)->Self{
         self.map(|x| T::one() / (T::one() + (-*x).exp()))
     }
+    //Relu 
     pub fn relu(&self)->Self{
         self.map(|x| x.max(T::zero()))
     }
+
+    //LeakyRelu  
     pub fn leaky_relu(&self, a: T)->Self{
         self.map(|x| x.max(a * *x))
     }
+
+    //Softmax 
     pub fn softmax(&self)->Self{
         let max = self.maxf();
         let exp = self.map(|x| *x - max).exp();
