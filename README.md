@@ -171,7 +171,7 @@ fn main() {
 - [x] Image to array conversion.
 - [x] Array to image conversion.
 - [ ] APL-inspired rotate function.
-- [ ] Commonly use ML functions like Relu, Softmax etc.
+- [x] Commonly use ML functions like Relu, Softmax etc.
 - [ ] Support for existing plotting libraries in rust.
 - [ ] Mutable slicing.
 - [ ] Other Linear algebra functionalities: Eigen, LU, Gauss Jordan, Etc.
