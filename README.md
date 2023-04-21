@@ -2,7 +2,7 @@
 
 *NOTE*: `rapl`  requires Nightly and is strictly intended for non-production purposes only. `rapl` utilizes certain unstable features that may result in unexpected behavior, and is not optimized for performance.
 
-`rapl` is an experimental numerical computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomics and user-friendliness while maintaining generality. Notably, it offers automatic Rank Polymorphic broadcasting between arrays of varying shapes and scalars as a built-in feature.
+`rapl` is an experimental numerical computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomics and user-friendliness while maintaining generality. Our goal is to make Rust a viable option for scripting and numerical analysis by creating a versatile and user-friendly tools.
 
 ```Rust
 #![feature(generic_const_exprs)]
@@ -126,10 +126,6 @@ let matmul = mat_mul(a, b))
     let deck = ops::outer_product( add_str, ranks, suits).flatten(); //All cards in a deck
 ```
 ### Complex numbers
-```toml
-rapl = {git = "https://github.com/JErnestoMtz/rapl", features = ["complex"]}
-```
-
 You can ergonomically do operations between native numeric types and complex types `C<T>` with a simple and clean interface. 
 ``` Rust
 use rapl::*;
@@ -148,18 +144,35 @@ let arr_z = arr + -1 + 2.i();
 assert_eq!(arr_z, Ndarr::from([C(0,2), C(1,2), C(2,2)]));
 assert_eq!(arr_z.im(), Ndarr::from([2,2,2]));
 ```
+### Image to Array and Array to Image conversion
+You can easily work with images of almost any format. `rapl` provides  helpful functions to open images as both RGB and Luma `Ndarr`, and also save them to your preferred format.
 
+```Rust
+use rapl::*;
+use rapl::utils::rapl_img;
 
+fn main() {
+    //open RGB image as  Ndarr<u8,3>
+    let img: Ndarr<u8,3> = rapl_img::open_rgbu8(&"image_name.jpg").unwrap();
+    //Split RGB channels by Slicing along 3'th axis.
+    let channels: Vec<Ndarr<u8,2>> = img.slice_at(2);
+    //select blue channel and save it as black and white image.
+    channels[2].save_as_luma(&"blue_channel.png", rapl_img::ImageFormat::Png);
+}
+```
 
 ### Features in development:
-- Port to stable Rust
-- Line space and meshigrid initialization
-- Range support for floating types.
-- Random array creation.
-- 1D and 2D FFT.
-- Matrix inversion.
-- Image to array conversion.
-- APL-inspired rotate function.
-- Add generalized diatic functions between scaler types.
-- Commonly use ML functions like Relu, Softmax etc.
-- Support for existing plotting libraries in rust.
+- [x] Native support for complex numbers.
+- [ ] Port to stable Rust
+- [ ] Line space and meshigrid initialization.
+- [ ] Random array creation.
+- [ ] 1D and 2D FFT.
+- [ ] Matrix inversion.
+- [x] Image to array conversion.
+- [x] Array to image conversion.
+- [ ] APL-inspired rotate function.
+- [ ] Commonly use ML functions like Relu, Softmax etc.
+- [ ] Support for existing plotting libraries in rust.
+- [ ] Mutable slicing.
+- [ ] Other Linear algebra functionalities: Eigen, LU, Gauss Jordan, Etc.
+- [ ] Automatic differentiation.
