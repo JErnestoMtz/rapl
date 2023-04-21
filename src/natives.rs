@@ -18,7 +18,7 @@ where
     T: Clone + Debug + Copy + Default + Scalar,
 {
     fn from(value: [[T; N1]; N2]) -> Self {
-        let mut data = Vec::with_capacity(N1*N2);
+        let mut data = Vec::with_capacity(N1 * N2);
         for row in value.iter() {
             data.extend_from_slice(row);
         }
@@ -34,7 +34,7 @@ where
     T: Clone + Debug + Copy + Default + Scalar,
 {
     fn from(value: [[[T; N1]; N2]; N3]) -> Self {
-        let mut data = Vec::with_capacity(N1*N2*N3);
+        let mut data = Vec::with_capacity(N1 * N2 * N3);
         for row in value.iter() {
             for column in row.iter() {
                 data.extend_from_slice(column)
@@ -47,13 +47,13 @@ where
     }
 }
 
-impl<T, const N1: usize, const N2: usize, const N3: usize, const N4: usize> From<[[[[T; N1]; N2]; N3]; N4]>
-    for Ndarr<T, 4>
+impl<T, const N1: usize, const N2: usize, const N3: usize, const N4: usize>
+    From<[[[[T; N1]; N2]; N3]; N4]> for Ndarr<T, 4>
 where
     T: Clone + Debug + Copy + Default + Scalar,
 {
     fn from(value: [[[[T; N1]; N2]; N3]; N4]) -> Self {
-        let mut data = Vec::with_capacity(N1*N2*N3*N4);
+        let mut data = Vec::with_capacity(N1 * N2 * N3 * N4);
         for axis1 in value.iter() {
             for axis2 in axis1.iter() {
                 for axis3 in axis2.iter() {
@@ -82,9 +82,10 @@ where
 }
 
 impl<T> From<std::ops::Range<T>> for Ndarr<T, 1>
-where T: Copy + Clone + Debug + Default + Scalar,
-std::ops::Range<T>: Iterator,
-Vec<T>: FromIterator<<std::ops::Range<T> as Iterator>::Item>
+where
+    T: Copy + Clone + Debug + Default + Scalar,
+    std::ops::Range<T>: Iterator,
+    Vec<T>: FromIterator<<std::ops::Range<T> as Iterator>::Item>,
 {
     fn from(value: std::ops::Range<T>) -> Self {
         let out: Vec<T> = value.collect();
@@ -95,7 +96,6 @@ Vec<T>: FromIterator<<std::ops::Range<T> as Iterator>::Item>
     }
 }
 
-
 impl From<&str> for Ndarr<char, 1> {
     fn from(value: &str) -> Self {
         Ndarr {
@@ -104,4 +104,3 @@ impl From<&str> for Ndarr<char, 1> {
         }
     }
 }
-

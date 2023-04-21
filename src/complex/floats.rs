@@ -1,5 +1,5 @@
 use super::*;
-use num_traits::{Float, PrimInt};
+use num_traits::{Float};
 
 impl<T: Float> C<T> {
     pub fn abs(&self) -> T {
@@ -14,14 +14,14 @@ impl<T: Float> C<T> {
     pub fn exp(&self) -> Self {
         C(self.0.exp() * self.1.cos(), self.0.exp() * self.1.sin())
     }
-    pub fn sqrt(&self)->Self{
+    pub fn sqrt(&self) -> Self {
         //z = a + bi -> z = re^{iθ}
         //sqrt(z) = z^{1/2}
         //sqrt(z) = sqrt(r)e^{iθ/2}
         //The square root of z generally has two solutions, this functions has a branch cut that satisfy -pi/2 <= arg(sqrt(z)) <= pi/2.
         let two = T::one() + T::one();
         let (r, arg) = self.to_polar();
-        C(r.sqrt(),T::zero())*C(T::zero(),arg/two).exp()
+        C(r.sqrt(), T::zero()) * C(T::zero(), arg / two).exp()
     }
     pub fn ln(&self) -> Self {
         // Main branch complex logarithm with ln(-1)=iπ (as in numpy)
@@ -31,23 +31,24 @@ impl<T: Float> C<T> {
         // Commonly this curve is the negative real axis. Then ln(-1) is no longer defined.
         C(self.abs().ln(), self.arg())
     }
-    pub fn powf(&self, n: T)->Self{ 
+    pub fn powf(&self, n: T) -> Self {
         //z^n = r^n*exp(n*i*phi) with z = r*(cos(phi) + i*sin(phi))
-        if n.is_zero(){
-            return C(T::one(), T::zero())
-        }else if n < T::zero(){ //it seems faster this way
+        if n.is_zero() {
+            return C(T::one(), T::zero());
+        } else if n < T::zero() {
+            //it seems faster this way
             let (r, arg) = self.to_polar();
             let pow_r = r.powf(-n);
             let pow_c = C(T::zero(), arg.mul(n)).exp();
-            return (C(T::one(), T::zero()) / C(pow_r * pow_c.0, pow_r * pow_c.1))
-        }else{
+            return C(T::one(), T::zero()) / C(pow_r * pow_c.0, pow_r * pow_c.1);
+        } else {
             let (r, arg) = self.to_polar();
             let pow_r = r.powf(n);
             let pow_c = C(T::zero(), arg.mul(n)).exp();
-            return C(pow_r * pow_c.0, pow_r * pow_c.1)
+            return C(pow_r * pow_c.0, pow_r * pow_c.1);
         }
     }
-    pub fn powc(&self, c: Self)->Self{
+    pub fn powc(&self, c: Self) -> Self {
         //z = r*exp(iθ) = e^{ln(r) + iθ}
         //Z = (c + id)
         //z^Z = (r*exp(iθ))^{c + id}

@@ -1,4 +1,4 @@
-use std::{process::Output, ops::Neg};
+
 
 use crate::helpers::multiply_list;
 
@@ -39,7 +39,6 @@ impl Scalar for &u8 {}
 impl Scalar for &usize {}
 impl Scalar for &char {}
 impl Scalar for &str {}
-
 
 pub fn extend_scalar<P, T, const R: usize>(scalar: &P, shape: &[usize; R]) -> Ndarr<T, R>
 where

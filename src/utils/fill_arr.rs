@@ -1,16 +1,16 @@
+use num_traits::{One, Zero};
 
-use num_traits::{Zero, One};
-
-use super::*;
 use super::helpers::multiply_list;
+use super::*;
 
 //// zeros and ones
 impl<T, const R: usize> Ndarr<T, R>
 where
-    T: Clone + Debug + Default, 
+    T: Clone + Debug + Default,
 {
-    pub fn zeros(shape: &[usize; R]) -> Self 
-        where T: Zero 
+    pub fn zeros(shape: &[usize; R]) -> Self
+    where
+        T: Zero,
     {
         let data: Vec<T> = vec![T::zero(); multiply_list(shape, 1)];
         Ndarr {
@@ -19,8 +19,9 @@ where
         }
     }
 
-    pub fn ones(shape: &[usize; R]) -> Self 
-        where T: One 
+    pub fn ones(shape: &[usize; R]) -> Self
+    where
+        T: One,
     {
         let data: Vec<T> = vec![T::one(); multiply_list(shape, 1)];
         Ndarr {
@@ -36,7 +37,4 @@ where
             shape: shape.clone(),
         }
     }
-
 }
-
-

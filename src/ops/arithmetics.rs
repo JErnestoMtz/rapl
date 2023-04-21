@@ -1,12 +1,10 @@
-
-
+use super::dyadic::*;
 use super::*;
 use std::ops::*;
-use super::dyadic::*;
 
 macro_rules!  ndarr_op{
     ($Ty1:ty, $Ty2:ty, $Trait:tt, $F:tt, $Op:tt) => {
-        
+
         impl <T1, T2, T3, const R1: usize, const R2: usize> $Trait<$Ty2> for $Ty1
         where
             T1: Clone + Debug + Default + $Trait<T2, Output = T3>,
@@ -86,12 +84,11 @@ scalar_op!(Mul, mul, *);
 scalar_op!(Div, div, /);
 scalar_op!(Rem, rem, %);
 
-
 //////////////////////////////////////////// Neg /////////////////////////////////////////////
 
 impl<T, const R: usize> Neg for Ndarr<T, R>
 where
-    T: Neg<Output = T> +  Clone + Debug + Default + Copy,
+    T: Neg<Output = T> + Clone + Debug + Default + Copy,
 {
     type Output = Self;
     fn neg(self) -> Self::Output {
@@ -99,12 +96,11 @@ where
     }
 }
 
-
 impl<T, const R: usize> Neg for &Ndarr<T, R>
 where
-    T: Neg<Output = T> +  Clone + Debug + Default + Copy,
+    T: Neg<Output = T> + Clone + Debug + Default + Copy,
 {
-    type Output = Ndarr<T,R>;
+    type Output = Ndarr<T, R>;
     fn neg(self) -> Self::Output {
         self.map(|x| -*x)
     }
@@ -112,40 +108,37 @@ where
 
 //////////////////////////////////////////// AddAssing /////////////////////////////////////////////
 
-
 impl<P, T, const R: usize> AddAssign<&P> for Ndarr<T, R>
 where
     T: Add<Output = T> + Clone + Debug + Default,
-    P: IntoNdarr<T,R> + Clone,
+    P: IntoNdarr<T, R> + Clone,
 {
     fn add_assign(&mut self, other: &P) {
-        self.bimap_in_place(&other.into_ndarr(&self.shape), |x,y| x+y)
+        self.bimap_in_place(&other.into_ndarr(&self.shape), |x, y| x + y)
     }
 }
-
 
 ////////////////////////////////////////////  SubAssing /////////////////////////////////////////////
 
 impl<P, T, const R: usize> SubAssign<&P> for Ndarr<T, R>
 where
     T: Sub<Output = T> + Clone + Debug + Default,
-    P: IntoNdarr<T,R> + Clone,
+    P: IntoNdarr<T, R> + Clone,
 {
     fn sub_assign(&mut self, other: &P) {
-        self.bimap_in_place(&other.into_ndarr(&self.shape), |x,y| x-y)
+        self.bimap_in_place(&other.into_ndarr(&self.shape), |x, y| x - y)
     }
 }
-
 
 ////////////////////////////////////////////  MulAssing /////////////////////////////////////////////
 
 impl<P, T, const R: usize> MulAssign<&P> for Ndarr<T, R>
 where
     T: Mul<Output = T> + Clone + Debug + Default,
-    P: IntoNdarr<T,R> + Clone,
+    P: IntoNdarr<T, R> + Clone,
 {
     fn mul_assign(&mut self, other: &P) {
-        self.bimap_in_place(&other.into_ndarr(&self.shape), |x,y| x*y)
+        self.bimap_in_place(&other.into_ndarr(&self.shape), |x, y| x * y)
     }
 }
 
@@ -154,10 +147,10 @@ where
 impl<P, T, const R: usize> DivAssign<&P> for Ndarr<T, R>
 where
     T: Div<Output = T> + Clone + Debug + Default,
-    P: IntoNdarr<T,R> + Clone,
+    P: IntoNdarr<T, R> + Clone,
 {
     fn div_assign(&mut self, other: &P) {
-        self.bimap_in_place(&other.into_ndarr(&self.shape), |x,y| x/y)
+        self.bimap_in_place(&other.into_ndarr(&self.shape), |x, y| x / y)
     }
 }
 
@@ -166,9 +159,9 @@ where
 impl<P, T, const R: usize> RemAssign<&P> for Ndarr<T, R>
 where
     T: Rem<Output = T> + Clone + Debug + Default,
-    P: IntoNdarr<T,R> + Clone,
+    P: IntoNdarr<T, R> + Clone,
 {
     fn rem_assign(&mut self, other: &P) {
-        self.bimap_in_place(&other.into_ndarr(&self.shape), |x,y| x%y)
+        self.bimap_in_place(&other.into_ndarr(&self.shape), |x, y| x % y)
     }
 }

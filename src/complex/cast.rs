@@ -1,28 +1,30 @@
 use super::*;
-use num_traits::{Num, identities::zero};
-//impl<T,P> From<C<P>> for C<T> 
+use num_traits::{identities::zero, Num};
+//impl<T,P> From<C<P>> for C<T>
 //where T: Copy + PartialEq + From<P>,
 //P: Copy + PartialEq
 //{
-   //fn from(value: C<P>) -> Self {
-        //C(value.0.into(), value.1.into())     
-   //} 
+//fn from(value: C<P>) -> Self {
+//C(value.0.into(), value.1.into())
+//}
 //}
 
-impl<T> From<T> for C<T> 
-where T: Num + Copy
+impl<T> From<T> for C<T>
+where
+    T: Num + Copy,
 {
-   fn from(value: T) -> Self {
+    fn from(value: T) -> Self {
         C(value, zero())
-   } 
+    }
 }
 
-macro_rules!  cast_complex{
+macro_rules! cast_complex {
     ($T:tt, $P:tt) => {
-        impl From<C<$P>> for C<$T>{
-        fn from(value: C<$P>) -> Self {
-                C(value.0 as $T, value.1 as $T)     
-        }}       
+        impl From<C<$P>> for C<$T> {
+            fn from(value: C<$P>) -> Self {
+                C(value.0 as $T, value.1 as $T)
+            }
+        }
     };
 }
 
@@ -55,8 +57,6 @@ cast_complex!(usize, u16);
 cast_complex!(usize, u32);
 cast_complex!(usize, u64);
 cast_complex!(usize, u128);
-
-
 
 cast_complex!(i8, i16);
 cast_complex!(i8, i32);

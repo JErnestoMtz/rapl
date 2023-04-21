@@ -15,27 +15,22 @@
 //!}
 //!```
 
-
-pub mod ops;
+mod display;
 mod errors;
 mod helpers;
 mod natives;
+pub mod ops;
 mod scalars;
 pub mod utils;
-mod display;
 
 #[cfg(feature = "complex")]
 mod complex_tensor;
-use std::{
-    fmt::Debug,
-    fmt::{Display},
-};
+use std::{fmt::Debug, fmt::Display};
 #[cfg(feature = "complex")]
 pub mod complex;
 
-
-pub use scalars::{Scalar};
 pub use errors::DimError;
+pub use scalars::Scalar;
 
 pub use helpers::{broadcast_shape, const_max};
 
@@ -49,8 +44,6 @@ pub struct Ndarr<T: Clone + Default, const R: usize> {
     pub data: Vec<T>,
     pub shape: [usize; R],
 }
-
-
 
 impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     pub fn new(data: &[T], shape: [usize; R]) -> Result<Self, DimError> {
@@ -75,7 +68,7 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     pub fn shape(&self) -> [usize; R] {
         self.shape
     }
-    pub fn flatten(self)->Vec<T>{
+    pub fn flatten(self) -> Vec<T> {
         self.data
     }
 
@@ -91,14 +84,20 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
         p.into()
     }
 
-    pub fn reshape<const R2: usize>(&self, shape: &[usize; R2]) -> Result<Ndarr<T,R2>,DimError>
+    pub fn reshape<const R2: usize>(&self, shape: &[usize; R2]) -> Result<Ndarr<T, R2>, DimError>
     where
         [usize; const_max(R, R2)]: Sized,
     {
-        if helpers::multiply_list(&self.shape, 1) != helpers::multiply_list(shape, 1){
-            return Err(DimError::new(&format!("Can not reshape array with shape {:?} to {:?}.",&self.shape, shape)))
+        if helpers::multiply_list(&self.shape, 1) != helpers::multiply_list(shape, 1) {
+            return Err(DimError::new(&format!(
+                "Can not reshape array with shape {:?} to {:?}.",
+                &self.shape, shape
+            )));
         }
-        Ok(Ndarr{data: self.data.clone(), shape: *shape})
+        Ok(Ndarr {
+            data: self.data.clone(),
+            shape: *shape,
+        })
     }
 
     pub fn slice_at(&self, axis: usize) -> Vec<Ndarr<T, { R - 1 }>>
@@ -111,7 +110,9 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
 
         let iota = 0..n;
 
-        let indexes: Vec<[usize; R]> = iota.map(|i| helpers::get_indexes(&i, &self.shape)).collect(); //indexes of each element
+        let indexes: Vec<[usize; R]> = iota
+            .map(|i| helpers::get_indexes(&i, &self.shape))
+            .collect(); //indexes of each element
 
         let mut out: Vec<Ndarr<T, { R - 1 }>> = Vec::new(); // to sore
 
@@ -129,7 +130,11 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
         out
     }
 
-    pub fn reduce<F: Fn(T, T) -> T + Clone>(&self, axis: usize, f: F) -> Result<Ndarr<T, { R - 1 }>, DimError>
+    pub fn reduce<F: Fn(T, T) -> T + Clone>(
+        &self,
+        axis: usize,
+        f: F,
+    ) -> Result<Ndarr<T, { R - 1 }>, DimError>
     where
         [usize; R - 1]: Sized,
     {
@@ -147,11 +152,12 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
         }
     }
 
-
-
-    pub fn broadcast_to<const R2: usize>(&self, shape: &[usize; R2]) -> Result<Ndarr<T, { const_max(R, R2) }>, DimError>
+    pub fn broadcast_to<const R2: usize>(
+        &self,
+        shape: &[usize; R2],
+    ) -> Result<Ndarr<T, { const_max(R, R2) }>, DimError>
     where
-        [usize;  const_max(R, R2) ]: Sized,
+        [usize; const_max(R, R2)]: Sized,
     {
         //see https://numpy.org/doc/stable/user/basics.broadcasting.html
         //TODO: not sure at all if this implementation is general, but it seems to work for Rank 1 2 array broadcasted up to rank 3. For higher ranks a more rigorous proof is needed.
@@ -178,10 +184,12 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
         }
     }
 
-    
-    pub fn broadcast<const R2: usize>(&self, shape: &[usize; R2]) -> Result<Ndarr<T, { const_max(R, R2) }>, DimError>
+    pub fn broadcast<const R2: usize>(
+        &self,
+        shape: &[usize; R2],
+    ) -> Result<Ndarr<T, { const_max(R, R2) }>, DimError>
     where
-        [usize;  const_max(R, R2) ]: Sized,
+        [usize; const_max(R, R2)]: Sized,
     {
         let new_shape = helpers::broadcast_shape(&self.shape, shape)?;
 
@@ -234,23 +242,29 @@ impl<T: Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     }
 }
 
-pub fn de_slice<T: Clone + Debug + Default, const R: usize>(slices: &Vec<Ndarr<T,R>>, axis: usize)->Ndarr<T,{R+1}>{
+pub fn de_slice<T: Clone + Debug + Default, const R: usize>(
+    slices: &Vec<Ndarr<T, R>>,
+    axis: usize,
+) -> Ndarr<T, { R + 1 }> {
     let l_slice = slices[0].len();
     let shape_slice = slices[0].shape();
 
-    let out_shape : [usize; R + 1]= helpers::insert_element(shape_slice, axis, slices.len());
-    let mut  new_data: Vec<T> = vec![T::default(); helpers::multiply_list(&out_shape, 1)];
-    for i in 0..slices.len(){
-        for j in 0..l_slice{
+    let out_shape: [usize; R + 1] = helpers::insert_element(shape_slice, axis, slices.len());
+    let mut new_data: Vec<T> = vec![T::default(); helpers::multiply_list(&out_shape, 1)];
+    for i in 0..slices.len() {
+        for j in 0..l_slice {
             //calculate the flat position of element j of slice i
             let ind = helpers::get_indexes(&j, &shape_slice);
-            let new_pos = helpers::get_flat_pos(&helpers::insert_element( ind, axis, i), &out_shape).unwrap();
+            let new_pos =
+                helpers::get_flat_pos(&helpers::insert_element(ind, axis, i), &out_shape).unwrap();
             new_data[new_pos] = slices[i].data[j].clone()
         }
     }
-    Ndarr { data: new_data, shape: out_shape }
+    Ndarr {
+        data: new_data,
+        shape: out_shape,
+    }
 }
-
 
 impl<T: Copy + Clone + Debug + Default, const R: usize> Ndarr<T, R> {
     pub fn scalar(self) -> T {
@@ -290,10 +304,6 @@ where
     }
 }
 
-
-
-
-
 #[cfg(test)]
 mod tests {
 
@@ -320,8 +330,8 @@ mod tests {
         assert_eq!(c, Ndarr::from([5, 5, 5, 5]));
     }
     #[test]
-    fn helpers(){
-        assert_eq!(helpers::insert_element([1,2,3], 0, 0),[0,1,2,3])
+    fn helpers() {
+        assert_eq!(helpers::insert_element([1, 2, 3], 0, 0), [0, 1, 2, 3])
     }
     #[test]
     fn bimap_test() {
@@ -349,11 +359,11 @@ mod tests {
         assert_eq!((-arr1).data, vec![-1, -1, -1, -1]);
     }
     #[test]
-    fn assing_ops(){
-        let mut arr = Ndarr::from([1,2,3]);
+    fn assing_ops() {
+        let mut arr = Ndarr::from([1, 2, 3]);
         arr += &1;
-        arr += &Ndarr::from([-1,-1,-3]);
-        assert_eq!(arr, Ndarr::from([1,2,1]))
+        arr += &Ndarr::from([-1, -1, -3]);
+        assert_eq!(arr, Ndarr::from([1, 2, 1]))
     }
 
     #[test]
@@ -406,26 +416,26 @@ mod tests {
     }
 
     #[test]
-    fn deslice(){
-        let arr = Ndarr::from([[1,2],[3,4]]);
+    fn deslice() {
+        let arr = Ndarr::from([[1, 2], [3, 4]]);
         let slices0 = arr.slice_at(0);
         let slices1 = arr.slice_at(1);
         assert_eq!(arr, de_slice(&slices0, 0));
         assert_eq!(arr, de_slice(&slices1, 1));
     }
     #[test]
-    fn scan(){
-        let arr = Ndarr::from([[1,2],[3,4]]);
+    fn scan() {
+        let arr = Ndarr::from([[1, 2], [3, 4]]);
         let cumsum_r0 = arr.scanr(0, |x, y| x + y);
         let cumsum_r1 = arr.scanr(1, |x, y| x + y);
         let cumsum_l0 = arr.scanl(0, |x, y| x + y);
         let cumsum_l1 = arr.scanl(1, |x, y| x + y);
-        assert_eq!(cumsum_r0, Ndarr::from([[1, 2],[4, 6]]));
-        assert_eq!(cumsum_r1, Ndarr::from([[1, 3],[3, 7]]));
-        assert_eq!(cumsum_l0, Ndarr::from([[4, 6],[3, 4]]));
-        assert_eq!(cumsum_l1, Ndarr::from([[3, 2],[7, 4]]));
+        assert_eq!(cumsum_r0, Ndarr::from([[1, 2], [4, 6]]));
+        assert_eq!(cumsum_r1, Ndarr::from([[1, 3], [3, 7]]));
+        assert_eq!(cumsum_l0, Ndarr::from([[4, 6], [3, 4]]));
+        assert_eq!(cumsum_l1, Ndarr::from([[3, 2], [7, 4]]));
         let arr2 = Ndarr::from([0.1, 0.2, 0.3]);
-        let sump = arr2.scanr(0,|x,y| x + y);
+        let sump = arr2.scanr(0, |x, y| x + y);
     }
 
     #[test]
@@ -550,33 +560,35 @@ mod tests {
         assert_eq!(a.log(3.0), Ndarr::from([0.1_f64.log(3.0)]));
     }
     #[test]
-    fn reshape(){
-        let a = Ndarr::from([1,2,3,4]).reshape(&[2,2]).unwrap();
-        assert_eq!(a, Ndarr::from([[1,2],[3,4]]))
-
+    fn reshape() {
+        let a = Ndarr::from([1, 2, 3, 4]).reshape(&[2, 2]).unwrap();
+        assert_eq!(a, Ndarr::from([[1, 2], [3, 4]]))
     }
 
     #[test]
-    fn ranges(){
+    fn ranges() {
         let a = Ndarr::from(0..4);
-        assert_eq!(a, Ndarr::from([0,1,2,3]))
+        assert_eq!(a, Ndarr::from([0, 1, 2, 3]))
     }
 
     #[test]
-    fn abs(){
+    fn abs() {
         let a = Ndarr::from([-1, -3, 4]);
-        assert_eq!(a.abs(), Ndarr::from([1,3,4]))
+        assert_eq!(a.abs(), Ndarr::from([1, 3, 4]))
     }
     #[test]
     fn map_between_types_test() {
-        let x: Ndarr<i16, 1> = Ndarr::from([1,2,3]);
+        let x: Ndarr<i16, 1> = Ndarr::from([1, 2, 3]);
         println!("x: {:#?}", x.data);
         println!("x shape: {:#?}", x.shape);
         let res: Ndarr<f32, 1> = x.map_types(|x| *x as f32);
         println!("res: {:#?}", res);
         assert!(res.data[0] == 1.0_f32);
         let a_string: Ndarr<String, 1> = x.map_types(|x| x.to_string());
-        assert_eq!(a_string.data, vec!["1".to_owned(), "2".to_owned(), "3".to_owned()]);
+        assert_eq!(
+            a_string.data,
+            vec!["1".to_owned(), "2".to_owned(), "3".to_owned()]
+        );
 
         println!("a_string: {:#?}", a_string); // ["1","2","3"]
     }

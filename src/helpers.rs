@@ -24,8 +24,6 @@ pub(crate) fn get_indexes<const N: usize>(n: &usize, shape: &[usize; N]) -> [usi
     ind
 }
 
-
-
 // given the indexes of an element in a N rank array of shape shape return the position of such element if the array was flattened
 pub(crate) fn get_flat_pos<const R: usize>(
     indexes: &[usize; R],
@@ -41,8 +39,6 @@ pub(crate) fn get_flat_pos<const R: usize>(
     Ok(ind)
 }
 
-
-
 pub(crate) fn format_vla(val: String, size: &usize) -> String {
     let mut s = val.clone();
     let l = val.len();
@@ -55,7 +51,7 @@ pub fn remove_element<T: Copy, const N: usize>(arr: [T; N], index: usize) -> [T;
     assert!(index < N);
     let mut result = [arr[0]; N - 1];
     let mut j = 0;
-        for (i, &item) in arr.iter().enumerate().take(N) {
+    for (i, &item) in arr.iter().enumerate().take(N) {
         if i != index {
             result[j] = item;
             j += 1;
@@ -64,21 +60,24 @@ pub fn remove_element<T: Copy, const N: usize>(arr: [T; N], index: usize) -> [T;
     result
 }
 
-
-pub fn insert_element<T: Copy + Default, const N: usize>(arr: [T; N], index: usize, element: T) -> [T; N + 1] {
+pub fn insert_element<T: Copy + Default, const N: usize>(
+    arr: [T; N],
+    index: usize,
+    element: T,
+) -> [T; N + 1] {
     let mut result = [T::default(); N + 1];
     let mut inserted = false;
-    for i in 0..result.len(){
-        if ! inserted && i == index{
+    for i in 0..result.len() {
+        if !inserted && i == index {
             result[i] = element;
             inserted = true
-        }else if ! inserted{
+        } else if !inserted {
             result[i] = arr[i]
-        }else{
-            result[i] = arr[i-1]
+        } else {
+            result[i] = arr[i - 1]
         }
     }
-    return  result;
+    return result;
 }
 
 // paths a shape of rank N with ones in the left until is rank M
@@ -98,7 +97,7 @@ pub fn path_shape<const N: usize, const M: usize>(
     Ok(out)
 }
 
-// Given a indexes of an element in broadcasted broadcasted array and a shape of the array before broadcasting, 
+// Given a indexes of an element in broadcasted broadcasted array and a shape of the array before broadcasting,
 // returns the position of the element in the array before broadcasting
 pub fn rev_cast_pos<const N: usize, const M: usize>(
     small_shape: &[usize; N],
@@ -138,8 +137,8 @@ pub const fn const_max(x: usize, y: usize) -> usize {
 pub fn broadcast_shape<const N: usize, const M: usize>(
     shape1: &[usize; N],
     shape2: &[usize; M],
-) -> Result<[usize;  const_max(N, M) ], DimError> {
-    let mut out_shape: [usize;  const_max(N, M) ] = [0; { const_max(N, M) }];
+) -> Result<[usize; const_max(N, M)], DimError> {
+    let mut out_shape: [usize; const_max(N, M)] = [0; { const_max(N, M) }];
     let mut sh1 = shape1.to_vec();
     let mut sh2 = shape2.to_vec();
     sh1.reverse();

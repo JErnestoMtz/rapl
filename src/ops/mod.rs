@@ -1,11 +1,10 @@
-
-use super::*;
 pub use super::Ndarr;
+use super::*;
 
 mod arithmetics;
-mod floats;
-mod extras;
 mod dyadic;
+mod extras;
+mod floats;
 mod maps;
 
 pub use dyadic::*;
