@@ -3,6 +3,141 @@ use num_traits::Float;
 use super::*;
 
 impl<T: Float + Default + Clone + Debug, const R: usize> Ndarr<T, R> {
+    //Threshold
+    pub fn threshold(&self, threshold: &T, value: &T) -> Self {
+        self.map(|x| if x > threshold { *x } else { *value })
+    }
+
+    //Hard Tanh
+    pub fn hard_tanh(&self, min_val: &T, max_val: &T) -> Self {
+        self.map(|x| {
+            if x > max_val {
+                *max_val
+            } else if x < min_val {
+                *min_val
+            } else {
+                *x
+            }
+        })
+    }
+
+    //Expontential Linear Unit function
+    pub fn elu(&self, alpha: &T) -> Self {
+        self.map(|x| {
+            if x > &T::zero() {
+                *x
+            } else {
+                *alpha * (x.exp() - T::one())
+            }
+        })
+    }
+
+    //Hard Shrinkage function
+    pub fn hard_shrink(&self, lambda: &T) -> Self {
+        self.map(|x| {
+            if x > lambda || x < &-*lambda {
+                //TODO: Is there a better way writing -lambda?
+                -*x
+            } else {
+                T::zero()
+            }
+        })
+    }
+
+    //Hardsigmoid function
+    pub fn hard_sigmoid(&self) -> Self {
+        //TODO: Is there a better way to express 2, 3 and 6?
+        let two = T::one() + T::one();
+        let three = T::one() + T::one() + T::one() + T::one() + T::one() + T::one();
+        let six = T::one() + T::one() + T::one() + T::one() + T::one() + T::one();
+        self.map(|x| {
+            if x <= &-three {
+                T::zero()
+            } else if x >= &three {
+                T::one()
+            } else {
+                *x / six + T::one() / two
+            }
+        })
+    }
+
+    //Hardswish function
+    pub fn hard_swish(&self) -> Self {
+        //TODO: Is there a better way to express 3 and 6?
+        let three = T::one() + T::one() + T::one() + T::one() + T::one() + T::one();
+        let six = T::one() + T::one() + T::one() + T::one() + T::one() + T::one();
+        self.map(|x| {
+            if x <= &-three {
+                T::zero()
+            } else if x >= &three {
+                *x
+            } else {
+                *x * (*x + three) / six
+            }
+        })
+    }
+
+    //LogSigmoid function ln( 1/(1+exp(-x)) )
+    pub fn log_sigmoid(&self) -> Self {
+        self.map(|x| (T::one() / (T::one() + (-*x).exp())).ln())
+    }
+
+    //Relu6 function min(max(0,x),6)
+    pub fn relu_6(&self) -> Self {
+        let six = T::one() + T::one() + T::one() + T::one() + T::one() + T::one();
+        self.map(|x| x.max(T::zero()).min(six))
+    }
+
+    //Selu
+    pub fn selu(&self) -> Self {
+        let alpha = T::from(1.6732632423543772848170429916717).unwrap();
+        let scale = T::from(1.6732632423543772848170429916717).unwrap();
+        self.map(|x| scale * (x.max(T::zero())) + T::zero().min(alpha * (x.exp() - T::one())))
+    }
+
+    //Celu function max(0,x) + min(0, alpha * (exp(x/alpha)-1))
+    pub fn celu(&self, alpha: &T) -> Self {
+        self.map(|x| x.max(T::zero()) + T::zero().min(*alpha * ((*x / *alpha).exp() - T::one())))
+    }
+
+    //Silu function x*sigmoid(x)
+    pub fn silu(&self) -> Self {
+        self.map(|x| *x * T::one() / (T::one() + (-*x).exp()))
+    }
+
+    //Softplus function 1/beta * log(1 + exp(beta*x))
+    pub fn softplus(&self, beta: &T) -> Self {
+        self.map(|x| T::one() / *beta * (T::one() + (*beta * *x).exp()).ln())
+    }
+
+    //Mish function x * Tanh(Softplus(x, beta=1))
+    pub fn mish(&self) -> Self {
+        self.map(|x| *x * (T::one() + x.exp()).ln().tanh())
+    }
+
+    //Soft shrinkage function
+    pub fn softshrink(&self, lambda: &T) -> Self {
+        self.map(|x| {
+            if x > lambda {
+                *x - *lambda
+            } else if x < &-*lambda {
+                *x + *lambda
+            } else {
+                T::zero()
+            }
+        })
+    }
+
+    //Softsign function x/(1+abs(x))
+    pub fn softsign(&self) -> Self {
+        self.map(|x| *x / (T::one() + x.abs()))
+    }
+
+    //Tanhshrink function x-tanh(x)
+    pub fn tanhshrink(&self) -> Self {
+        self.map(|x| *x - x.tanh())
+    }
+
     //Sigmoid function
     pub fn sigmoid(&self) -> Self {
         self.map(|x| T::one() / (T::one() + (-*x).exp()))
@@ -30,6 +165,7 @@ impl<T: Float + Default + Clone + Debug, const R: usize> Ndarr<T, R> {
 #[cfg(test)]
 mod test_act {
     use super::*;
+
     #[test]
     fn sigmoid() {
         let x = Ndarr::from([0., 1., 2., 3., 4., 5.]);
