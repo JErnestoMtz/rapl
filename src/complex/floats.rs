@@ -1,5 +1,5 @@
 use super::*;
-use num_traits::{Float};
+use num_traits::Float;
 
 impl<T: Float> C<T> {
     pub fn abs(&self) -> T {

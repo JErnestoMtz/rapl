@@ -1,5 +1,3 @@
-
-
 use crate::helpers::multiply_list;
 
 use super::*;

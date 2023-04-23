@@ -1,8 +1,8 @@
-use super::*;
 use super::Ndarr;
+use super::*;
 
-mod fill_arr;
 mod activation;
+mod fill_arr;
 
 #[cfg(feature = "rapl_image")]
 pub mod rapl_img;

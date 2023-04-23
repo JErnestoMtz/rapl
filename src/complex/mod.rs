@@ -1,4 +1,4 @@
-use num_traits::{Num};
+use num_traits::Num;
 use std::{
     fmt::{Debug, Display},
     ops::{Add, AddAssign, Div, Mul, MulAssign, Neg},

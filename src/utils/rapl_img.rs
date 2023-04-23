@@ -2,7 +2,7 @@ use super::Ndarr;
 
 use image::*;
 
-use std::{path::Path};
+use std::path::Path;
 
 pub use image::ImageFormat;
 
