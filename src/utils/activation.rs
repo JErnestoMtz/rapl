@@ -37,7 +37,7 @@ impl<T: Float + Default + Clone + Debug, const R: usize> Ndarr<T, R> {
         self.map(|x| {
             if x > lambda || x < &-*lambda {
                 //TODO: Is there a better way writing -lambda?
-                -*x
+                *x
             } else {
                 T::zero()
             }
@@ -46,33 +46,26 @@ impl<T: Float + Default + Clone + Debug, const R: usize> Ndarr<T, R> {
 
     //Hardsigmoid function
     pub fn hard_sigmoid(&self) -> Self {
-        //TODO: Is there a better way to express 2, 3 and 6?
-        let two = T::one() + T::one();
-        let three = T::one() + T::one() + T::one() + T::one() + T::one() + T::one();
-        let six = T::one() + T::one() + T::one() + T::one() + T::one() + T::one();
         self.map(|x| {
-            if x <= &-three {
+            if x <= &T::from(-3.0).unwrap() {
                 T::zero()
-            } else if x >= &three {
+            } else if x >= &T::from(3.0).unwrap() {
                 T::one()
             } else {
-                *x / six + T::one() / two
+                *x / T::from(6.0).unwrap() + T::one() / T::from(2.0).unwrap()
             }
         })
     }
 
     //Hardswish function
     pub fn hard_swish(&self) -> Self {
-        //TODO: Is there a better way to express 3 and 6?
-        let three = T::one() + T::one() + T::one() + T::one() + T::one() + T::one();
-        let six = T::one() + T::one() + T::one() + T::one() + T::one() + T::one();
         self.map(|x| {
-            if x <= &-three {
+            if x <= &T::from(-3.0).unwrap() {
                 T::zero()
-            } else if x >= &three {
+            } else if x >= &T::from(3.0).unwrap() {
                 *x
             } else {
-                *x * (*x + three) / six
+                *x * (*x + T::from(3.0).unwrap()) / T::from(6.0).unwrap()
             }
         })
     }
@@ -91,8 +84,8 @@ impl<T: Float + Default + Clone + Debug, const R: usize> Ndarr<T, R> {
     //Selu
     pub fn selu(&self) -> Self {
         let alpha = T::from(1.6732632423543772848170429916717).unwrap();
-        let scale = T::from(1.6732632423543772848170429916717).unwrap();
-        self.map(|x| scale * (x.max(T::zero())) + T::zero().min(alpha * (x.exp() - T::one())))
+        let scale = T::from(1.0507009873554804934193349852946).unwrap();
+        self.map(|x| scale * (x.max(T::zero()) + T::zero().min(alpha * (x.exp() - T::one()))))
     }
 
     //Celu function max(0,x) + min(0, alpha * (exp(x/alpha)-1))
@@ -198,42 +191,155 @@ mod test_act {
     }
 
     #[test]
-    fn hard_shrink() {}
+    fn hard_shrink() {
+        let x = Ndarr::from([-2., -1., 0., 1., 2., 3.]);
+        assert_eq!(
+            x.hard_shrink(&1.0,),
+            Ndarr::from([-2., -0., 0., 0., 2., 3.])
+        );
+    }
 
     #[test]
-    fn hard_sigmoid() {}
+    fn hard_sigmoid() {
+        let x = Ndarr::from([-3., -2., -1., 0., 1., 2., 3.]);
+        assert!(x.hard_sigmoid().approx(&Ndarr::from([
+            0.,
+            0.1666666666666666666666666666,
+            0.3333333333333333333333333333,
+            0.5,
+            0.6666666666666666666666666666,
+            0.8333333333333333333333333333,
+            1.
+        ])));
+    }
 
     #[test]
-    fn hard_swish() {}
+    fn hard_swish() {
+        let x = Ndarr::from([-3., -2., -1., 0., 1., 2., 3.]);
+        assert!(x.hard_swish().approx(&Ndarr::from([
+            0.,
+            -0.3333333333333333333333333333,
+            -0.3333333333333333333333333333,
+            0.,
+            0.66666666666666666666666666666,
+            1.66666666666666666666666666666,
+            3.
+        ])));
+    }
 
     #[test]
-    fn log_sigmoid() {}
+    fn log_sigmoid() {
+        let x = Ndarr::from([-3., -2., -1., 0., 1., 2., 3.]);
+        assert!(x.log_sigmoid().approx(&Ndarr::from([
+            -3.0485873515737420587589259198,
+            -2.1269280110429724964437268063,
+            -1.3132616875182228340489954949,
+            -0.6931471805599453094172321214,
+            -0.3132616875182228340489954949,
+            -0.1269280110429724964437268063,
+            -0.0485873515737420587589259198
+        ])));
+    }
 
     #[test]
-    fn relu_6() {}
+    fn relu_6() {
+        let x = Ndarr::from([-3., -2., -1., 0., 1., 2., 3., 4., 5., 6., 7.]);
+        assert_eq!(
+            x.relu_6(),
+            Ndarr::from([0., 0., 0., 0., 1., 2., 3., 4., 5., 6., 6.])
+        );
+    }
 
     #[test]
-    fn selu() {}
+    fn selu() {
+        let x = Ndarr::from([-3., -2., -1., 0., 1., 2., 3.]);
+        assert!(x.selu().approx(&Ndarr::from([
+            -1.6705687287671119749192485076,
+            -1.5201664685956950351375928376,
+            -1.1113307378125627617986406624,
+            0.,
+            1.05070098735548049341933498529,
+            2.10140197471096098683866997058,
+            3.15210296206644148025800495588
+        ])));
+    }
 
     #[test]
-    fn celu() {}
+    fn celu() {
+        let x = Ndarr::from([-3., -2., -1., 0., 1., 2., 3.]);
+        assert!(x.celu(&1.5).approx(&Ndarr::from([
+            -1.2969970751450809621590007575,
+            -1.1046042928264098448814490815,
+            -0.7298743214511119596920203608,
+            0.,
+            1.,
+            2.,
+            3.
+        ])));
+    }
 
     #[test]
-    fn silu() {}
+    fn silu() {
+        let x = Ndarr::from([-3., -2., -1., 0., 1., 2., 3.]);
+        assert!(x.silu().approx(&Ndarr::from([
+            -0.1422776195327003426365444553,
+            -0.2384058440442351118805417173,
+            -0.2689414213699951207488407581,
+            0.,
+            0.73105857863000487925115924182,
+            1.76159415595576488811945828260,
+            2.85772238046729965736345554468
+        ])));
+    }
 
     #[test]
-    fn softplus() {}
+    fn softplus() {
+        let x = Ndarr::from([-3., -2., -1., 0., 1., 2., 3.]);
+        assert!(x.softplus(&1.5).approx(&Ndarr::from([
+            0.00736516323239587754776281247,
+            0.03239156771582803917261727990,
+            0.13427551865516827299965520603,
+            0.46209812037329687294482141430,
+            1.13427551865516827299965520603,
+            2.03239156771582803917261727990,
+            3.00736516323239587754776281247
+        ])));
+    }
 
     #[test]
-    fn mish() {}
+    fn mish() {
+        let x = Ndarr::from([-3., -2., -1., 0., 1., 2., 3.]);
+        assert!(x.mish().approx(&Ndarr::from([
+            -0.1456474612756245873146171857,
+            -0.2525014826957088636350729038,
+            -0.3034014613741089180743892753,
+            0.,
+            0.86509838826731034611623344925,
+            1.94395895953399452031848132479,
+            2.98653500496795731905705182010
+        ])));
+    }
 
     #[test]
-    fn softshrink() {}
+    fn softshrink() {
+        let x = Ndarr::from([-3., -2., -1., 0., 1., 2., 3.]);
+        assert_eq!(
+            x.softshrink(&1.5),
+            Ndarr::from([-1.5, -0.5, 0., 0., 0., 0.5, 1.5])
+        );
+    }
 
     #[test]
     fn sigmoid() {
         let x = Ndarr::from([0., 1., 2., 3., 4., 5.]);
-        println!("{}", x.sigmoid()) //[0.5        0.73105858 0.88079708 0.95257413 0.98201379 0.99330715]
+        assert!(x.sigmoid().approx(&Ndarr::from([
+            0.5,
+            0.73105857863000487925115924182,
+            0.88079707797788244405972914130,
+            0.95257412682243321912115184822,
+            0.98201379003790844197320686205,
+            0.99330714907571514444063801961
+        ])));
     }
 
     #[test]
@@ -252,9 +358,10 @@ mod test_act {
 
     fn softmax() {
         let x = Ndarr::from([1., 2., 3.]);
-        assert_eq!(
-            x.softmax(),
-            Ndarr::from([0.09003057317038046, 0.24472847105479764, 0.6652409557748218])
-        );
+        assert!(x.softmax().approx(&Ndarr::from([
+            0.09003057317038046,
+            0.24472847105479764,
+            0.6652409557748218
+        ])));
     }
 }
