@@ -37,6 +37,8 @@ pub use helpers::{broadcast_shape, const_max};
 #[cfg(feature = "complex")]
 pub use complex::*;
 
+use num_traits::Float;
+
 ///Main struct of N Dimensional generic array. The shape is denoted by the `shape` array where the length is the Rank of the Ndarray the actual values are stored in a flattened state in a rank 1 array.
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -301,6 +303,30 @@ where
     }
     fn get_rank(&self) -> usize {
         R
+    }
+}
+
+impl<T: Float + Clone + Debug + Default, const R: usize> Ndarr<T, R> {
+    fn approx_epsilon<const R2: usize>(&self, other: &Ndarr<T, R2>, epsilon: T) -> bool
+    where
+        [usize; const_max(R2, R)]: Sized,
+        [usize; const_max(R, R2)]: Sized,
+    {
+        let diff = self - other;
+        for val in diff.data {
+            if val > epsilon {
+                return false;
+            }
+        }
+        true
+    }
+
+    fn approx<const R2: usize>(&self, other: &Ndarr<T, R2>) -> bool
+    where
+        [usize; const_max(R2, R)]: Sized,
+        [usize; const_max(R, R2)]: Sized,
+    {
+        self.approx_epsilon(other, T::from(1e-10).unwrap())
     }
 }
 

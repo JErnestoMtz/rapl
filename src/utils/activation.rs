@@ -167,6 +167,70 @@ mod test_act {
     use super::*;
 
     #[test]
+    fn threshold() {
+        let x = Ndarr::from([-1., 0., 1., 2., 3.]);
+        assert_eq!(
+            x.threshold(&1.0, &42.0),
+            Ndarr::from([42., 42., 42., 2., 3.])
+        );
+    }
+
+    #[test]
+    fn hard_tanh() {
+        let x = Ndarr::from([-2., -1., 0., 1., 2., 3.]);
+        assert_eq!(
+            x.hard_tanh(&-1.5, &2.0),
+            Ndarr::from([-1.5, -1., 0., 1., 2., 2.])
+        );
+    }
+
+    #[test]
+    fn elu() {
+        let x = Ndarr::from([-2., -1., 0., 1., 2., 3.]);
+        assert!(x.elu(&1.5).approx(&Ndarr::from([
+            -1.29699707514508096215900075,
+            -0.9481808382428365176067,
+            0.,
+            1.,
+            2.,
+            3.
+        ])));
+    }
+
+    #[test]
+    fn hard_shrink() {}
+
+    #[test]
+    fn hard_sigmoid() {}
+
+    #[test]
+    fn hard_swish() {}
+
+    #[test]
+    fn log_sigmoid() {}
+
+    #[test]
+    fn relu_6() {}
+
+    #[test]
+    fn selu() {}
+
+    #[test]
+    fn celu() {}
+
+    #[test]
+    fn silu() {}
+
+    #[test]
+    fn softplus() {}
+
+    #[test]
+    fn mish() {}
+
+    #[test]
+    fn softshrink() {}
+
+    #[test]
     fn sigmoid() {
         let x = Ndarr::from([0., 1., 2., 3., 4., 5.]);
         println!("{}", x.sigmoid()) //[0.5        0.73105858 0.88079708 0.95257413 0.98201379 0.99330715]
