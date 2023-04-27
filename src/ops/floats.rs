@@ -59,11 +59,19 @@ where
     }
 
     ///Max Float, floating types do not implement `Ord`, but this gives a way to get the maximum value in an `Ndarr` if all comparisons are allowed.
-    pub fn maxf(&self)->T{
-        self.data.clone().into_iter().reduce(T::max).expect("Cannot perform fmax deu to imposable comparison")
+    pub fn maxf(&self) -> T {
+        self.data
+            .clone()
+            .into_iter()
+            .reduce(T::max)
+            .expect("Cannot perform fmax deu to imposable comparison")
     }
     ///Min Float, floating types do not implement `Ord`, but this gives a way to get the minimum value in an `Ndarr` if all comparisons are allowed.
-    pub fn minf(&self)->T{
-        self.data.clone().into_iter().reduce(T::min).expect("Cannot perform minf due to imposable comparison.")
+    pub fn minf(&self) -> T {
+        self.data
+            .clone()
+            .into_iter()
+            .reduce(T::min)
+            .expect("Cannot perform minf due to imposable comparison.")
     }
 }

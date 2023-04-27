@@ -25,8 +25,9 @@ impl<T, const R: usize> Ndarr<T, R>
 where
     T: Clone + Debug + Default,
 {
-    pub fn sum(&self) -> T 
-        where T :Add<Output = T>,
+    pub fn sum(&self) -> T
+    where
+        T: Add<Output = T>,
     {
         let data = &self.data;
         let mut sum = data[0].clone();
@@ -37,28 +38,26 @@ where
     }
 
     pub fn max(&self) -> Option<&T>
-        where T : Ord,
+    where
+        T: Ord,
     {
         self.data.iter().max()
     }
 }
 
-
 #[cfg(test)]
-mod test_extras{
+mod test_extras {
     use super::Ndarr;
 
     #[test]
-    fn max(){
-        let arr = Ndarr::from([-2,0,4,8]);
+    fn max() {
+        let arr = Ndarr::from([-2, 0, 4, 8]);
         assert_eq!(arr.max().unwrap(), &8)
     }
 
     #[test]
-    fn sum(){
-        let arr = Ndarr::from([-2,0,4,8]);
+    fn sum() {
+        let arr = Ndarr::from([-2, 0, 4, 8]);
         assert_eq!(arr.sum(), 10)
     }
 }
-
-

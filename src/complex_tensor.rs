@@ -1,6 +1,4 @@
-use std::{
-    ops::{Add, Div, Mul, MulAssign, Neg},
-};
+use std::ops::{Add, Div, Mul, MulAssign, Neg};
 
 use super::*;
 use crate::complex::*;
