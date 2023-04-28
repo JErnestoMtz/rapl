@@ -22,6 +22,7 @@ mod natives;
 pub mod ops;
 mod scalars;
 pub mod utils;
+mod shape;
 
 #[cfg(feature = "complex")]
 mod complex_tensor;
@@ -38,7 +39,7 @@ pub use helpers::{broadcast_shape, const_max};
 pub use complex::*;
 
 use num_traits::Float;
-
+use shape::Dim;
 ///Main struct of N Dimensional generic array. The shape is denoted by the `shape` array where the length is the Rank of the Ndarray the actual values are stored in a flattened state in a rank 1 array.
 
 #[derive(Debug, Clone, PartialEq, Eq)]
