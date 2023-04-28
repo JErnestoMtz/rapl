@@ -1,7 +1,8 @@
+use std::cmp::max;
 use std::marker::PhantomData;
 use std::ops::{Sub, Add};
 
-use typenum::{Unsigned, Add1, Sum, Sub1, Maximum, B1};
+use typenum::{Unsigned, Add1, Sum, Sub1, Maximum, B1, Max};
 use crate::errors::DimError;
 use crate::helpers::multiply_list;
 
@@ -102,6 +103,42 @@ impl <R: Unsigned> Dim<R>{
         }
         let rev_cast_ind = Dim::<R1>::new(&rev_cast_ind)?;
         Ok(small_shape.get_flat_pos(&rev_cast_ind)?)
+
+    }
+    fn index_or(arr: &[usize], index: usize, or: usize)->usize{
+        if index >= arr.len(){
+            or
+        }else{
+            arr[index]
+        }
+    }
+    pub fn broadcast_shape<R2: Unsigned>(&self, other: &Dim<R2>)->Result<Dim<Maximum<R,R2>>,DimError>
+    where R: Max<R2>,
+    <R as Max<R2>>::Output: Unsigned,
+    {
+        let N = R::to_usize();
+        let M = R2::to_usize();
+        let mut out_shape = vec![0; max(N, M)];
+        //get both shapes
+        let mut sh1 = self.shape.clone();
+        let mut sh2 = other.shape.clone();
+        sh1.reverse();
+        sh2.reverse();
+
+        let l = max(N,M);
+        for i in 0..l {
+            let size1 = Self::index_or(&sh1, i, 1);
+            let size2 = Self::index_or(&sh2, i, 1);
+            //broadcasting criteria
+            if size1 != 1 && size2 != 1 && size1 != size2 {
+                return Err(DimError::new(&format!(
+                    "Error arrays with shape {:?} and {:?} can not be broadcasted.",
+                    self.shape, other.shape
+                )));
+            }
+            out_shape[l - i - 1] = max(size1, size2)
+        }    
+        Ok(Dim::<Maximum<R,R2>>::new(&out_shape)?)
 
     }
 
