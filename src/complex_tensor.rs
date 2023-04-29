@@ -20,7 +20,7 @@ impl Scalar for C<u16> {}
 impl Scalar for C<u8> {}
 impl Scalar for C<usize> {}
 
-impl<T: Copy + PartialEq + Clone + Debug + Default, const R: usize> Ndarr<C<T>, R> {
+impl<T: Copy + PartialEq + Clone + Debug + Default, R: Unsigned> Ndarr<C<T>, R> {
     pub fn re(&self) -> Ndarr<T, R> {
         let out = self.map_types(|z| z.re());
         out
@@ -31,7 +31,7 @@ impl<T: Copy + PartialEq + Clone + Debug + Default, const R: usize> Ndarr<C<T>, 
     }
 }
 
-impl<T: Copy + PartialEq + Neg<Output = T> + Clone + Debug + Default, const R: usize>
+impl<T: Copy + PartialEq + Neg<Output = T> + Clone + Debug + Default, R: Unsigned>
     Ndarr<C<T>, R>
 {
     /// Element wise complex conjugate.
@@ -47,7 +47,7 @@ impl<T: Copy + PartialEq + Neg<Output = T> + Clone + Debug + Default, const R: u
     }
 }
 
-impl<T, const R: usize> Ndarr<C<T>, R>
+impl<T, R: Unsigned> Ndarr<C<T>, R>
 where
     T: Copy
         + PartialEq
@@ -68,7 +68,7 @@ where
 
 impl<
         T: Copy + PartialEq + Add<Output = T> + Mul<Output = T> + Clone + Debug + Default,
-        const R: usize,
+        R: Unsigned,
     > Ndarr<C<T>, R>
 {
     pub fn r_square(&self) -> Ndarr<T, R> {
@@ -77,7 +77,7 @@ impl<
     }
 }
 
-impl<T, const R: usize> Ndarr<C<T>, R>
+impl<T, R: Unsigned> Ndarr<C<T>, R>
 where
     C<T>: MulAssign + Debug,
     T: Clone + Default + Debug + Copy + PartialEq + Num,
@@ -90,7 +90,7 @@ where
 
 //---------------Complex Float Tensors
 
-impl<T, const R: usize> Ndarr<C<T>, R>
+impl<T, R: Unsigned> Ndarr<C<T>, R>
 where
     T: Clone + Debug + Default + Float,
 {

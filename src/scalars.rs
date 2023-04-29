@@ -38,12 +38,12 @@ impl Scalar for &usize {}
 impl Scalar for &char {}
 impl Scalar for &str {}
 
-pub fn extend_scalar<P, T, const R: usize>(scalar: &P, shape: &[usize; R]) -> Ndarr<T, R>
+pub fn extend_scalar<P, T, R: Unsigned>(scalar: &P, shape: &Dim<R>) -> Ndarr<T, R>
 where
     T: Debug + Copy + Clone + Default,
     P: Into<T> + Clone,
 {
-    let n = multiply_list(shape, 1);
+    let n = multiply_list(&shape.shape, 1);
     let s = shape.clone();
     let mut out_data = vec![T::default(); n];
     for i in 0..out_data.len() {
@@ -51,16 +51,16 @@ where
     }
     Ndarr {
         data: out_data,
-        shape: s,
+        dim: s,
     }
 }
 
-impl<T, P, const R: usize> IntoNdarr<T, R> for P
+impl<T, P, R: Unsigned> IntoNdarr<T, R> for P
 where
     T: Debug + Copy + Clone + Default,
     P: Into<T> + Clone + Scalar,
 {
-    fn into_ndarr(&self, shape: &[usize; R]) -> Ndarr<T, R> {
+    fn into_ndarr(&self, shape: &Dim<R>) -> Ndarr<T, R> {
         extend_scalar(self, shape)
     }
     fn get_rank(&self) -> usize {

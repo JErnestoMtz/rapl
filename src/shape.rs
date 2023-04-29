@@ -2,13 +2,13 @@ use std::cmp::max;
 use std::marker::PhantomData;
 use std::ops::{Sub, Add};
 
-use typenum::{Unsigned, Add1, Sum, Sub1, Maximum, B1, Max};
+use typenum::{Unsigned, Add1, Sub1, Maximum, B1, Max, U1, U2, U3};
 use crate::errors::DimError;
 use crate::helpers::multiply_list;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dim<R: Unsigned>{
-    shape: Vec<usize>,
+    pub shape: Vec<usize>,
     rank: PhantomData<R>
 }
 
@@ -65,8 +65,8 @@ impl <R: Unsigned> Dim<R>{
         Dim::<Add1<R>>::new(&result).unwrap()
     }
 
+    ///Paths a shape of rank R with ones in the left until is rank R2.
     pub fn path_shape<R2: Unsigned>(&self)->Result<Dim<R2>,DimError>{
-        ///Paths a shape of rank R with ones in the left until is rank R2.
         let R = R::to_usize();
         let R2 = R2::to_usize();
         if R::to_usize() > R2::to_usize(){
@@ -141,11 +141,85 @@ impl <R: Unsigned> Dim<R>{
         Ok(Dim::<Maximum<R,R2>>::new(&out_shape)?)
 
     }
+    pub fn len(&self)->usize{
+        self.shape.len()
+    }
+    pub fn reverse(&self)->Self{
+        let mut shape = self.shape.clone();
+        shape.reverse();
+        Dim { shape: shape, rank: PhantomData }
+    }
 
 
 }
 
+impl<R: Unsigned> From<&Dim<R>> for Dim<R>{
+    fn from(value: &Dim<R>) -> Self {
+        Dim { shape: value.shape.clone(), rank: PhantomData }
+    }
+}
 
+impl<const N: usize> From<[usize; N]> for Dim<U1>
+{
+    fn from(value: [usize; N]) -> Self {
+        Dim { shape: value.to_vec(), rank: PhantomData }
+    }
+}
+
+impl<const N: usize> From<&[usize; N]> for Dim<U1>
+{
+    fn from(value: &[usize; N]) -> Self {
+        Dim { shape: value.to_vec(), rank: PhantomData }
+    }
+}
+impl<const N1: usize, const N2: usize> From<[[usize; N1];N2 ]> for Dim<U2>
+{
+    fn from(value: [[usize; N1]; N2]) -> Self {
+        let mut data = Vec::with_capacity(N1 * N2);
+        for row in value.iter() {
+            data.extend_from_slice(row);
+        }
+        Dim { shape: data, rank: PhantomData }
+    }
+}
+impl<const N1: usize, const N2: usize> From<&[[usize; N1];N2 ]> for Dim<U2>
+{
+    fn from(value: &[[usize; N1]; N2]) -> Self {
+        let mut data = Vec::with_capacity(N1 * N2);
+        for row in value.iter() {
+            data.extend_from_slice(row);
+        }
+        Dim { shape: data, rank: PhantomData }
+    }
+}
+
+impl<const N1: usize, const N2: usize, const N3: usize> From<[[[usize; N1]; N2]; N3]> for Dim<U3>
+{
+    fn from(value: [[[usize; N1]; N2]; N3]) -> Self {
+        let mut data = Vec::with_capacity(N1 * N2 * N3);
+        for row in value.iter() {
+            for column in row.iter() {
+                data.extend_from_slice(column)
+            }
+        }
+
+        Dim { shape: data, rank: PhantomData }
+    }
+}
+
+impl<const N1: usize, const N2: usize, const N3: usize> From<&[[[usize; N1]; N2]; N3]> for Dim<U3>
+{
+    fn from(value: &[[[usize; N1]; N2]; N3]) -> Self {
+        let mut data = Vec::with_capacity(N1 * N2 * N3);
+        for row in value.iter() {
+            for column in row.iter() {
+                data.extend_from_slice(column)
+            }
+        }
+
+        Dim { shape: data, rank: PhantomData }
+    }
+}
 
 #[cfg(test)]
 mod Dim_tests {
@@ -189,3 +263,5 @@ mod Dim_tests {
 
 
 }
+
+

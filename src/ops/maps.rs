@@ -1,34 +1,7 @@
 use super::*;
 
-trait GeneralBimap<F, T2, T3> {
-    type Other;
-    type Output;
-    fn gen_bimap(self, other: Self::Other, f: F) -> Self::Output;
-}
 
-impl<F, T1, T2, T3, const R: usize> GeneralBimap<F, T2, T3> for Ndarr<T1, R>
-where
-    T1: Debug + Clone + Default,
-    T2: Debug + Clone + Default,
-    T3: Debug + Clone + Default,
-    F: Fn(T1, T2) -> T3,
-{
-    type Other = Ndarr<T2, R>;
-    type Output = Ndarr<T3, R>;
-
-    fn gen_bimap(self, other: Self::Other, f: F) -> Self::Output {
-        let mut out = vec![T3::default(); self.data.len()];
-        for (i, val) in out.iter_mut().enumerate() {
-            *val = f(self.data[i].clone(), other.data[i].clone())
-        }
-        Ndarr {
-            data: out,
-            shape: self.shape,
-        }
-    }
-}
-
-impl<T1: Debug + Clone + Default, const R: usize> Ndarr<T1, R> {
+impl<T1: Debug + Clone + Default, R: Unsigned> Ndarr<T1, R> {
     pub fn map<F1: Fn(&T1) -> T1>(&self, f: F1) -> Self {
         let mut out = vec![T1::default(); self.data.len()];
         for (i, val) in out.iter_mut().enumerate() {
@@ -36,7 +9,7 @@ impl<T1: Debug + Clone + Default, const R: usize> Ndarr<T1, R> {
         }
         Ndarr {
             data: out,
-            shape: self.shape,
+            dim: self.dim.clone()
         }
     }
     pub fn map_in_place<F1: Fn(&T1) -> T1>(&mut self, f: F1) {
@@ -51,7 +24,7 @@ impl<T1: Debug + Clone + Default, const R: usize> Ndarr<T1, R> {
         }
         Ndarr {
             data: out,
-            shape: self.shape,
+            dim: self.dim.clone()
         }
     }
     // Bimap: is the same as Zip then map, is just a convenient way for doing diadic operations between Ndarrs
@@ -62,7 +35,7 @@ impl<T1: Debug + Clone + Default, const R: usize> Ndarr<T1, R> {
         }
         Ndarr {
             data: out,
-            shape: self.shape,
+            dim: self.dim.clone()
         }
     }
 
@@ -73,10 +46,10 @@ impl<T1: Debug + Clone + Default, const R: usize> Ndarr<T1, R> {
     }
 
     pub fn scanr<F: Fn(T1, T1) -> T1>(&self, axis: usize, f: F) -> Self
-    where
-        [usize; R - 1]: Sized,
-        [usize; R - 1 + 1]: Sized, // lol const generics still too dum, we need this or it else breaks
-        [usize; R + 1 - 1]: Sized,
+    where R: Sub<B1>,
+    <R as Sub<B1>>::Output: Unsigned,
+    <R as Sub<B1>>::Output: Add<B1>,
+    <<R as Sub<B1>>::Output as Add<B1>>::Output: Unsigned,
     {
         let mut slices = self.slice_at(axis);
         for i in 0..slices.len() - 1 {
@@ -85,15 +58,15 @@ impl<T1: Debug + Clone + Default, const R: usize> Ndarr<T1, R> {
         let out = de_slice(&slices, axis);
         Ndarr {
             data: out.data,
-            shape: self.shape,
+            dim: self.dim.clone(),
         }
     }
 
     pub fn scanl<F: Fn(T1, T1) -> T1>(&self, axis: usize, f: F) -> Self
-    where
-        [usize; R - 1]: Sized,
-        [usize; R - 1 + 1]: Sized, // lol const generics still too dum, we need this or it else breaks
-        [usize; R + 1 - 1]: Sized,
+    where R: Sub<B1>,
+        <R as Sub<B1>>::Output: Unsigned,
+        <R as Sub<B1>>::Output: Add<B1>,
+        <<R as Sub<B1>>::Output as Add<B1>>::Output: Unsigned,
     {
         let mut slices = self.slice_at(axis);
         let l = slices.len();
@@ -103,7 +76,7 @@ impl<T1: Debug + Clone + Default, const R: usize> Ndarr<T1, R> {
         let out = de_slice(&slices, axis);
         Ndarr {
             data: out.data,
-            shape: self.shape,
+            dim: self.dim.clone(),
         }
     }
 }

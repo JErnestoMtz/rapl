@@ -2,7 +2,7 @@ use super::*;
 use num_traits::Signed;
 use std::ops::Add;
 
-impl<T, const R: usize> Ndarr<T, R>
+impl<T, R: Unsigned> Ndarr<T, R>
 where
     T: Clone + Debug + Default + Signed + PartialOrd,
 {
@@ -21,7 +21,7 @@ where
     }
 }
 
-impl<T, const R: usize> Ndarr<T, R>
+impl<T, R: Unsigned> Ndarr<T, R>
 where
     T: Clone + Debug + Default,
 {

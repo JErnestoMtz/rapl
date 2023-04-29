@@ -1,19 +1,20 @@
 use super::*;
 use crate::scalars::Scalar;
+use typenum::{U1, U2, U3, U4};
 
-impl<T, const N: usize> From<[T; N]> for Ndarr<T, 1>
+impl<T, const N: usize> From<[T; N]> for Ndarr<T, U1>
 where
     T: Clone + Debug + Copy + Default + Scalar,
 {
     fn from(value: [T; N]) -> Self {
         Ndarr {
             data: value.to_vec(),
-            shape: [N],
+            dim: Dim::<U1>::new(&[N]).unwrap(),
         }
     }
 }
 
-impl<T, const N1: usize, const N2: usize> From<[[T; N1]; N2]> for Ndarr<T, 2>
+impl<T, const N1: usize, const N2: usize> From<[[T; N1]; N2]> for Ndarr<T, U2>
 where
     T: Clone + Debug + Copy + Default + Scalar,
 {
@@ -24,12 +25,12 @@ where
         }
         Ndarr {
             data,
-            shape: [N2, N1],
+            dim: Dim::new(&[N2, N1]).unwrap(),
         }
     }
 }
 
-impl<T, const N1: usize, const N2: usize, const N3: usize> From<[[[T; N1]; N2]; N3]> for Ndarr<T, 3>
+impl<T, const N1: usize, const N2: usize, const N3: usize> From<[[[T; N1]; N2]; N3]> for Ndarr<T, U3>
 where
     T: Clone + Debug + Copy + Default + Scalar,
 {
@@ -42,13 +43,13 @@ where
         }
         Ndarr {
             data,
-            shape: [N3, N2, N1],
+            dim: Dim::new(&[N3, N2, N1]).unwrap(),
         }
     }
 }
 
 impl<T, const N1: usize, const N2: usize, const N3: usize, const N4: usize>
-    From<[[[[T; N1]; N2]; N3]; N4]> for Ndarr<T, 4>
+    From<[[[[T; N1]; N2]; N3]; N4]> for Ndarr<T, U4>
 where
     T: Clone + Debug + Copy + Default + Scalar,
 {
@@ -63,12 +64,12 @@ where
         }
         Ndarr {
             data,
-            shape: [N4, N3, N2, N1],
+            dim: Dim::new(&[N4, N3, N2, N1]).unwrap(),
         }
     }
 }
 
-impl<T> From<Vec<T>> for Ndarr<T, 1>
+impl<T> From<Vec<T>> for Ndarr<T, U1>
 where
     T: Clone + Debug + Copy + Default + Scalar,
 {
@@ -76,12 +77,12 @@ where
         let l = &value.len();
         Ndarr {
             data: value,
-            shape: [*l],
+            dim: Dim::new(&[*l]).unwrap(),
         }
     }
 }
 
-impl<T> From<std::ops::Range<T>> for Ndarr<T, 1>
+impl<T> From<std::ops::Range<T>> for Ndarr<T, U1>
 where
     T: Copy + Clone + Debug + Default + Scalar,
     std::ops::Range<T>: Iterator,
@@ -91,16 +92,16 @@ where
         let out: Vec<T> = value.collect();
         Ndarr {
             data: out.clone(),
-            shape: [out.len()],
+            dim: Dim::new(&[out.len()]).unwrap(),
         }
     }
 }
 
-impl From<&str> for Ndarr<char, 1> {
+impl From<&str> for Ndarr<char, U1> {
     fn from(value: &str) -> Self {
         Ndarr {
             data: value.chars().collect(),
-            shape: [value.len()],
+            dim: Dim::new(&[value.len()]).unwrap(),
         }
     }
 }

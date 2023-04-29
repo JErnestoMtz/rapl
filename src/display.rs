@@ -1,5 +1,5 @@
 use super::*;
-impl<T: Clone + Debug + Default + Display, const R: usize> Display for Ndarr<T, R> {
+impl<T: Clone + Debug + Default + Display, R: Unsigned> Display for Ndarr<T, R> {
     // Kind of nasty function, it can be imprube a lot, but I think there is no scape from recursion.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         //convert to string
@@ -14,7 +14,7 @@ impl<T: Clone + Debug + Default + Display, const R: usize> Display for Ndarr<T, 
             .map(|s| helpers::format_vla(s.to_string(), max_size))
             .collect();
 
-        let splits = self.shape;
+        let splits = self.dim.shape.clone();
         //splits.reverse();
 
         fn slip_format<'a>(strings: &'a mut [String], splits: &'a [usize]) {

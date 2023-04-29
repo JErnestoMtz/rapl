@@ -2,7 +2,7 @@ use num_traits::Float;
 
 use super::*;
 
-impl<T, const R: usize> Ndarr<T, R>
+impl<T, R: Unsigned> Ndarr<T, R>
 where
     T: Clone + Copy + Debug + Default + Float,
 {
