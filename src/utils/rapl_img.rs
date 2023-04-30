@@ -146,7 +146,7 @@ mod image_test {
     use super::*;
     #[test]
     fn open_rgb8() {
-        //let img = open_rgbu8(&"graphics\\test_img.jpg").unwrap();
+        let img = open_rgbu8(&"graphics\\test_img.jpg").unwrap();
         //let mut slices = img.slice_at(2);
         //slices[2].map_in_place(|x| x.wrapping_add(200));
         //let des = de_slice(&slices, 2);
@@ -154,10 +154,10 @@ mod image_test {
     }
     #[test]
     fn open_f32() {
-        //let img = open_lumaf32(&"graphics\\test_img.jpg").unwrap();
-        //img.save_as_luma(&"graphics\\out_test_bw.jpg", ImageFormat::Png);
-        ////square image
-        //let square = &img * &img;
-        //square.save_as_luma(&"graphics\\out_test_bw_square.jpg", ImageFormat::Png);
+        let img = open_lumaf32(&"graphics\\test_img.jpg").unwrap();
+        img.save_as_luma(&"graphics\\out_test_bw.jpg", ImageFormat::Png);
+        //square image
+        let square = &img * &img;
+        square.save_as_luma(&"graphics\\out_test_bw_square.jpg", ImageFormat::Png);
     }
 }

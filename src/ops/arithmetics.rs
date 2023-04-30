@@ -1,4 +1,3 @@
-use super::dyadic::*;
 use super::*;
 use std::ops::*;
 use typenum::{Maximum, Unsigned};
@@ -18,7 +17,7 @@ macro_rules!  ndarr_op{
         {
             type Output = Ndarr<T3,Maximum<R1,R2>>;
             fn $F(self, rhs: $Ty2) -> Self::Output {
-                poly_diatic(&self, &rhs, |x,y| x $Op y).unwrap()
+                self.poly_diatic(&rhs, |x,y| x $Op y).unwrap()
             }
         }
     };
