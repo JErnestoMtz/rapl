@@ -8,33 +8,37 @@ impl<T, R: Unsigned> Ndarr<T, R>
 where
     T: Clone + Debug + Default,
 {
-    pub fn zeros(shape: &Dim<R>) -> Self
+    pub fn zeros<D: Into<Dim<R>>>(shape: D) -> Self
     where
         T: Zero,
     {
+        let shape = shape.into();
         let data: Vec<T> = vec![T::zero(); multiply_list(&shape.shape, 1)];
         Ndarr {
             data,
-            dim: shape.clone(),
+            dim: shape,
         }
     }
 
-    pub fn ones(shape: &Dim<R>) -> Self
+    pub fn ones<D: Into<Dim<R>>>(shape: D) -> Self
     where
         T: One,
     {
+
+        let shape = shape.into();
         let data: Vec<T> = vec![T::one(); multiply_list(&shape.shape, 1)];
         Ndarr {
             data,
-            dim: shape.clone(),
+            dim: shape,
         }
     }
 
-    pub fn fill(with: T, shape: &Dim<R>) -> Self {
+    pub fn fill<D: Into<Dim<R>>>(with: T, shape: D) -> Self {
+        let shape = shape.into();
         let data: Vec<T> = vec![with; multiply_list(&shape.shape, 1)];
         Ndarr {
             data,
-            dim: shape.clone(),
+            dim: shape,
         }
     }
 }
