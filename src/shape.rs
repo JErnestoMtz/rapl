@@ -2,7 +2,7 @@ use std::cmp::max;
 use std::marker::PhantomData;
 use std::ops::{Sub, Add};
 
-use typenum::{Unsigned, Add1, Sub1, Maximum, B1, Max, U1, U2, U3};
+use typenum::{Unsigned, Add1, Sub1, Maximum, B1, Max, U1, U2, U3, U4, U5};
 use crate::errors::DimError;
 use crate::helpers::multiply_list;
 
@@ -196,6 +196,32 @@ impl From<[usize; 3]> for Dim<U3>
 impl From<&[usize; 3]> for Dim<U3>
 {
     fn from(value: &[usize; 3]) -> Self {
+        Dim { shape: value.to_vec(), rank: PhantomData }
+    }
+}
+
+impl From<[usize; 4]> for Dim<U4>
+{
+    fn from(value: [usize; 4]) -> Self {
+        Dim { shape: value.to_vec(), rank: PhantomData }
+    }
+}
+impl From<&[usize; 4]> for Dim<U4>
+{
+    fn from(value: &[usize; 4]) -> Self {
+        Dim { shape: value.to_vec(), rank: PhantomData }
+    }
+}
+
+impl From<[usize; 5]> for Dim<U5>
+{
+    fn from(value: [usize; 5]) -> Self {
+        Dim { shape: value.to_vec(), rank: PhantomData }
+    }
+}
+impl From<&[usize; 5]> for Dim<U5>
+{
+    fn from(value: &[usize; 5]) -> Self {
         Dim { shape: value.to_vec(), rank: PhantomData }
     }
 }
