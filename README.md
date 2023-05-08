@@ -1,8 +1,10 @@
 # rapl
 
-Note: `rapl` is in early development and is  not optimized for performance, thus is not recommended for production applications.
+Note: `rapl` is in early development and is  not optimized for performance, is not recommended for production applications.
 
-`rapl` is an experimental numerical computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomics and user-friendliness while maintaining generality. Our goal is to make Rust scripting as productive as possible and a real option for numerical computing. 
+`rapl` is an experimental numerical computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomics and user-friendliness while maintaining generality. 
+
+Our goal is to make Rust scripting as productive as possible and a real option when it comes to  numerical computing and data science. 
 
 Out of the box `rapl` provides features like co-broadcasting, rank type checking, native complex number support, among many others:
 
@@ -54,7 +56,7 @@ let b = Ndarr::from([[1,2],[-3,-4]]);
 assert_eq!(a + b, Ndarr::from([[2,4],[0,0]]))
 ```
 Note: If the shapes are not equal `rapl` will automatically broadcast the arrays into a compatible shape (if it exist) and perform the operation.
-- Math operations including trigonometric functions
+- Math operations including trigonometric and activation functions.
 ```Rust
 let x = Ndarr::from([-1.0 , -0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6, 0.8, 1.0]);
 let sin_x = x.sin();
@@ -62,6 +64,7 @@ let cos_x = x.cos();
 let tanh_x = x.tanh();
 
 let abs_x = x.abs();
+let relu_x = x.relu();
 ```
 - Map function
 ```Rust
@@ -154,9 +157,9 @@ use rapl::utils::rapl_img;
 
 fn main() {
     //open RGB image as  Ndarr<u8,3>
-    let img: Ndarr<u8,3> = rapl_img::open_rgbu8(&"image_name.jpg").unwrap();
+    let img: Ndarr<u8,U3> = rapl_img::open_rgbu8(&"image_name.jpg").unwrap();
     //Split RGB channels by Slicing along 3'th axis.
-    let channels: Vec<Ndarr<u8,2>> = img.slice_at(2);
+    let channels: Vec<Ndarr<u8,U2>> = img.slice_at(2);
     //select blue channel and save it as black and white image.
     channels[2].save_as_luma(&"blue_channel.png", rapl_img::ImageFormat::Png);
 }
