@@ -29,6 +29,7 @@ use std::{fmt::Debug, fmt::Display};
 pub mod complex;
 
 pub use errors::DimError;
+use num_traits::Float;
 pub use scalars::Scalar;
 
 #[cfg(feature = "complex")]
@@ -39,7 +40,6 @@ pub use typenum::{B0,B1,U0,U1,U2,U3,U4,U5,U6,U7,U8};
 
 use std::ops::{Sub, Add};
 use typenum::{Unsigned, Add1, Sub1, Maximum, Max};
-use num_traits::{Float};
 
 
 

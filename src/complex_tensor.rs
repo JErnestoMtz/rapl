@@ -41,7 +41,7 @@ impl<T: Copy + PartialEq + Neg<Output = T> + Clone + Debug + Default, R: Unsigne
     }
 
     /// Conjugate or Hermitian transpose.
-    pub fn conj_t(&self) -> Self {
+    pub fn h(&self) -> Self {
         let out = self.map(|z| z.conj());
         out.t()
     }

@@ -158,71 +158,62 @@ impl<R: Unsigned> From<&Dim<R>> for Dim<R>{
         Dim { shape: value.shape.clone(), rank: PhantomData }
     }
 }
+macro_rules!  arr_to_dim{
+    ($n:expr, $t:ty) => {
+     impl From<[usize; $n]> for Dim<$t>
+        {
+            fn from(value: [usize; $n]) -> Self {
+                Dim { shape: value.to_vec(), rank: PhantomData }
+            }
+        }
 
-impl From<[usize; 1]> for Dim<U1>
-{
-    fn from(value: [usize; 1]) -> Self {
-        Dim { shape: value.to_vec(), rank: PhantomData }
-    }
-}
-
-impl From<&[usize; 1]> for Dim<U1>
-{
-    fn from(value: &[usize; 1]) -> Self {
-        Dim { shape: value.to_vec(), rank: PhantomData }
-    }
-}
-
-impl From<[usize; 2]> for Dim<U2>
-{
-    fn from(value: [usize; 2]) -> Self {
-        Dim { shape: value.to_vec(), rank: PhantomData }
-    }
+        impl From<&[usize; $n]> for Dim<$t>
+        {
+            fn from(value: &[usize; $n]) -> Self {
+                Dim { shape: value.to_vec(), rank: PhantomData }
+            }
+        }
+    };
 }
 
-impl From<&[usize; 2]> for Dim<U2>
-{
-    fn from(value: &[usize; 2]) -> Self {
-        Dim { shape: value.to_vec(), rank: PhantomData }
-    }
-}
+arr_to_dim!(1,U1);
+arr_to_dim!(2,U2);
+arr_to_dim!(3,U3);
+arr_to_dim!(4,U4);
+arr_to_dim!(5,U5);
 
-impl From<[usize; 3]> for Dim<U3>
-{
-    fn from(value: [usize; 3]) -> Self {
-        Dim { shape: value.to_vec(), rank: PhantomData }
-    }
-}
-impl From<&[usize; 3]> for Dim<U3>
-{
-    fn from(value: &[usize; 3]) -> Self {
-        Dim { shape: value.to_vec(), rank: PhantomData }
-    }
-}
 
-impl From<[usize; 4]> for Dim<U4>
+
+
+
+
+
+
+impl<const N1: usize, const N2: usize, const N3: usize> From<[[[usize; N1]; N2]; N3]> for Dim<U3>
 {
-    fn from(value: [usize; 4]) -> Self {
-        Dim { shape: value.to_vec(), rank: PhantomData }
-    }
-}
-impl From<&[usize; 4]> for Dim<U4>
-{
-    fn from(value: &[usize; 4]) -> Self {
-        Dim { shape: value.to_vec(), rank: PhantomData }
+    fn from(value: [[[usize; N1]; N2]; N3]) -> Self {
+        let mut data = Vec::with_capacity(N1 * N2 * N3);
+        for row in value.iter() {
+            for column in row.iter() {
+                data.extend_from_slice(column)
+            }
+        }
+
+        Dim { shape: data, rank: PhantomData }
     }
 }
 
-impl From<[usize; 5]> for Dim<U5>
+impl<const N1: usize, const N2: usize, const N3: usize> From<&[[[usize; N1]; N2]; N3]> for Dim<U3>
 {
-    fn from(value: [usize; 5]) -> Self {
-        Dim { shape: value.to_vec(), rank: PhantomData }
-    }
-}
-impl From<&[usize; 5]> for Dim<U5>
-{
-    fn from(value: &[usize; 5]) -> Self {
-        Dim { shape: value.to_vec(), rank: PhantomData }
+    fn from(value: &[[[usize; N1]; N2]; N3]) -> Self {
+        let mut data = Vec::with_capacity(N1 * N2 * N3);
+        for row in value.iter() {
+            for column in row.iter() {
+                data.extend_from_slice(column)
+            }
+        }
+
+        Dim { shape: data, rank: PhantomData }
     }
 }
 
