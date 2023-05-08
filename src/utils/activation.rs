@@ -2,7 +2,7 @@ use num_traits::Float;
 
 use super::*;
 
-impl<T: Float + Default + Clone + Debug, const R: usize> Ndarr<T, R> {
+impl<T: Float + Default + Clone + Debug, R: Unsigned> Ndarr<T, R> {
     //Threshold
     pub fn threshold(&self, threshold: &T, value: &T) -> Self {
         self.map(|x| if x > threshold { *x } else { *value })
@@ -158,7 +158,6 @@ impl<T: Float + Default + Clone + Debug, const R: usize> Ndarr<T, R> {
 #[cfg(test)]
 mod test_act {
     use super::*;
-
     #[test]
     fn threshold() {
         let x = Ndarr::from([-1., 0., 1., 2., 3.]);

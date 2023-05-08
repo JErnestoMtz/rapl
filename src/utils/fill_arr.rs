@@ -4,37 +4,41 @@ use super::helpers::multiply_list;
 use super::*;
 
 //// zeros and ones
-impl<T, const R: usize> Ndarr<T, R>
+impl<T, R: Unsigned> Ndarr<T, R>
 where
     T: Clone + Debug + Default,
 {
-    pub fn zeros(shape: &[usize; R]) -> Self
+    pub fn zeros<D: Into<Dim<R>>>(shape: D) -> Self
     where
         T: Zero,
     {
-        let data: Vec<T> = vec![T::zero(); multiply_list(shape, 1)];
+        let shape = shape.into();
+        let data: Vec<T> = vec![T::zero(); multiply_list(&shape.shape, 1)];
         Ndarr {
             data,
-            shape: shape.clone(),
+            dim: shape,
         }
     }
 
-    pub fn ones(shape: &[usize; R]) -> Self
+    pub fn ones<D: Into<Dim<R>>>(shape: D) -> Self
     where
         T: One,
     {
-        let data: Vec<T> = vec![T::one(); multiply_list(shape, 1)];
+
+        let shape = shape.into();
+        let data: Vec<T> = vec![T::one(); multiply_list(&shape.shape, 1)];
         Ndarr {
             data,
-            shape: shape.clone(),
+            dim: shape,
         }
     }
 
-    pub fn fill(with: T, shape: &[usize; R]) -> Self {
-        let data: Vec<T> = vec![with; multiply_list(shape, 1)];
+    pub fn fill<D: Into<Dim<R>>>(with: T, shape: D) -> Self {
+        let shape = shape.into();
+        let data: Vec<T> = vec![with; multiply_list(&shape.shape, 1)];
         Ndarr {
             data,
-            shape: shape.clone(),
+            dim: shape,
         }
     }
 }

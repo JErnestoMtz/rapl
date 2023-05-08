@@ -1,17 +1,18 @@
 # rapl
 
-*NOTE*: `rapl`  requires Nightly and is strictly intended for non-production purposes only. `rapl` utilizes certain unstable features that may result in unexpected behavior, and is not optimized for performance.
+Note: `rapl` is in early development and is  not optimized for performance, thus is not recommended for production applications.
 
-`rapl` is an experimental numerical computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomics and user-friendliness while maintaining generality. Our goal is to make Rust a viable option for scripting and numerical analysis by creating a versatile and user-friendly tools.
+`rapl` is an experimental numerical computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomics and user-friendliness while maintaining generality. Our goal is to make Rust scripting as productive as possible and a real option for numerical computing. 
+
+Out of the box `rapl` provides features like co-broadcasting, rank type checking, native complex number support, among many others:
 
 ```Rust
-#![feature(generic_const_exprs)]
 use rapl::*;
 fn main() {
-    let a = Ndarr::from([1, 2, 3]);
-    let b = Ndarr::from([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
-    let r = a + b - 1;
-    assert_eq!(r, Ndarr::from([[1, 3, 5], [4, 6, 8], [7, 9, 11]]));
+    let a = Ndarr::from([1 + 1.i(), 2 + 1.i()]);
+    let b = Ndarr::from([[1, 2], [3, 4]]);
+    let r = a + b - 2;
+    assert_eq!(r, Ndarr::from([[1.i(), 2 + 1.i()],[2 + 1.i(), 4 + 1.i()]]));
 }
 ```
 
@@ -56,9 +57,9 @@ Note: If the shapes are not equal `rapl` will automatically broadcast the arrays
 - Math operations including trigonometric functions
 ```Rust
 let x = Ndarr::from([-1.0 , -0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6, 0.8, 1.0]);
-let sin_x = &x.sin();
-let cos_x = &x.cos();
-let tanh_x = &x.tanh();
+let sin_x = x.sin();
+let cos_x = x.cos();
+let tanh_x = x.tanh();
 
 let abs_x = x.abs();
 ```
@@ -162,8 +163,8 @@ fn main() {
 ```
 
 ### Features in development:
+- [x] Port to stable Rust
 - [x] Native support for complex numbers.
-- [ ] Port to stable Rust
 - [ ] Line space and meshigrid initialization.
 - [ ] Random array creation.
 - [ ] 1D and 2D FFT.
