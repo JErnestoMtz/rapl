@@ -30,7 +30,8 @@ where
     }
 }
 
-impl<T, const N1: usize, const N2: usize, const N3: usize> From<[[[T; N1]; N2]; N3]> for Ndarr<T, U3>
+impl<T, const N1: usize, const N2: usize, const N3: usize> From<[[[T; N1]; N2]; N3]>
+    for Ndarr<T, U3>
 where
     T: Clone + Debug + Copy + Default + Scalar,
 {

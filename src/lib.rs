@@ -1,4 +1,3 @@
-
 //!Note: `rapl` is in early development and is  not optimized for performance, thus is not recommended for production applications.
 
 //!`rapl` is an experimental numerical computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomics and user-friendliness while maintaining generality. Our goal is to make Rust scripting as productive as possible and a real option for numerical computing.
@@ -18,9 +17,8 @@ mod helpers;
 mod natives;
 pub mod ops;
 mod scalars;
-pub mod utils;
 mod shape;
-
+pub mod utils;
 
 #[cfg(feature = "complex")]
 mod complex_tensor;
@@ -36,12 +34,11 @@ pub use scalars::Scalar;
 pub use complex::*;
 
 pub use shape::Dim;
-pub use typenum::{B0,B1,U0,U1,U2,U3,U4,U5,U6,U7,U8};
 
-use std::ops::{Sub, Add};
-use typenum::{Unsigned, Add1, Sub1, Maximum, Max};
+pub use typenum::{UTerm, B0, B1, U0, U1, U2, U3, U4, U5, U6, U7, U8};
 
-
+use std::ops::{Add, Sub};
+use typenum::{Add1, Max, Maximum, Sub1, Unsigned};
 
 ///Main struct of N Dimensional generic array. The shape is denoted by the `shape` array where the length is the Rank of the Ndarray the actual values are stored in a flattened state in a rank 1 array.
 
@@ -70,7 +67,7 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
         }
     }
     pub fn rank(&self) -> usize {
-        R::to_usize()
+        self.dim.shape.len()
     }
     pub fn shape(&self) -> &[usize] {
         &self.dim.shape
@@ -91,8 +88,10 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
         p.into()
     }
 
-    pub fn reshape<R2: Unsigned, D: Into<Dim<R2>>>(&self, shape: D) -> Result<Ndarr<T, R2>, DimError>
-    {
+    pub fn reshape<R2: Unsigned, D: Into<Dim<R2>>>(
+        &self,
+        shape: D,
+    ) -> Result<Ndarr<T, R2>, DimError> {
         let shape = shape.into();
         if helpers::multiply_list(&self.dim.shape, 1) != helpers::multiply_list(&shape.shape, 1) {
             return Err(DimError::new(&format!(
@@ -107,12 +106,38 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
     }
 
     pub fn slice_at(&self, axis: usize) -> Vec<Ndarr<T, Sub1<R>>>
-    where R: Sub<B1>,
-    <R as Sub<B1>>::Output: Unsigned
-
+    where
+        R: Sub<B1>,
+        <R as Sub<B1>>::Output: Unsigned,
     {
         let n = helpers::multiply_list(&self.dim.shape, 1); // number of elements in original array
         let new_shape = self.dim.clone().remove_element(axis);
+        let n_new_arrs = self.dim.shape[axis]; // number of new arrays
+
+        let iota = 0..n;
+
+        let indexes: Vec<Dim<R>> = iota.map(|i| self.dim.get_indexes(&i)).collect(); //indexes of each element
+
+        let mut out = Vec::new(); // to store
+
+        for i in 0..n_new_arrs {
+            let mut this_data: Vec<T> = Vec::new();
+            for j in 0..n {
+                // if the index at the slice position coincide with i (or the slice number)
+                if indexes[j].shape[axis] == i {
+                    let ind = self.dim.get_flat_pos(&indexes[j]).unwrap();
+                    this_data.push(self.data[ind].clone())
+                }
+            }
+            //TODO: remove push, with allocation size
+            out.push(Ndarr::new(&this_data, new_shape.clone()).expect("Error initializing"))
+        }
+        out
+    }
+
+    pub fn slice_at_notyped(&self, axis: usize) -> Vec<Ndarr<T, UTerm>> {
+        let n = helpers::multiply_list(&self.dim.shape, 1); // number of elements in original array
+        let new_shape = self.dim.clone().remove_element_notyped(axis);
         let n_new_arrs = self.dim.shape[axis]; // number of new arrays
 
         let iota = 0..n;
@@ -141,8 +166,9 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
         axis: usize,
         f: F,
     ) -> Result<Ndarr<T, Sub1<R>>, DimError>
-    where R: Sub<B1>,
-    <R as Sub<B1>>::Output: Unsigned
+    where
+        R: Sub<B1>,
+        <R as Sub<B1>>::Output: Unsigned,
     {
         if axis >= R::to_usize() {
             Err(DimError::new("Axis grater than rank"))
@@ -161,9 +187,10 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
     pub fn broadcast_to<R2: Unsigned, D: Into<Dim<R2>>>(
         &self,
         shape: D,
-    ) -> Result<Ndarr<T, Maximum<R,R2>>, DimError>
-    where R: Max<R2>,
-    <R as Max<R2>>::Output: Unsigned
+    ) -> Result<Ndarr<T, Maximum<R, R2>>, DimError>
+    where
+        R: Max<R2>,
+        <R as Max<R2>>::Output: Unsigned,
     {
         let shape = shape.into();
         //see https://numpy.org/doc/stable/user/basics.broadcasting.html
@@ -194,9 +221,10 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
     pub fn broadcast<R2: Unsigned, D: Into<Dim<R2>>>(
         &self,
         shape: D,
-    ) -> Result<Ndarr<T, Maximum<R,R2>>, DimError>
-    where R: Max<R2>,
-    <R as Max<R2>>::Output: Unsigned
+    ) -> Result<Ndarr<T, Maximum<R, R2>>, DimError>
+    where
+        R: Max<R2>,
+        <R as Max<R2>>::Output: Unsigned,
     {
         let shape = shape.into();
         let new_shape = self.dim.broadcast_shape(&shape)?;
@@ -214,9 +242,13 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
         })
     }
 
-    pub fn broadcast_data<R2: Unsigned, D: Into<Dim<R2>>>(&self, shape: D) -> Result<Vec<T>, DimError>
-    where R: Max<R2>,
-    <R as Max<R2>>::Output: Unsigned,
+    pub fn broadcast_data<R2: Unsigned, D: Into<Dim<R2>>>(
+        &self,
+        shape: D,
+    ) -> Result<Vec<T>, DimError>
+    where
+        R: Max<R2>,
+        <R as Max<R2>>::Output: Unsigned,
     {
         let shape = shape.into();
         let new_shape = self.dim.broadcast_shape(&shape)?;
@@ -252,9 +284,10 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
 pub fn de_slice<T: Clone + Debug + Default, R: Unsigned>(
     slices: &Vec<Ndarr<T, R>>,
     axis: usize,
-) -> Ndarr<T, Add1<R>> 
-where R: Add<B1>,
-    <R as Add<B1>>::Output: Unsigned
+) -> Ndarr<T, Add1<R>>
+where
+    R: Add<B1>,
+    <R as Add<B1>>::Output: Unsigned,
 {
     let l_slice = slices[0].len();
     let shape_slice = slices[0].dim.clone();
@@ -266,7 +299,9 @@ where R: Add<B1>,
             //calculate the flat position of element j of slice i
             let ind = shape_slice.get_indexes(&j);
             //calculate the new flat position of element j of slice i
-            let new_pos = out_shape.get_flat_pos(&ind.insert_element(axis, i)).unwrap();
+            let new_pos = out_shape
+                .get_flat_pos(&ind.insert_element(axis, i))
+                .unwrap();
             new_data[new_pos] = slices[i].data[j].clone()
         }
     }
@@ -310,12 +345,12 @@ where
     }
 }
 
-
 impl<T: Float + Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
     fn approx_epsilon<R2: Unsigned>(&self, other: Ndarr<T, R2>, epsilon: T) -> bool
-    where R: Max<R2>,
-    <R as typenum::Max<R2>>::Output: typenum::Unsigned,
-    Ndarr<T, R>: Sub<Ndarr<T, R2>, Output = Ndarr<T,Maximum<R,R2>>>
+    where
+        R: Max<R2>,
+        <R as typenum::Max<R2>>::Output: typenum::Unsigned,
+        Ndarr<T, R>: Sub<Ndarr<T, R2>, Output = Ndarr<T, Maximum<R, R2>>>,
     {
         let diff = self.clone() - other;
         for val in diff.data {
@@ -327,20 +362,20 @@ impl<T: Float + Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
     }
 
     fn approx<R2: Unsigned>(&self, other: &Ndarr<T, R2>) -> bool
-    where R: Max<R2>,
-    <R as typenum::Max<R2>>::Output: typenum::Unsigned,
-    Ndarr<T, R>: Sub<Ndarr<T, R2>, Output = Ndarr<T,Maximum<R,R2>>>
+    where
+        R: Max<R2>,
+        <R as typenum::Max<R2>>::Output: typenum::Unsigned,
+        Ndarr<T, R>: Sub<Ndarr<T, R2>, Output = Ndarr<T, Maximum<R, R2>>>,
     {
         self.approx_epsilon(other.to_owned(), T::from(1e-10).unwrap())
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use ops::*;
-    use typenum::{U2};
+    use typenum::U2;
 
     #[test]
     fn constructor_test() {
@@ -479,7 +514,7 @@ mod tests {
         //[12, 13, 14],
         //[15, 16, 17]]])
         let red_0 = arr.clone().reduce(0, |x, y| x + y).unwrap();
-        let red_1= arr.reduce(1, |x, y| x + y).unwrap();
+        let red_1 = arr.reduce(1, |x, y| x + y).unwrap();
         assert_eq!(
             red_0,
             Ndarr::new(&[9, 11, 13, 15, 17, 19, 21, 23, 25], [3, 3]).unwrap()
@@ -516,10 +551,10 @@ mod tests {
 
         assert_eq!(r1, Ndarr::from([[2, 3, 4], [3, 4, 5], [4, 5, 6]]));
         assert_eq!(r2, Ndarr::from([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
-        let c = Ndarr::from(["a","b","c","d"]);
-        let d = Ndarr::from(["1","2","3","4"]);
-        let ap = |x: &str, y: &str| (x.to_owned() + y);
-        let r3 = ops::outer_product( ap, &c, &d);
+        //let c = Ndarr::from(["a", "b", "c", "d"]);
+        //let d = Ndarr::from(["1", "2", "3", "4"]);
+        //let ap = |x: &str, y: &str| (x.to_owned() + y);
+        //let r3 = ops::outer_product(ap, &c, &d);
     }
 
     #[test]

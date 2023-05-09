@@ -14,31 +14,21 @@ where
     {
         let shape = shape.into();
         let data: Vec<T> = vec![T::zero(); multiply_list(&shape.shape, 1)];
-        Ndarr {
-            data,
-            dim: shape,
-        }
+        Ndarr { data, dim: shape }
     }
 
     pub fn ones<D: Into<Dim<R>>>(shape: D) -> Self
     where
         T: One,
     {
-
         let shape = shape.into();
         let data: Vec<T> = vec![T::one(); multiply_list(&shape.shape, 1)];
-        Ndarr {
-            data,
-            dim: shape,
-        }
+        Ndarr { data, dim: shape }
     }
 
     pub fn fill<D: Into<Dim<R>>>(with: T, shape: D) -> Self {
         let shape = shape.into();
         let data: Vec<T> = vec![with; multiply_list(&shape.shape, 1)];
-        Ndarr {
-            data,
-            dim: shape,
-        }
+        Ndarr { data, dim: shape }
     }
 }

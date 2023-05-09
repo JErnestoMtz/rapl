@@ -1,6 +1,5 @@
 use super::*;
 
-
 impl<T1: Debug + Clone + Default, R: Unsigned> Ndarr<T1, R> {
     pub fn map<F1: Fn(&T1) -> T1>(&self, f: F1) -> Self {
         let mut out = vec![T1::default(); self.data.len()];
@@ -9,7 +8,7 @@ impl<T1: Debug + Clone + Default, R: Unsigned> Ndarr<T1, R> {
         }
         Ndarr {
             data: out,
-            dim: self.dim.clone()
+            dim: self.dim.clone(),
         }
     }
     pub fn map_in_place<F1: Fn(&T1) -> T1>(&mut self, f: F1) {
@@ -24,7 +23,7 @@ impl<T1: Debug + Clone + Default, R: Unsigned> Ndarr<T1, R> {
         }
         Ndarr {
             data: out,
-            dim: self.dim.clone()
+            dim: self.dim.clone(),
         }
     }
     // Bimap: is the same as Zip then map, is just a convenient way for doing diadic operations between Ndarrs
@@ -35,7 +34,7 @@ impl<T1: Debug + Clone + Default, R: Unsigned> Ndarr<T1, R> {
         }
         Ndarr {
             data: out,
-            dim: self.dim.clone()
+            dim: self.dim.clone(),
         }
     }
 
@@ -46,10 +45,11 @@ impl<T1: Debug + Clone + Default, R: Unsigned> Ndarr<T1, R> {
     }
 
     pub fn scanr<F: Fn(T1, T1) -> T1>(&self, axis: usize, f: F) -> Self
-    where R: Sub<B1>,
-    <R as Sub<B1>>::Output: Unsigned,
-    <R as Sub<B1>>::Output: Add<B1>,
-    <<R as Sub<B1>>::Output as Add<B1>>::Output: Unsigned,
+    where
+        R: Sub<B1>,
+        <R as Sub<B1>>::Output: Unsigned,
+        <R as Sub<B1>>::Output: Add<B1>,
+        <<R as Sub<B1>>::Output as Add<B1>>::Output: Unsigned,
     {
         let mut slices = self.slice_at(axis);
         for i in 0..slices.len() - 1 {
@@ -63,7 +63,8 @@ impl<T1: Debug + Clone + Default, R: Unsigned> Ndarr<T1, R> {
     }
 
     pub fn scanl<F: Fn(T1, T1) -> T1>(&self, axis: usize, f: F) -> Self
-    where R: Sub<B1>,
+    where
+        R: Sub<B1>,
         <R as Sub<B1>>::Output: Unsigned,
         <R as Sub<B1>>::Output: Add<B1>,
         <<R as Sub<B1>>::Output as Add<B1>>::Output: Unsigned,

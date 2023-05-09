@@ -2,9 +2,9 @@ use super::Ndarr;
 
 use image::*;
 
-use std::path::Path;
-use typenum::{U2,U3};
 use crate::shape::Dim;
+use std::path::Path;
+use typenum::{U2, U3};
 
 pub use image::ImageFormat;
 
@@ -17,7 +17,7 @@ pub fn open_rgbu8(path: &dyn AsRef<Path>) -> Result<Ndarr<u8, U3>, ImageError> {
     let data_arr = img.iter().map(|x| *x).collect();
     Ok(Ndarr {
         data: data_arr,
-        dim:  Dim::new(&[w as usize, h as usize, 3]).unwrap(),
+        dim: Dim::new(&[w as usize, h as usize, 3]).unwrap(),
     })
 }
 
@@ -32,7 +32,7 @@ pub fn open_rgbf32(path: &dyn AsRef<Path>) -> Result<Ndarr<f32, U3>, ImageError>
     let data_arr = img.iter().map(|x| *x).collect();
     Ok(Ndarr {
         data: data_arr,
-        dim:  Dim::new(&[w as usize, h as usize, 3]).unwrap(),
+        dim: Dim::new(&[w as usize, h as usize, 3]).unwrap(),
     })
 }
 
@@ -45,7 +45,7 @@ pub fn open_lumau8(path: &dyn AsRef<Path>) -> Result<Ndarr<u8, U2>, ImageError> 
     let data_arr = img.iter().map(|x| *x).collect();
     Ok(Ndarr {
         data: data_arr,
-        dim:  Dim::new(&[w as usize, h as usize]).unwrap(),
+        dim: Dim::new(&[w as usize, h as usize]).unwrap(),
     })
 }
 
@@ -59,7 +59,7 @@ pub fn open_lumaf32(path: &dyn AsRef<Path>) -> Result<Ndarr<f32, U2>, ImageError
     let data_arr = img.iter().map(|x| *x).collect();
     Ok(Ndarr {
         data: data_arr,
-        dim:  Dim::new(&[w as usize, h as usize]).unwrap(),
+        dim: Dim::new(&[w as usize, h as usize]).unwrap(),
     })
 }
 
@@ -141,8 +141,8 @@ impl Ndarr<f32, U2> {
 #[cfg(test)]
 mod image_test {
 
-    use crate::de_slice;
     use super::*;
+    use crate::de_slice;
     #[test]
     fn open_rgb8() {
         let img = open_rgbu8(&"graphics\\test_img.jpg").unwrap();

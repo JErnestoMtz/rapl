@@ -31,9 +31,7 @@ impl<T: Copy + PartialEq + Clone + Debug + Default, R: Unsigned> Ndarr<C<T>, R> 
     }
 }
 
-impl<T: Copy + PartialEq + Neg<Output = T> + Clone + Debug + Default, R: Unsigned>
-    Ndarr<C<T>, R>
-{
+impl<T: Copy + PartialEq + Neg<Output = T> + Clone + Debug + Default, R: Unsigned> Ndarr<C<T>, R> {
     /// Element wise complex conjugate.
     pub fn conj(&self) -> Self {
         let out = self.map(|z| z.conj());

@@ -168,28 +168,31 @@ where
     }
 }
 #[cfg(test)]
-mod test_arithmetics{
+mod test_arithmetics {
     use super::*;
     #[test]
-    fn test_basic(){
-        let arr1 = Ndarr::from([1,2,3]);
-        let arr2 = Ndarr::from([1,1,1]);
-        let arr3 = Ndarr::from([2,2,2]);
-        assert_eq!(&arr1 - &arr2, Ndarr::from([0,1,2]));
-        assert_eq!(&arr1 + arr2, Ndarr::from([2,3,4]));
-        assert_eq!(arr1 * arr3, Ndarr::from([2,4,6]));
+    fn test_basic() {
+        let arr1 = Ndarr::from([1, 2, 3]);
+        let arr2 = Ndarr::from([1, 1, 1]);
+        let arr3 = Ndarr::from([2, 2, 2]);
+        assert_eq!(&arr1 - &arr2, Ndarr::from([0, 1, 2]));
+        assert_eq!(&arr1 + arr2, Ndarr::from([2, 3, 4]));
+        assert_eq!(arr1 * arr3, Ndarr::from([2, 4, 6]));
     }
 
     #[test]
-    fn test_single_broadcast(){
-        let arr1 = Ndarr::from([1,2]);
-        let arr2 = Ndarr::from([[1,2],[3,4]]);
-        assert_eq!(&arr1 + &arr2, Ndarr::from([[2,4],[4,6]]));
+    fn test_single_broadcast() {
+        let arr1 = Ndarr::from([1, 2]);
+        let arr2 = Ndarr::from([[1, 2], [3, 4]]);
+        assert_eq!(&arr1 + &arr2, Ndarr::from([[2, 4], [4, 6]]));
     }
 
     #[test]
-    fn test_cobroadcast(){
-        let arr1 = Ndarr::from([[1,2,3]]);
-        assert_eq!(&arr1 + arr1.t(), Ndarr::from([[2,3,4],[3,4,5],[4,5,6]]));
+    fn test_cobroadcast() {
+        let arr1 = Ndarr::from([[1, 2, 3]]);
+        assert_eq!(
+            &arr1 + arr1.t(),
+            Ndarr::from([[2, 3, 4], [3, 4, 5], [4, 5, 6]])
+        );
     }
 }
