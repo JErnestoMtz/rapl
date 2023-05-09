@@ -14,6 +14,7 @@ pub struct Dim<R: Unsigned> {
 
 //<R as typenum::Unsigned>::to_usize(rank)
 impl<R: Unsigned> Dim<R> {
+    //TODO: check type and make another notyped function
     pub fn new(dim: &[usize]) -> Result<Self, DimError> {
         Ok(Dim {
             shape: dim.to_owned(),
@@ -22,6 +23,9 @@ impl<R: Unsigned> Dim<R> {
     }
     pub fn shape(&self) -> Vec<usize> {
         self.shape.clone()
+    }
+    pub fn get_number_elements(&self)->usize{
+        multiply_list(&self.shape, 1)
     }
     pub fn get_indexes(&self, n: &usize) -> Self {
         let r = self.shape.len();
