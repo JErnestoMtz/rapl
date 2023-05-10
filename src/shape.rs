@@ -84,6 +84,12 @@ impl<R: Unsigned> Dim<R> {
         Dim::<Add1<R>>::new(&result).unwrap()
     }
 
+    pub fn insert_element_notyped(self, index: usize, element: usize) -> Dim<UTerm>
+    {
+        let mut result = self.shape.clone();
+        result.insert(index, element);
+        Dim::<UTerm>::new(&result).unwrap()
+    }
     ///Paths a shape of rank R with ones in the left until is rank R2.
     pub fn path_shape<R2: Unsigned>(&self) -> Result<Dim<R2>, DimError> {
         let r1 = R::to_usize();

@@ -279,6 +279,14 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
             dim: out_dim,
         }
     }
+    ///Like Numpy roll but inefficient 
+    pub fn roll(&self,shift: isize, axis: usize)->Self{
+        let mut slices = self.slice_at_notyped(axis);
+        let shift = (shift % slices.len() as isize) as usize;
+        slices.rotate_right(shift);
+        let new_data = de_slice_notyped(&slices, axis).data;
+        Ndarr::new(&new_data, self.dim.clone()).unwrap()
+    }
 }
 
 pub fn de_slice<T: Clone + Debug + Default, R: Unsigned>(
@@ -310,6 +318,36 @@ where
         dim: out_shape,
     }
 }
+
+
+pub fn de_slice_notyped<T: Clone + Debug + Default, R: Unsigned>(
+    slices: &Vec<Ndarr<T, R>>,
+    axis: usize,
+) -> Ndarr<T, UTerm>
+{
+    let l_slice = slices[0].len();
+    let shape_slice = slices[0].dim.clone();
+    let out_shape = shape_slice.clone().insert_element_notyped(axis, slices.len());
+    let mut new_data: Vec<T> = vec![T::default(); helpers::multiply_list(&out_shape.shape, 1)];
+    for i in 0..slices.len() {
+        for j in 0..l_slice {
+            //calculate the flat position of element j of slice i
+            let ind = shape_slice.get_indexes(&j);
+            //calculate the new flat position of element j of slice i
+            let new_pos = out_shape
+                .get_flat_pos(&ind.insert_element_notyped(axis, i))
+                .unwrap();
+            new_data[new_pos] = slices[i].data[j].clone()
+        }
+    }
+    Ndarr {
+        data: new_data,
+        dim: out_shape,
+    }
+}
+
+
+
 
 impl<T: Copy + Clone + Debug + Default> Ndarr<T, typenum::U0> {
     pub fn scalar(self) -> T {
@@ -586,7 +624,11 @@ mod tests {
         let a = Ndarr::from([-1, -3, 4]);
         assert_eq!(a.abs(), Ndarr::from([1, 3, 4]))
     }
-
+    #[test]
+    fn roll() {
+        let a = Ndarr::from([[1,2],[3,4]]);
+        assert_eq!(a.roll(1, 1), Ndarr::from([[2,1],[4,3]]))
+    }
 
 
 }
