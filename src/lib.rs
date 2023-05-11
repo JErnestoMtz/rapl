@@ -19,6 +19,7 @@ pub mod ops;
 mod scalars;
 mod shape;
 pub mod utils;
+mod indexing;
 
 #[cfg(feature = "complex")]
 mod complex_tensor;
