@@ -1,3 +1,5 @@
+use std::ops::{Index, IndexMut};
+
 use super::*;
 
 
@@ -8,6 +10,23 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
         self.data[flat_pos] = value;
     }
 }
+
+impl<T: Clone + Default + Debug, R: Unsigned, I: Into<Dim<R>>> Index<I> for Ndarr<T,R>{
+    type Output = T;
+    fn index(&self, index: I) -> &Self::Output {
+        let flat_pos = self.dim.get_flat_pos(&index.into()).unwrap();
+        &self.data[flat_pos]
+    }
+}
+
+impl<T: Clone + Default + Debug, R: Unsigned, I: Into<Dim<R>>> IndexMut<I> for Ndarr<T,R>{
+    fn index_mut(&mut self, index: I) -> &mut Self::Output {
+        let flat_pos = self.dim.get_flat_pos(&index.into()).unwrap();
+        &mut self.data[flat_pos]
+    } 
+}
+
+
 
 #[cfg(test)]
 mod indexing_tes{
@@ -20,4 +39,5 @@ mod indexing_tes{
         arr.assign_at([1,1], 10);
         assert_eq!(&arr, &Ndarr::from([[1, 8],[3, 10]]));
     }
+
 }
