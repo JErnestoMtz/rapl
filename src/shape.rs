@@ -220,6 +220,35 @@ arr_to_dim!(3, U3);
 arr_to_dim!(4, U4);
 arr_to_dim!(5, U5);
 
+impl From<usize> for Dim<U1>{
+    fn from(value: usize) -> Self {
+        Dim { shape: vec![value], rank: PhantomData}
+    }
+}
+impl From<(usize,)> for Dim<U1>{
+    fn from(value: (usize,)) -> Self {
+        Dim { shape: vec![value.0], rank: PhantomData}
+    }
+}
+
+impl From<(usize, usize)> for Dim<U2>{
+    fn from(value: (usize, usize)) -> Self {
+        Dim { shape: vec![value.0, value.1], rank: PhantomData}
+    }
+}
+
+impl From<(usize, usize, usize)> for Dim<U3>{
+    fn from(value: (usize, usize, usize)) -> Self {
+        Dim { shape: vec![value.0, value.1, value.2], rank: PhantomData}
+    }
+}
+
+impl From<(usize, usize, usize, usize)> for Dim<U4>{
+    fn from(value: (usize, usize, usize, usize)) -> Self {
+        Dim { shape: vec![value.0, value.1, value.2, value.3], rank: PhantomData}
+    }
+}
+
 impl<const N1: usize, const N2: usize, const N3: usize> From<[[[usize; N1]; N2]; N3]> for Dim<U3> {
     fn from(value: [[[usize; N1]; N2]; N3]) -> Self {
         let mut data = Vec::with_capacity(N1 * N2 * N3);

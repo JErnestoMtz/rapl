@@ -40,4 +40,11 @@ mod indexing_tes{
         assert_eq!(&arr, &Ndarr::from([[1, 8],[3, 10]]));
     }
 
+    #[test]
+    fn indexing(){
+        let mut arr = Ndarr::from([[1, 2],[3, 4]]);
+        assert_eq!(arr[[0,0]], 1);
+        arr[[1,1]] = 10;
+        assert_eq!(&arr, &Ndarr::from([[1, 2],[3, 10]]));
+    }
 }

@@ -89,6 +89,7 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
         p.into()
     }
 
+    /// Reshapes an Ndarr into an specified Shape. Returns Error if the shape is not compatible.
     pub fn reshape<R2: Unsigned, D: Into<Dim<R2>>>(
         &self,
         shape: D,
@@ -106,6 +107,7 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
         })
     }
 
+    //Slice an Ndarr of rank `R` into rust vector of Ndarrs of rank `R-1` by splitting the original array along the specified axis
     pub fn slice_at(&self, axis: usize) -> Vec<Ndarr<T, Sub1<R>>>
     where
         R: Sub<B1>,
@@ -161,7 +163,7 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
         }
         out
     }
-
+    ///Takes a function `F(T,T)-T and an axis, evaluates the function by inserting it between the elements along the specified axis  in right-to-left.
     pub fn reduce<F: Fn(T, T) -> T + Clone>(
         &self,
         axis: usize,
@@ -184,7 +186,7 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
             Ok(out)
         }
     }
-    //similar to broadcast but, this do not allow a shape different to shape
+    //similar to broadcast but, this does not allow a shape different to shape
     pub fn broadcast_to<R2: Unsigned, D: Into<Dim<R2>>>(
         &self,
         shape: D,
@@ -264,7 +266,7 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
         }
         Ok(new_data)
     }
-
+    ///Transpose an N-dimensional array.
     fn t(&self) -> Self {
         let mut out_shape = self.dim.shape.clone();
         out_shape.reverse();
@@ -280,7 +282,8 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
             dim: out_dim,
         }
     }
-    ///Like Numpy roll but inefficient 
+    ///Roll array elements along a given axis, by shift `isize`.
+    ///Elements that roll beyond the last position are re-introduced at the first.
     pub fn roll(&self,shift: isize, axis: usize)->Self{
         let mut slices = self.slice_at_notyped(axis);
         let shift = (shift % slices.len() as isize) as usize;
