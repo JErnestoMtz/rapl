@@ -31,7 +31,7 @@ fn format_vec(f: &mut fmt::Formatter<'_>, length: usize, limit: usize, separator
     Ok(())
 }
 
-use std::{fmt, io::repeat};
+use std::{fmt};
 fn format_array<T,R: Unsigned>(arr: Ndarr<T,R>, f: &mut fmt::Formatter<'_>, dim: usize, full_dim: usize, max_len: usize)->fmt::Result
 where T: Display + Clone + Default + Debug,
 {

@@ -8,7 +8,7 @@ use std::{
 
 const N: usize = 18; // Number of spins in each direction.
 const T: f32= 0.05; // Temperature
-const STEPS: usize = 300; //Steps of simulation
+const STEPS: usize = 700; //Steps of simulation
 const M: usize= 20; //Number of updates per metropolis circle 
 
 
@@ -38,7 +38,7 @@ fn main() {
         metropolis(&mut spin_arr); //updates array with metropolis algorithm
         let vis = spin_arr.map_types(|x| {
             if *x < 0.0 {
-                "▒".to_string()
+                "░".to_string()
             } else {
                 "█".to_string()
             }
@@ -53,4 +53,6 @@ fn main() {
         stdout.write_all(b"\x1B[1;1H").unwrap();
         stdout.flush().unwrap();
     }
+        stdout.write_all(b"\x1B[2J\x1B[1;1H").unwrap();
+        stdout.flush().unwrap();
 }
