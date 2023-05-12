@@ -2,10 +2,7 @@ use super::*;
 
 impl<T1: Debug + Clone + Default, R: Unsigned> Ndarr<T1, R> {
     pub fn map<F1: Fn(&T1) -> T1>(&self, f: F1) -> Self {
-        let mut out = vec![T1::default(); self.data.len()];
-        for (i, val) in out.iter_mut().enumerate() {
-            *val = f(&self.data[i])
-        }
+        let out: Vec<T1> = self.data.iter().map(f).collect();
         Ndarr {
             data: out,
             dim: self.dim.clone(),
@@ -17,10 +14,7 @@ impl<T1: Debug + Clone + Default, R: Unsigned> Ndarr<T1, R> {
         }
     }
     pub fn map_types<T2: Clone + Debug + Default, F2: Fn(&T1) -> T2>(&self, f: F2) -> Ndarr<T2, R> {
-        let mut out = vec![T2::default(); self.data.len()];
-        for (i, val) in out.iter_mut().enumerate() {
-            *val = f(&self.data[i])
-        }
+        let out: Vec<T2> = self.data.iter().map(f).collect();
         Ndarr {
             data: out,
             dim: self.dim.clone(),
