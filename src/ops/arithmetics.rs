@@ -86,6 +86,54 @@ scalar_op!(Mul, mul, *);
 scalar_op!(Div, div, /);
 scalar_op!(Rem, rem, %);
 
+
+macro_rules! scalar_op2 {
+    ($Op:tt, $f_name:tt, $f:tt, $t:ty) => {
+        impl<T, R: Unsigned> $Op<Ndarr<T,R>> for $t
+            where T: Clone + Debug + Default + $Op<$t,Output = T>,
+        {
+            type Output = Ndarr<T,R>;
+            fn $f_name(self, rhs: Ndarr<T,R>) -> Self::Output {
+                rhs.map(|x| x.clone() $f self) 
+            } 
+        }
+        impl<T, R: Unsigned> $Op<&Ndarr<T,R>> for $t
+            where T: Clone + Debug + Default + $Op<$t,Output = T>,
+        {
+            type Output = Ndarr<T,R>;
+            fn $f_name(self, rhs: &Ndarr<T,R>) -> Self::Output {
+                rhs.map(|x| x.clone() $f self) 
+            } 
+        }
+    }
+}
+macro_rules! scalar_to_ndarr {
+    ($t:ty) => {
+        scalar_op2!(Add, add, +, $t);
+        scalar_op2!(Sub, sub, -, $t);
+        scalar_op2!(Mul, mul, *, $t);
+        scalar_op2!(Div, div, /, $t);
+        scalar_op2!(Rem, rem, %, $t);
+    };
+}
+
+scalar_to_ndarr!(u8);
+scalar_to_ndarr!(u16);
+scalar_to_ndarr!(u32);
+scalar_to_ndarr!(u64);
+scalar_to_ndarr!(u128);
+scalar_to_ndarr!(i8);
+scalar_to_ndarr!(i16);
+scalar_to_ndarr!(i32);
+scalar_to_ndarr!(i64);
+scalar_to_ndarr!(i128);
+
+scalar_to_ndarr!(f32);
+scalar_to_ndarr!(f64);
+
+scalar_to_ndarr!(char);
+
+
 //////////////////////////////////////////// Neg /////////////////////////////////////////////
 
 impl<T, R: Unsigned> Neg for Ndarr<T, R>
@@ -194,5 +242,15 @@ mod test_arithmetics {
             &arr1 + arr1.t(),
             Ndarr::from([[2, 3, 4], [3, 4, 5], [4, 5, 6]])
         );
+    }
+
+    #[test]
+    fn test_sclalat(){
+        let arr = Ndarr::from([0.1, 0.2, 0.3]);
+        let arr_scalar: Ndarr<f64,_> =  &arr * 2.0;
+        let scalar_arr = 2.0 * arr;
+        assert_eq!(arr_scalar, scalar_arr)
+
+
     }
 }

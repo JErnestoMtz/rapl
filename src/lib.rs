@@ -286,7 +286,7 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
     ///Elements that roll beyond the last position are re-introduced at the first.
     pub fn roll(&self,shift: isize, axis: usize)->Self{
         let mut slices = self.slice_at_notyped(axis);
-        let shift = (shift % slices.len() as isize) as usize;
+        let shift = (shift.rem_euclid(slices.len() as isize)) as usize;
         slices.rotate_right(shift);
         let new_data = de_slice_notyped(&slices, axis).data;
         Ndarr::new(&new_data, self.dim.clone()).unwrap()

@@ -42,7 +42,7 @@ where T: Display + Clone + Default + Debug,
             format_vec(f, len, 100, ", ", "...", &mut |f, index| {
                 let elm = arr.data[index].to_string();
                 let path = max_len - elm.len();
-                let elm = " ".repeat(path) + &elm;
+                let elm: String = " ".repeat(path) + &elm;
                 f.write_str(&elm)    
             })?;
             f.write_str("]")?;
