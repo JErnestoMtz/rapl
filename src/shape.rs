@@ -4,7 +4,7 @@ use std::ops::{Add, Sub};
 
 use crate::errors::DimError;
 use crate::helpers::multiply_list;
-use typenum::{Add1, Max, Maximum, Sub1, UTerm, Unsigned, B1, U1, U2, U3, U4, U5};
+use typenum::{Add1, Max, Maximum, Sub1, UTerm, Unsigned, B1, U1, U2, U3, U4, U5, U6,U7,U8,U9,U10,U11,U12,U13,U14,U15,U16,U17,U18,U19};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dim<R: Unsigned> {
@@ -16,6 +16,9 @@ pub struct Dim<R: Unsigned> {
 impl<R: Unsigned> Dim<R> {
     //TODO: check type and make another notyped function
     pub fn new(dim: &[usize]) -> Result<Self, DimError> {
+        if R::to_usize() != dim.len() || R::to_usize() != 0{
+            DimError::new(&format!("Error initializing Dim of rank {} with slice of length {}",R::to_usize(),dim.len()));
+        }
         Ok(Dim {
             shape: dim.to_owned(),
             rank: PhantomData,
@@ -24,7 +27,7 @@ impl<R: Unsigned> Dim<R> {
     pub fn shape(&self) -> Vec<usize> {
         self.shape.clone()
     }
-    pub fn get_number_elements(&self)->usize{
+    pub fn get_number_elements(&self) -> usize {
         multiply_list(&self.shape, 1)
     }
     pub fn get_indexes(&self, n: &usize) -> Self {
@@ -84,8 +87,7 @@ impl<R: Unsigned> Dim<R> {
         Dim::<Add1<R>>::new(&result).unwrap()
     }
 
-    pub fn insert_element_notyped(self, index: usize, element: usize) -> Dim<UTerm>
-    {
+    pub fn insert_element_notyped(self, index: usize, element: usize) -> Dim<UTerm> {
         let mut result = self.shape.clone();
         result.insert(index, element);
         Dim::<UTerm>::new(&result).unwrap()
@@ -219,66 +221,24 @@ arr_to_dim!(2, U2);
 arr_to_dim!(3, U3);
 arr_to_dim!(4, U4);
 arr_to_dim!(5, U5);
-
-impl From<usize> for Dim<U1>{
-    fn from(value: usize) -> Self {
-        Dim { shape: vec![value], rank: PhantomData}
-    }
-}
-impl From<(usize,)> for Dim<U1>{
-    fn from(value: (usize,)) -> Self {
-        Dim { shape: vec![value.0], rank: PhantomData}
-    }
-}
-
-impl From<(usize, usize)> for Dim<U2>{
-    fn from(value: (usize, usize)) -> Self {
-        Dim { shape: vec![value.0, value.1], rank: PhantomData}
-    }
-}
-
-impl From<(usize, usize, usize)> for Dim<U3>{
-    fn from(value: (usize, usize, usize)) -> Self {
-        Dim { shape: vec![value.0, value.1, value.2], rank: PhantomData}
-    }
-}
-
-impl From<(usize, usize, usize, usize)> for Dim<U4>{
-    fn from(value: (usize, usize, usize, usize)) -> Self {
-        Dim { shape: vec![value.0, value.1, value.2, value.3], rank: PhantomData}
-    }
-}
-
-impl<const N1: usize, const N2: usize, const N3: usize> From<[[[usize; N1]; N2]; N3]> for Dim<U3> {
-    fn from(value: [[[usize; N1]; N2]; N3]) -> Self {
-        let mut data = Vec::with_capacity(N1 * N2 * N3);
-        for row in value.iter() {
-            for column in row.iter() {
-                data.extend_from_slice(column)
-            }
-        }
-
-        Dim {
-            shape: data,
-            rank: PhantomData,
-        }
-    }
-}
-
-impl<const N1: usize, const N2: usize, const N3: usize> From<&[[[usize; N1]; N2]; N3]> for Dim<U3> {
-    fn from(value: &[[[usize; N1]; N2]; N3]) -> Self {
-        let mut data = Vec::with_capacity(N1 * N2 * N3);
-        for row in value.iter() {
-            for column in row.iter() {
-                data.extend_from_slice(column)
-            }
-        }
-
-        Dim {
-            shape: data,
-            rank: PhantomData,
-        }
-    }
+arr_to_dim!(6, U6);
+arr_to_dim!(7, U7);
+arr_to_dim!(8, U8);
+arr_to_dim!(9, U9);
+arr_to_dim!(10, U10);
+arr_to_dim!(11, U11);
+arr_to_dim!(12, U12);
+arr_to_dim!(13, U13);
+arr_to_dim!(14, U14);
+arr_to_dim!(15, U15);
+arr_to_dim!(16, U16);
+arr_to_dim!(17, U17);
+arr_to_dim!(18, U18);
+arr_to_dim!(19, U19);
+impl From<usize> for Dim<U1> {
+   fn from(value: usize) -> Self {
+       Dim { shape: vec![value], rank: PhantomData }
+   } 
 }
 
 #[cfg(test)]

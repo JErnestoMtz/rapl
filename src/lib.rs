@@ -14,12 +14,12 @@
 mod display;
 mod errors;
 mod helpers;
+mod indexing;
 mod natives;
 pub mod ops;
 mod scalars;
 mod shape;
 pub mod utils;
-mod indexing;
 
 #[cfg(feature = "complex")]
 mod complex_tensor;
@@ -284,7 +284,7 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
     }
     ///Roll array elements along a given axis, by shift `isize`.
     ///Elements that roll beyond the last position are re-introduced at the first.
-    pub fn roll(&self,shift: isize, axis: usize)->Self{
+    pub fn roll(&self, shift: isize, axis: usize) -> Self {
         let mut slices = self.slice_at_notyped(axis);
         let shift = (shift.rem_euclid(slices.len() as isize)) as usize;
         slices.rotate_right(shift);
@@ -323,15 +323,15 @@ where
     }
 }
 
-
 pub fn de_slice_notyped<T: Clone + Debug + Default, R: Unsigned>(
     slices: &Vec<Ndarr<T, R>>,
     axis: usize,
-) -> Ndarr<T, UTerm>
-{
+) -> Ndarr<T, UTerm> {
     let l_slice = slices[0].len();
     let shape_slice = slices[0].dim.clone();
-    let out_shape = shape_slice.clone().insert_element_notyped(axis, slices.len());
+    let out_shape = shape_slice
+        .clone()
+        .insert_element_notyped(axis, slices.len());
     let mut new_data: Vec<T> = vec![T::default(); helpers::multiply_list(&out_shape.shape, 1)];
     for i in 0..slices.len() {
         for j in 0..l_slice {
@@ -349,9 +349,6 @@ pub fn de_slice_notyped<T: Clone + Debug + Default, R: Unsigned>(
         dim: out_shape,
     }
 }
-
-
-
 
 impl<T: Copy + Clone + Debug + Default> Ndarr<T, typenum::U0> {
     pub fn scalar(self) -> T {
@@ -630,9 +627,7 @@ mod tests {
     }
     #[test]
     fn roll() {
-        let a = Ndarr::from([[1,2],[3,4]]);
-        assert_eq!(a.roll(1, 1), Ndarr::from([[2,1],[4,3]]))
+        let a = Ndarr::from([[1, 2], [3, 4]]);
+        assert_eq!(a.roll(1, 1), Ndarr::from([[2, 1], [4, 3]]))
     }
-
-
 }
