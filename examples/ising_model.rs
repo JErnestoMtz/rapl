@@ -11,11 +11,13 @@ const T: f32 = 0.05; // Temperature
 const STEPS: usize = 700; //Steps of simulation
 const M: usize = 20; //Number of updates per metropolis circle
 
-fn metropolis(spin_arr: &mut Ndarr<f32, U2>) {
-    let energy: Ndarr<f32, U2> = 2.
-        * spin_arr.clone()
-        * (spin_arr.roll(1, 0) + spin_arr.roll(-1, 0) + spin_arr.roll(1, 1) + spin_arr.roll(-1, 1));//sum all neighbors 
-    let temp_exp = (-&energy / T).exp();
+
+fn metropolis(spin_arr: &mut Ndarr<f32, U2>){  
+    let energy:Ndarr<f32, U2> = 2. * spin_arr.clone() * (spin_arr.roll(1, 0)+
+                                                    spin_arr.roll(-1, 0) +
+                                                    spin_arr.roll(1, 1) +
+                                                    spin_arr.roll(-1, 1));
+    let temp_exp = (- &energy / T).exp(); 
     let indexes: Vec<usize> = (0..N).collect();
     let i_s = NdarrRand::choose(&indexes, [M]); //random i indexes
     let j_s = NdarrRand::choose(&indexes, [M]); //random j indexes

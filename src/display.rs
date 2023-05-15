@@ -1,4 +1,7 @@
 use super::*;
+
+const LIMIT: usize = 50;
+
 impl<T: Clone + Debug + Default + Display, R: Unsigned> Display for Ndarr<T, R> {
     // Kind of nasty function, it can be imprube a lot, but I think there is no scape from recursion.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -53,7 +56,7 @@ where
         &[] => f.write_str(&arr.data[0].to_string())?,
         &[len] => {
             f.write_str("[")?;
-            format_vec(f, len, 50, ", ", "...", &mut |f, index| {
+            format_vec(f, len, LIMIT, ", ", "...", &mut |f, index| {
                 let elm = arr.data[index].to_string();
                 let path = max_len - elm.len();
                 let elm: String = " ".repeat(path) + &elm;
@@ -66,7 +69,7 @@ where
             let indent = " ".repeat(dim + 1);
             let separator = format!(",\n{}{}", nl, indent);
             f.write_str("[")?;
-            let limit = 50;
+            let limit = LIMIT;
             format_vec(f, shape[0], limit, &separator, "...", &mut |f, index| {
                 format_array(
                     arr.slice_at_notyped(0)[index].clone(),

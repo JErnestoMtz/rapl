@@ -236,7 +236,6 @@ arr_to_dim!(17, U17);
 arr_to_dim!(18, U18);
 arr_to_dim!(19, U19);
 
-
 impl From<usize> for Dim<U1> {
    fn from(value: usize) -> Self {
        Dim { shape: vec![value], rank: PhantomData }
