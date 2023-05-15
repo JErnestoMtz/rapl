@@ -86,7 +86,6 @@ scalar_op!(Mul, mul, *);
 scalar_op!(Div, div, /);
 scalar_op!(Rem, rem, %);
 
-
 macro_rules! scalar_op2 {
     ($Op:tt, $f_name:tt, $f:tt, $t:ty) => {
         impl<T, R: Unsigned> $Op<Ndarr<T,R>> for $t
@@ -94,16 +93,16 @@ macro_rules! scalar_op2 {
         {
             type Output = Ndarr<T,R>;
             fn $f_name(self, rhs: Ndarr<T,R>) -> Self::Output {
-                rhs.map(|x| x.clone() $f self) 
-            } 
+                rhs.map(|x| x.clone() $f self)
+            }
         }
         impl<T, R: Unsigned> $Op<&Ndarr<T,R>> for $t
             where T: Clone + Debug + Default + $Op<$t,Output = T>,
         {
             type Output = Ndarr<T,R>;
             fn $f_name(self, rhs: &Ndarr<T,R>) -> Self::Output {
-                rhs.map(|x| x.clone() $f self) 
-            } 
+                rhs.map(|x| x.clone() $f self)
+            }
         }
     }
 }
@@ -132,7 +131,6 @@ scalar_to_ndarr!(f32);
 scalar_to_ndarr!(f64);
 
 scalar_to_ndarr!(char);
-
 
 //////////////////////////////////////////// Neg /////////////////////////////////////////////
 
@@ -245,12 +243,10 @@ mod test_arithmetics {
     }
 
     #[test]
-    fn test_sclalat(){
+    fn test_sclalat() {
         let arr = Ndarr::from([0.1, 0.2, 0.3]);
-        let arr_scalar: Ndarr<f64,_> =  &arr * 2.0;
+        let arr_scalar: Ndarr<f64, _> = &arr * 2.0;
         let scalar_arr = 2.0 * arr;
         assert_eq!(arr_scalar, scalar_arr)
-
-
     }
 }
