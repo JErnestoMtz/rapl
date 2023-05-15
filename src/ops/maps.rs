@@ -1,6 +1,6 @@
 use super::*;
 
-impl<T1: Debug + Clone + Default, R: Unsigned> Ndarr<T1, R> {
+impl<T1: Debug + Clone, R: Unsigned> Ndarr<T1, R> {
     pub fn map<F1: Fn(&T1) -> T1>(&self, f: F1) -> Self {
         let out: Vec<T1> = self.data.iter().map(f).collect();
         Ndarr {
@@ -13,7 +13,7 @@ impl<T1: Debug + Clone + Default, R: Unsigned> Ndarr<T1, R> {
             *val = f(val)
         }
     }
-    pub fn map_types<T2: Clone + Debug + Default, F2: Fn(&T1) -> T2>(&self, f: F2) -> Ndarr<T2, R> {
+    pub fn map_types<T2: Clone + Debug, F2: Fn(&T1) -> T2>(&self, f: F2) -> Ndarr<T2, R> {
         let out: Vec<T2> = self.data.iter().map(f).collect();
         Ndarr {
             data: out,
@@ -21,7 +21,9 @@ impl<T1: Debug + Clone + Default, R: Unsigned> Ndarr<T1, R> {
         }
     }
     // Bimap: is the same as Zip then map, is just a convenient way for doing diadic operations between Ndarrs
-    pub fn bimap<F: Fn(T1, T1) -> T1>(&self, other: &Self, f: F) -> Self {
+    pub fn bimap<F: Fn(T1, T1) -> T1>(&self, other: &Self, f: F) -> Self 
+    where T1: Default,
+    {
         let mut out = vec![T1::default(); self.data.len()];
         for (i, val) in out.iter_mut().enumerate() {
             *val = f(self.data[i].clone(), other.data[i].clone())
@@ -40,6 +42,7 @@ impl<T1: Debug + Clone + Default, R: Unsigned> Ndarr<T1, R> {
 
     pub fn scanr<F: Fn(T1, T1) -> T1>(&self, axis: usize, f: F) -> Self
     where
+        T1: Default,
         R: Sub<B1>,
         <R as Sub<B1>>::Output: Unsigned,
         <R as Sub<B1>>::Output: Add<B1>,
@@ -58,6 +61,7 @@ impl<T1: Debug + Clone + Default, R: Unsigned> Ndarr<T1, R> {
 
     pub fn scanl<F: Fn(T1, T1) -> T1>(&self, axis: usize, f: F) -> Self
     where
+        T1: Default,
         R: Sub<B1>,
         <R as Sub<B1>>::Output: Unsigned,
         <R as Sub<B1>>::Output: Add<B1>,

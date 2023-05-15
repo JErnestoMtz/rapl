@@ -44,12 +44,12 @@ use typenum::{Add1, Max, Maximum, Sub1, Unsigned};
 ///Main struct of N Dimensional generic array. The shape is denoted by the `shape` array where the length is the Rank of the Ndarray the actual values are stored in a flattened state in a rank 1 array.
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Ndarr<T: Clone + Default, R: Unsigned> {
+pub struct Ndarr<T: Clone, R: Unsigned> {
     pub data: Vec<T>,
     pub dim: Dim<R>,
 }
 
-impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
+impl<T: Clone + Debug, R: Unsigned> Ndarr<T, R> {
     pub fn new<D: Into<Dim<R>>>(data: &[T], shape: D) -> Result<Self, DimError> {
         let shape = shape.into();
         let n = helpers::multiply_list(&shape.shape, 1);
@@ -192,6 +192,7 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
         shape: D,
     ) -> Result<Ndarr<T, Maximum<R, R2>>, DimError>
     where
+        T: Default,
         R: Max<R2>,
         <R as Max<R2>>::Output: Unsigned,
     {
@@ -226,6 +227,7 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
         shape: D,
     ) -> Result<Ndarr<T, Maximum<R, R2>>, DimError>
     where
+        T: Default,
         R: Max<R2>,
         <R as Max<R2>>::Output: Unsigned,
     {
@@ -250,6 +252,7 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
         shape: D,
     ) -> Result<Vec<T>, DimError>
     where
+        T: Default,
         R: Max<R2>,
         <R as Max<R2>>::Output: Unsigned,
     {
@@ -267,7 +270,9 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
         Ok(new_data)
     }
     ///Transpose an N-dimensional array.
-    fn t(&self) -> Self {
+    fn t(&self) -> Self 
+    where T: Default 
+    {
         let mut out_shape = self.dim.shape.clone();
         out_shape.reverse();
         let out_dim = Dim::<R>::new(&out_shape).unwrap();
@@ -284,7 +289,9 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
     }
     ///Roll array elements along a given axis, by shift `isize`.
     ///Elements that roll beyond the last position are re-introduced at the first.
-    pub fn roll(&self, shift: isize, axis: usize) -> Self {
+    pub fn roll(&self, shift: isize, axis: usize) -> Self 
+    where T: Default 
+    {
         let mut slices = self.slice_at_notyped(axis);
         let shift = (shift.rem_euclid(slices.len() as isize)) as usize;
         slices.rotate_right(shift);

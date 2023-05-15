@@ -1,6 +1,8 @@
 use super::*;
 
-const LIMIT: usize = 50;
+const LIMIT_X: usize = 18;
+const LIMIT_Y: usize = 18;
+const LIMIT_DIM: usize = 5;
 
 impl<T: Clone + Debug + Default + Display, R: Unsigned> Display for Ndarr<T, R> {
     // Kind of nasty function, it can be imprube a lot, but I think there is no scape from recursion.
@@ -40,7 +42,13 @@ fn format_vec(
     }
     Ok(())
 }
-
+fn collapsed(limit: usize)->usize{
+    match limit {
+       0 => LIMIT_X,
+       1 => LIMIT_Y,
+       _ => LIMIT_DIM
+    }
+}
 use std::fmt;
 fn format_array<T, R: Unsigned>(
     arr: Ndarr<T, R>,
@@ -56,7 +64,7 @@ where
         &[] => f.write_str(&arr.data[0].to_string())?,
         &[len] => {
             f.write_str("[")?;
-            format_vec(f, len, LIMIT, ", ", "...", &mut |f, index| {
+            format_vec(f, len, LIMIT_X, ", ", "...", &mut |f, index| {
                 let elm = arr.data[index].to_string();
                 let path = max_len - elm.len();
                 let elm: String = " ".repeat(path) + &elm;
@@ -69,7 +77,7 @@ where
             let indent = " ".repeat(dim + 1);
             let separator = format!(",\n{}{}", nl, indent);
             f.write_str("[")?;
-            let limit = LIMIT;
+            let limit = collapsed(full_dim - dim - 1);
             format_vec(f, shape[0], limit, &separator, "...", &mut |f, index| {
                 format_array(
                     arr.slice_at_notyped(0)[index].clone(),
@@ -91,8 +99,9 @@ mod disp {
     use super::*;
     #[test]
     fn disp_test() {
-        let a = Ndarr::from(80..80 + 64).reshape([4, 4, 4]).unwrap();
-        println!("a = \n {}", a);
+        let a = Ndarr::from(0..2_000_000).reshape([1_000, 1_000, 2]).unwrap();
+        
+        //println!("a = \n {}", a);
         //a =
         //[[[ 80,  81,  82,  83],
         //[ 84,  85,  86,  87],

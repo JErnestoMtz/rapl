@@ -10,6 +10,36 @@ impl<T: Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
     }
 }
 
+
+fn slice_borrow<'a, T: Clone + Debug + Default, R: Unsigned>(arr: &'a Ndarr<T,R>, axis: usize)->Vec<Ndarr<&'a T,UTerm>>{
+        let n = helpers::multiply_list(&arr.dim.shape, 1); // number of elements in original array
+        let new_shape = arr.dim.clone().remove_element_notyped(axis);
+        let n_new_arrs = arr.dim.shape[axis]; // number of new arrays
+
+        let iota = 0..n;
+
+        let indexes: Vec<Dim<R>> = iota.map(|i| arr.dim.get_indexes(&i)).collect(); //indexes of each element
+
+        let mut out:Vec<Ndarr<&'a T, UTerm>> = Vec::new(); // to store
+
+        for i in 0..n_new_arrs {
+            let mut this_data: Vec<&'a T> = Vec::new();
+            for j in 0..n {
+                // if the index at the slice position coincide with i (or the slice number)
+                if indexes[j].shape[axis] == i {
+                    let ind = arr.dim.get_flat_pos(&indexes[j]).unwrap();
+                    this_data.push(&arr.data[ind])
+                }
+            }
+            //TODO: remove push, with allocation size
+            out.push(Ndarr::new(&this_data, new_shape.clone()).expect("Error initializing"))
+        }
+        out
+}
+
+
+
+
 impl<T: Clone + Default + Debug, R: Unsigned, I: Into<Dim<R>>> Index<I> for Ndarr<T, R> {
     type Output = T;
     fn index(&self, index: I) -> &Self::Output {
