@@ -12,7 +12,9 @@ license = "MIT"
 image = {version = "0.24.6", optional = true}
 num-traits = "0.2.15"
 rand = "0.8.5"
+rand_distr = "0.4.3"
 typenum = "1.16.0"
+
 
 [features]
 default = ["complex", "rapl_image"]
