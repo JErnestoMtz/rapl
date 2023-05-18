@@ -8,16 +8,14 @@ macro_rules!  ndarr_op{
         impl <T1, T2, T3, R1: Unsigned, R2: Unsigned> $Trait<$Ty2> for $Ty1
         where
             R1: Max<R2>,
-            R2: Max<R1>,
             <R1 as Max<R2>>::Output: Unsigned,
-            <R2 as Max<R1>>::Output: Unsigned,
             T1: Clone + Debug + Default + $Trait<T2, Output = T3>,
             T2: Clone + Debug + Default,
             T3: Clone + Debug + Default,
         {
             type Output = Ndarr<T3,Maximum<R1,R2>>;
             fn $F(self, rhs: $Ty2) -> Self::Output {
-                self.poly_dyatic(&rhs, |x,y| x $Op y).unwrap()
+                self.poly_dyadic(&rhs, |x,y| x $Op y).unwrap()
             }
         }
     };

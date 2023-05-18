@@ -588,15 +588,15 @@ mod tests {
     }
 
     #[test]
-    fn dyatic_polymorphism() {
+    fn dyadic_polymorphism() {
         let arr1 = Ndarr::from([[1, 2], [3, 4]]);
         let arr2 = Ndarr::from([1, 1]);
         assert_eq!(
-            arr2.poly_dyatic(&arr1, |x, y| x + y).unwrap(),
+            arr2.poly_dyadic(&arr1, |x, y| x + y).unwrap(),
             Ndarr::from([[2, 3], [4, 5]])
         );
         assert_eq!(
-            arr1.poly_dyatic(&arr2, |x, y| x + y).unwrap(),
+            arr1.poly_dyadic(&arr2, |x, y| x + y).unwrap(),
             Ndarr::from([[2, 3], [4, 5]])
         );
     }

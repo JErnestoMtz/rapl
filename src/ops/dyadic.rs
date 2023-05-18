@@ -3,7 +3,7 @@ use std::ops::*;
 use typenum::{Max, Maximum, Sub1, Sum, Unsigned, B1};
 
 impl<T1: Clone + Debug + Default, R1: Unsigned> Ndarr<T1, R1> {
-    pub fn poly_dyatic<F, T2, T3, R2: Unsigned>(
+    pub fn poly_dyadic<F, T2, T3, R2: Unsigned>(
         &self,
         other: &Ndarr<T2, R2>,
         f: F,
@@ -34,7 +34,7 @@ impl<T1: Clone + Debug + Default, R1: Unsigned> Ndarr<T1, R1> {
         other: &Ndarr<T1, R2>,
     ) -> Ndarr<T1, Sub1<Sub1<Sum<R1,R2>>>>
     where
-    //TODO: remove poly dyatic trait req
+    //TODO: remove poly dyadic trait req
         R1: Max<R2>,
         <R1 as Max<R2>>::Output: Unsigned,
         R1: Add<R2>,
@@ -58,7 +58,7 @@ impl<T1: Clone + Debug + Default, R1: Unsigned> Ndarr<T1, R1> {
             data: bdata2,
             dim: padded2,
         };
-        let r = arr1.poly_dyatic(&arr2, |x, y| x * y).unwrap();
+        let r = arr1.poly_dyadic(&arr2, |x, y| x * y).unwrap();
         //TODO: Not 100% sure if the reduction is always in R-1 axis, I'm like 90% confident but too lazy to do a math proof.
         //seems to work for all test I did
         let rr = r.reduce_notyped(self.dim.len() - 1, |x, y| x + y).unwrap();
@@ -99,7 +99,7 @@ impl<T1: Clone + Debug + Default, R1: Unsigned> Ndarr<T1, R1> {
             data: bdata2,
             dim: padded2,
         };
-        let r = arr1.poly_dyatic(&arr2, f).unwrap();
+        let r = arr1.poly_dyadic(&arr2, f).unwrap();
         let rr = r.reduce_notyped(self.dim.len() - 1, |x, y| g(x, y)).unwrap();
 
         Ndarr { data: rr.data , dim: Dim::<Sub1<Sub1<Sum<R1,R2>>>>::new(&rr.dim.shape).unwrap()}
@@ -135,7 +135,7 @@ impl<T1: Clone + Debug + Default, R1: Unsigned> Ndarr<T1, R1> {
             data: bdata2,
             dim: padded2,
         };
-        let r = arr1.poly_dyatic(&arr2, f).unwrap();
+        let r = arr1.poly_dyadic(&arr2, f).unwrap();
 
         Ndarr { data: r.data , dim: Dim::<Sum<R1,R2>>::new(&r.dim.shape).unwrap()}
     }
@@ -145,10 +145,9 @@ impl<T1: Clone + Debug + Default, R1: Unsigned> Ndarr<T1, R1> {
 
 #[cfg(test)]
 
-mod dyatic_test{
+mod dyadic_test{
     use super::*;
     #[test]
-        #[test]
     fn outer() {
         let z = Ndarr::from([1, 2, 3]);
         let g = |a, b| {
