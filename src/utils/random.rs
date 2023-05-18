@@ -61,17 +61,10 @@ impl NdarrRand {
 
 #[cfg(test)]
 mod rng_arr {
-    // use super::*;
+    use super::*;
     #[test]
     fn test_rand() {
-        todo!()
-
-        //let x: Ndarr<f32, U2> = NdarrRand::rand_f32(&[4,4]);
-        //let y: Ndarr<i32,U1> = NdarrRand::uniform((-10,10), &[10]);
-        //let faces = NdarrRand::choose(&["😀","😎","😐","😢"], &[4,4]);
-
-        //println!("{}", x);
-        //println!("{}", y);
-        //println!("{}", faces);
+        //let a = NdarrRand::uniform(0.0, 1.0, [2,2]);
+       todo!() 
     }
 }

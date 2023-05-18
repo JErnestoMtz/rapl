@@ -1,7 +1,9 @@
 use super::*;
+
+
 const LIMIT_X: usize = 18;
 const LIMIT_Y: usize = 18;
-const LIMIT_DIM: usize = 5;
+const LIMIT_Z: usize = 5;
 
 impl<T: Clone + Debug + Display, R: Unsigned> Display for Ndarr<T, R> {
     // Kind of nasty function, it can be imprube a lot, but I think there is no scape from recursion.
@@ -45,7 +47,7 @@ fn collapsed(limit: usize)->usize{
     match limit {
        0 => LIMIT_X,
        1 => LIMIT_Y,
-       _ => LIMIT_DIM
+       _ => LIMIT_Z
     }
 }
 use std::fmt;

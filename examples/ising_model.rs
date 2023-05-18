@@ -21,7 +21,7 @@ fn metropolis(spin_arr: &mut Ndarr<f32, U2>){
     let indexes: Vec<usize> = (0..N).collect();
     let i_s = NdarrRand::choose(&indexes, [M]); //random i indexes
     let j_s = NdarrRand::choose(&indexes, [M]); //random j indexes
-    let p_swich: f32 = NdarrRand::rand_f32([1])[0]; // selection probability of random spin switch
+    let p_swich: f32 = NdarrRand::uniform(0.0,1.0, [1])[0]; // selection probability of random spin switch
     for (i, j) in i_s.data.iter().zip(j_s.data.iter()) {
         if energy[[*i, *j]] < 0.0 || p_swich < temp_exp[[*i, *j]] {
             spin_arr[[*i, *j]] *= &-1.0;
