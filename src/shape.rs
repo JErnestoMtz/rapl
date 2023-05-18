@@ -114,8 +114,8 @@ impl<R: Unsigned> Dim<R> {
         small_shape: &Dim<R1>,
         indexes: &Dim<R2>,
     ) -> Result<usize, DimError> {
-        let r1 = R1::to_usize();
-        let r2 = R2::to_usize();
+        let r1 = small_shape.shape.len();
+        let r2 = indexes.shape.len();
         let mut indexes = indexes.shape.clone();
         //paths shape with 1 on the left until is the same shape as indexes;
         let padded = small_shape.path_shape::<R2>()?.shape;
@@ -184,6 +184,7 @@ impl<R: Unsigned> Dim<R> {
             rank: PhantomData,
         }
     }
+
 }
 
 impl<R: Unsigned> From<&Dim<R>> for Dim<R> {

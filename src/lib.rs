@@ -19,6 +19,9 @@ mod natives;
 pub mod ops;
 mod scalars;
 mod shape;
+mod view;
+
+pub use view::*;
 pub mod utils;
 
 #[cfg(feature = "complex")]

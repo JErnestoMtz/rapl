@@ -1,10 +1,9 @@
 use super::*;
-
 const LIMIT_X: usize = 18;
 const LIMIT_Y: usize = 18;
 const LIMIT_DIM: usize = 5;
 
-impl<T: Clone + Debug + Default + Display, R: Unsigned> Display for Ndarr<T, R> {
+impl<T: Clone + Debug + Display, R: Unsigned> Display for Ndarr<T, R> {
     // Kind of nasty function, it can be imprube a lot, but I think there is no scape from recursion.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let max_len = self.data.iter().map(|x| x.to_string().len()).max().unwrap();
@@ -58,7 +57,7 @@ fn format_array<T, R: Unsigned>(
     max_len: usize,
 ) -> fmt::Result
 where
-    T: Display + Clone + Default + Debug,
+    T: Display + Clone + Debug,
 {
     match arr.shape() {
         &[] => f.write_str(&arr.data[0].to_string())?,
@@ -81,6 +80,7 @@ where
             format_vec(f, shape[0], limit, &separator, "...", &mut |f, index| {
                 format_array(
                     arr.slice_at_notyped(0)[index].clone(),
+                    //arr.slice_borrow(0)[index].clone(),
                     f,
                     dim + 1,
                     full_dim,
@@ -99,9 +99,9 @@ mod disp {
     use super::*;
     #[test]
     fn disp_test() {
+        //let a = Ndarr::from(0..2_000_000).reshape([1_000, 1_000, 2]).unwrap();
         let a = Ndarr::from(0..2_000_000).reshape([1_000, 1_000, 2]).unwrap();
-        
-        //println!("a = \n {}", a);
+        println!("a = \n {}", a);
         //a =
         //[[[ 80,  81,  82,  83],
         //[ 84,  85,  86,  87],
