@@ -17,7 +17,7 @@ macro_rules!  ndarr_op{
         {
             type Output = Ndarr<T3,Maximum<R1,R2>>;
             fn $F(self, rhs: $Ty2) -> Self::Output {
-                self.poly_diatic(&rhs, |x,y| x $Op y).unwrap()
+                self.poly_dyatic(&rhs, |x,y| x $Op y).unwrap()
             }
         }
     };
