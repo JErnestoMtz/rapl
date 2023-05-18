@@ -61,10 +61,9 @@ impl NdarrRand {
 
 #[cfg(test)]
 mod rng_arr {
-    use super::*;
+    //use super::*;
     #[test]
     fn test_rand() {
         //let a = NdarrRand::uniform(0.0, 1.0, [2,2]);
-       todo!() 
     }
 }

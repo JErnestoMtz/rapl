@@ -81,7 +81,7 @@ where
             let limit = collapsed(full_dim - dim - 1);
             format_vec(f, shape[0], limit, &separator, "...", &mut |f, index| {
                 format_array(
-                    arr.slice_at_notyped(0)[index].clone(),
+                    arr.index_slice_notyped(0, index),
                     //arr.slice_borrow(0)[index].clone(),
                     f,
                     dim + 1,
@@ -98,12 +98,12 @@ where
 #[cfg(test)]
 
 mod disp {
-    use super::*;
+    //use super::*;
     #[test]
     fn disp_test() {
         //let a = Ndarr::from(0..2_000_000).reshape([1_000, 1_000, 2]).unwrap();
-        let a = Ndarr::from(0..2_000_000).reshape([1_000, 1_000, 2]).unwrap();
-        println!("a = \n {}", a);
+        //let a = Ndarr::from(0..2_000_000).reshape([1_000, 1_000, 2]).unwrap();
+        //println!("a = \n {}", a);
         //a =
         //[[[ 80,  81,  82,  83],
         //[ 84,  85,  86,  87],

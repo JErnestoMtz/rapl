@@ -40,7 +40,7 @@ impl<R: Unsigned> Dim<R> {
         }
         Self::new(&ind).unwrap()
     }
-    pub fn get_flat_pos(&self, indexes: &Self) -> Result<usize, DimError> {
+    pub fn get_flat_pos<R2: Unsigned>(&self, indexes: &Dim<R2>) -> Result<usize, DimError> {
         let mut ind = 0;
         let shape = self.shape.clone();
         let r = self.shape.len();

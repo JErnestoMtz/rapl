@@ -7,6 +7,16 @@ impl<T: Clone + Debug, R: Unsigned> Ndarr<T, R> {
         let flat_pos = self.dim.get_flat_pos(&index.into()).unwrap();
         self.data[flat_pos] = value;
     }
+    pub fn index_slice_notyped(&self, axis: usize, index: usize) -> Ndarr<T, UTerm>{
+        let new_shape = self.dim.clone().remove_element_notyped(axis);
+        let n_new = helpers::multiply_list(&new_shape.shape, 1); // number of elements in new slice;
+
+        let iota = 0..n_new;
+        let indexes: Vec<Dim<UTerm>> = iota.map(|i| new_shape.get_indexes(&i).insert_element_notyped(axis, index)).collect(); //indexes of each element
+        let flat_pos: Vec<usize> = indexes.iter().map(|index| self.dim.get_flat_pos(index).unwrap()).collect();
+        let new_data: Vec<T> = flat_pos.iter().map(|i| self.data[*i].clone()).collect();
+        return Ndarr::new(&new_data, new_shape).unwrap()
+    }
 }
 
 
@@ -53,7 +63,10 @@ mod indexing_tes {
 mod indexing_test{
     use super::*;
     #[test]
-    fn slice_borro(){
+    fn index_slice(){
         let a = Ndarr::from([[1,2,3],[4,5,6]]);
+        let b = a.index_slice_notyped(0, 1);
+        assert_eq!(b.data, vec![4,5,6])
+        
     }
 }
