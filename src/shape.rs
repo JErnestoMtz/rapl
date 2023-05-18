@@ -93,10 +93,10 @@ impl<R: Unsigned> Dim<R> {
         Dim::<UTerm>::new(&result).unwrap()
     }
     ///Paths a shape of rank R with ones in the left until is rank R2.
-    pub fn path_shape<R2: Unsigned>(&self) -> Result<Dim<R2>, DimError> {
-        let r1 = R::to_usize();
-        let r2 = R2::to_usize();
-        if R::to_usize() > R2::to_usize() {
+    pub fn path_shape<R2: Unsigned>(&self, n: usize) -> Result<Dim<R2>, DimError> {
+        let r1 = self.len();
+        let r2 = n;
+        if r1 > r2 {
             return Err(DimError::new(&format!(
                 "Can not path shape {:?} of rank {} to rank {}.",
                 self.shape, r1, r2
@@ -118,7 +118,7 @@ impl<R: Unsigned> Dim<R> {
         let r2 = indexes.shape.len();
         let mut indexes = indexes.shape.clone();
         //paths shape with 1 on the left until is the same shape as indexes;
-        let padded = small_shape.path_shape::<R2>()?.shape;
+        let padded = small_shape.path_shape::<R2>(r2)?.shape;
         //initialize the indexes, with the same rank of small_shape
         let mut rev_cast_ind = vec![0; r1];
         for i in 0..r2 {
@@ -173,6 +173,40 @@ impl<R: Unsigned> Dim<R> {
         }
         Ok(Dim::<Maximum<R, R2>>::new(&out_shape)?)
     }
+
+
+    pub fn broadcast_shape_notyped<R2: Unsigned>(
+        &self,
+        other: &Dim<R2>,
+    ) -> Result<Dim<UTerm>, DimError>
+    {
+        let r1 = self.len();
+        let r2 = other.len();
+        let mut out_shape = vec![0; max(r1, r2)];
+        //get both shapes
+        let mut sh1 = self.shape.clone();
+        let mut sh2 = other.shape.clone();
+        sh1.reverse();
+        sh2.reverse();
+
+        let l = max(r1, r2);
+        for i in 0..l {
+            let size1 = Self::index_or(&sh1, i, 1);
+            let size2 = Self::index_or(&sh2, i, 1);
+            //broadcasting criteria
+            if size1 != 1 && size2 != 1 && size1 != size2 {
+                return Err(DimError::new(&format!(
+                    "Error arrays with shape {:?} and {:?} can not be broadcasted.",
+                    self.shape, other.shape
+                )));
+            }
+            out_shape[l - i - 1] = max(size1, size2)
+        }
+        Ok(Dim::<UTerm>::new(&out_shape)?)
+    }
+
+
+
     pub fn len(&self) -> usize {
         self.shape.len()
     }
@@ -281,6 +315,6 @@ mod dim_tests {
     pub fn tpath_shape() {
         let s1 = Dim::<U2>::new(&[2, 3]).unwrap();
         let s2 = Dim::<U5>::new(&[1, 1, 1, 2, 3]).unwrap();
-        assert_eq!(s1.path_shape().unwrap(), s2);
+        assert_eq!(s1.path_shape(s2.len()).unwrap(), s2);
     }
 }

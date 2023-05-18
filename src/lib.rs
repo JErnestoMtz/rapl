@@ -187,6 +187,28 @@ impl<T: Clone + Debug, R: Unsigned> Ndarr<T, R> {
             Ok(out)
         }
     }
+
+    pub fn reduce_notyped<F: Fn(T, T) -> T + Clone>(
+        &self,
+        axis: usize,
+        f: F,
+    ) -> Result<Ndarr<T, UTerm>, DimError>
+    {
+        if axis >= self.dim.len() {
+            Err(DimError::new("Axis grater than rank"))
+        } else {
+            let slices = self.clone().slice_at_notyped(axis);
+            let n = slices.len();
+            let mut out = slices[0].clone();
+            for i in 1..n {
+                out.bimap_in_place(&slices[i], f.clone())
+            }
+
+            Ok(out)
+        }
+    }
+
+
     //similar to broadcast but, this does not allow a shape different to shape
     pub fn broadcast_to<R2: Unsigned, D: Into<Dim<R2>>>(
         &self,
@@ -252,21 +274,17 @@ impl<T: Clone + Debug, R: Unsigned> Ndarr<T, R> {
         &self,
         shape: D,
     ) -> Result<Vec<T>, DimError>
-    where
-        T: Default,
-        R: Max<R2>,
-        <R as Max<R2>>::Output: Unsigned,
     {
         let shape = shape.into();
-        let new_shape = self.dim.broadcast_shape(&shape)?;
+        let new_shape = self.dim.broadcast_shape_notyped(&shape)?;
 
         let n = helpers::multiply_list(&new_shape.shape, 1);
 
-        let mut new_data = vec![T::default(); n];
+        let mut new_data = Vec::with_capacity(n);
         for i in 0..n {
             let indexes = new_shape.get_indexes(&i);
             let rev_casted_pos = Dim::<R>::rev_cast_pos(&self.dim, &indexes)?;
-            new_data[i] = self.data[rev_casted_pos].clone();
+            new_data.push(self.data[rev_casted_pos].clone())
         }
         Ok(new_data)
     }
@@ -570,39 +588,20 @@ mod tests {
     }
 
     #[test]
-    fn diatic_polymorphism() {
+    fn dyadic_polymorphism() {
         let arr1 = Ndarr::from([[1, 2], [3, 4]]);
         let arr2 = Ndarr::from([1, 1]);
         assert_eq!(
-            ops::poly_diatic(&arr2, &arr1, |x, y| x + y).unwrap(),
+            arr2.poly_dyadic(&arr1, |x, y| x + y).unwrap(),
             Ndarr::from([[2, 3], [4, 5]])
         );
         assert_eq!(
-            ops::poly_diatic(&arr1, &arr2, |x, y| x + y).unwrap(),
+            arr1.poly_dyadic(&arr2, |x, y| x + y).unwrap(),
             Ndarr::from([[2, 3], [4, 5]])
         );
     }
 
-    #[test]
-    fn outer() {
-        let z = Ndarr::from([1, 2, 3]);
-        let g = |a, b| {
-            if a == b {
-                1
-            } else {
-                0
-            }
-        };
-        let r1 = outer_product(|x, y| x + y, &z, &z);
-        let r2 = outer_product(g, &z, &z);
 
-        assert_eq!(r1, Ndarr::from([[2, 3, 4], [3, 4, 5], [4, 5, 6]]));
-        assert_eq!(r2, Ndarr::from([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
-        //let c = Ndarr::from(["a", "b", "c", "d"]);
-        //let d = Ndarr::from(["1", "2", "3", "4"]);
-        //let ap = |x: &str, y: &str| (x.to_owned() + y);
-        //let r3 = ops::outer_product(ap, &c, &d);
-    }
 
     #[test]
     fn float_ops() {
@@ -618,8 +617,8 @@ mod tests {
     }
     #[test]
     fn reshape() {
-        //let a = Ndarr::from([1, 2, 3, 4]).reshape(&[2, 2]).unwrap();
-        //assert_eq!(a, Ndarr::from([[1, 2], [3, 4]]))
+        let a = Ndarr::from([1, 2, 3, 4]).reshape(&[2, 2]).unwrap();
+        assert_eq!(a, Ndarr::from([[1, 2], [3, 4]]))
     }
 
     #[test]
