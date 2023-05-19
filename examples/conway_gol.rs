@@ -31,9 +31,9 @@ fn main(){
         }); //make it pretty
         println!("{}",vis);
         println!(
-            "\n Conway's game of life: [Step {} out of {}] \n"
+            "\n Conway's Game of Life using rapl: [Step {} out of {}] \n"
         , i + 1, STEPS);
-        sleep(Duration::from_millis(40));
+        sleep(Duration::from_millis(50));
         stdout.write_all(b"\x1B[1;1H").unwrap();
         stdout.flush().unwrap();
     }
