@@ -11,17 +11,15 @@ const T: f32 = 0.05; // Temperature
 const STEPS: usize = 700; //Steps of simulation
 const M: usize = 20; //Number of updates per metropolis circle
 
-
-fn metropolis(spin_arr: &mut Ndarr<f32, U2>){  
-    let energy:Ndarr<f32, U2> = 2. * spin_arr.clone() * (spin_arr.roll(1, 0)+
-                                                    spin_arr.roll(-1, 0) +
-                                                    spin_arr.roll(1, 1) +
-                                                    spin_arr.roll(-1, 1));
-    let temp_exp = (- &energy / T).exp(); 
+fn metropolis(spin_arr: &mut Ndarr<f32, U2>) {
+    let energy: Ndarr<f32, U2> = 2.
+        * spin_arr.clone()
+        * (spin_arr.roll(1, 0) + spin_arr.roll(-1, 0) + spin_arr.roll(1, 1) + spin_arr.roll(-1, 1));
+    let temp_exp = (-&energy / T).exp();
     let indexes: Vec<usize> = (0..N).collect();
-    let i_s = NdarrRand::choose(&indexes, [M]); //random i indexes
-    let j_s = NdarrRand::choose(&indexes, [M]); //random j indexes
-    let p_swich: f32 = NdarrRand::uniform(0.0,1.0, [1])[0]; // selection probability of random spin switch
+    let i_s = NdarrRand::choose(&indexes, [M], None); //random i indexes
+    let j_s = NdarrRand::choose(&indexes, [M], None); //random j indexes
+    let p_swich: f32 = NdarrRand::uniform(0.0, 1.0, [1], None)[0]; // selection probability of random spin switch
     for (i, j) in i_s.data.iter().zip(j_s.data.iter()) {
         if energy[[*i, *j]] < 0.0 || p_swich < temp_exp[[*i, *j]] {
             spin_arr[[*i, *j]] *= &-1.0;
@@ -31,7 +29,7 @@ fn metropolis(spin_arr: &mut Ndarr<f32, U2>){
 
 fn main() {
     let mut stdout = stdout();
-    let mut spin_arr = NdarrRand::choose(&[-1.0, 1.0], [N, N]);
+    let mut spin_arr = NdarrRand::choose(&[-1.0, 1.0], [N, N], None);
     stdout.flush().unwrap();
     stdout.write_all(b"\x1B[2J\x1B[1;1H").unwrap();
     for i in 0..STEPS {
