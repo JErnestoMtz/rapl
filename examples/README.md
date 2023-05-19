@@ -11,4 +11,4 @@ cargo run --release --example ising_model
 ```
 cargo run --release --example conway_gol
 ```
-<img src="https://github.com/JErnestoMtz/rapl/blob/main/graphics/Ising.gif" width="300">
+<img src="https://github.com/JErnestoMtz/rapl/blob/main/graphics/gol.gif" width="300">
