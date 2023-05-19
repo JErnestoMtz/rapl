@@ -129,7 +129,7 @@ impl Ndarr<f32, U2> {
         let norm_arr = (self - min) / (max - min);
         let w = self.dim.shape[0];
         let h = self.dim.shape[1];
-        let im_u8 = norm_arr.map_types(|x| (*x * u16::MAX as f32) as u16);
+        let im_u8 = norm_arr.map(|x| (*x * u16::MAX as f32) as u16);
         let img: ImageBuffer<Luma<u16>, Vec<u16>> =
             ImageBuffer::from_raw(w as u32, h as u32, im_u8.data)
                 .expect("Could not create ImageBuffer with Ndarr");

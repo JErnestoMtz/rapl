@@ -46,16 +46,16 @@ where
         self.map(|x| x.log2())
     }
     pub fn is_infinite(&self) -> Ndarr<bool, R> {
-        self.map_types(|x| x.is_infinite())
+        self.map(|x| x.is_infinite())
     }
     pub fn is_finite(&self) -> Ndarr<bool, R> {
-        self.map_types(|x| x.is_finite())
+        self.map(|x| x.is_finite())
     }
     pub fn is_normal(&self) -> Ndarr<bool, R> {
-        self.map_types(|x| x.is_normal())
+        self.map(|x| x.is_normal())
     }
     pub fn is_nan(&self) -> Ndarr<bool, R> {
-        self.map_types(|x| x.is_nan())
+        self.map(|x| x.is_nan())
     }
 
     ///Max Float, floating types do not implement `Ord`, but this gives a way to get the maximum value in an `Ndarr` if all comparisons are allowed.

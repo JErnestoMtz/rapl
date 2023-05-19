@@ -61,7 +61,7 @@ macro_rules! scalar_op {
         {
             type Output = Ndarr<L,R>;
             fn $f_name(self, other: P) -> Self::Output {
-                self.map_types(|x| x.clone() $f other)
+                self.map(|x| x.clone() $f other)
             }
         }
         impl<L,P, T, R: Unsigned> $Op<P> for &Ndarr<T, R>
@@ -72,7 +72,7 @@ macro_rules! scalar_op {
         {
             type Output = Ndarr<L, R>;
             fn $f_name(self, other: P) -> Self::Output {
-                self.map_types(|x| x.clone() $f other)
+                self.map(|x| x.clone() $f other)
             }
         }
     };

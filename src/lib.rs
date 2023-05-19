@@ -290,12 +290,11 @@ impl<T: Clone + Debug, R: Unsigned> Ndarr<T, R> {
     }
     ///Transpose an N-dimensional array.
     fn t(&self) -> Self 
-    where T: Default 
     {
         let mut out_shape = self.dim.shape.clone();
         out_shape.reverse();
         let out_dim = Dim::<R>::new(&out_shape).unwrap();
-        let mut out_arr = vec![T::default(); self.data.len()];
+        let mut out_arr = vec![self.data[0].clone(); self.data.len()];
         for i in 0..self.data.len() {
             let new_indexes = self.dim.get_indexes(&i).reverse();
             let new_pos = out_dim.get_flat_pos(&new_indexes).unwrap();
@@ -376,10 +375,18 @@ pub fn de_slice_notyped<T: Clone + Debug + Default, R: Unsigned>(
     }
 }
 
-impl<T: Copy + Clone + Debug + Default> Ndarr<T, typenum::U0> {
-    pub fn scalar(self) -> T {
-        self.data[0]
+impl<T: Clone + Debug> Ndarr<T, typenum::U0> {
+    pub fn scalar(self) -> T 
+    where T: Scalar 
+    {
+        self.data[0].to_owned()
     }
+
+    pub fn extract(self) -> T 
+    {
+        self.data[0].to_owned()
+    }
+
 }
 
 pub trait IntoNdarr<T, R: Unsigned>
@@ -439,7 +446,6 @@ impl<T: Float + Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ops::*;
     use typenum::U2;
 
     #[test]

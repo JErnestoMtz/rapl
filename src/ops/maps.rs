@@ -1,19 +1,12 @@
 use super::*;
 
 impl<T1: Debug + Clone, R: Unsigned> Ndarr<T1, R> {
-    pub fn map<F1: Fn(&T1) -> T1>(&self, f: F1) -> Self {
-        let out: Vec<T1> = self.data.iter().map(f).collect();
-        Ndarr {
-            data: out,
-            dim: self.dim.clone(),
-        }
-    }
     pub fn map_in_place<F1: Fn(&T1) -> T1>(&mut self, f: F1) {
         for val in self.data.iter_mut() {
             *val = f(val)
         }
     }
-    pub fn map_types<T2: Clone + Debug, F2: Fn(&T1) -> T2>(&self, f: F2) -> Ndarr<T2, R> {
+    pub fn map<T2: Clone + Debug, F2: Fn(&T1) -> T2>(&self, f: F2) -> Ndarr<T2, R> {
         let out: Vec<T2> = self.data.iter().map(f).collect();
         Ndarr {
             data: out,

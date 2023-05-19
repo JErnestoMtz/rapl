@@ -36,7 +36,7 @@ fn main() {
     stdout.write_all(b"\x1B[2J\x1B[1;1H").unwrap();
     for i in 0..STEPS {
         metropolis(&mut spin_arr); //updates array with metropolis algorithm
-        let vis = spin_arr.map_types(|x| {
+        let vis = spin_arr.map(|x| {
             if *x < 0.0 {
                 "░".to_string()
             } else {

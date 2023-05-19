@@ -2,7 +2,7 @@ use super::*;
 use std::ops::*;
 use typenum::{Max, Maximum, Sub1, Sum, Unsigned, B1};
 
-impl<T1: Clone + Debug + Default, R1: Unsigned> Ndarr<T1, R1> {
+impl<T1: Clone + Debug, R1: Unsigned> Ndarr<T1, R1> {
     pub fn poly_dyadic<F, T2, T3, R2: Unsigned>(
         &self,
         other: &Ndarr<T2, R2>,
@@ -11,17 +11,17 @@ impl<T1: Clone + Debug + Default, R1: Unsigned> Ndarr<T1, R1> {
     where
         R1: Max<R2>,
         <R1 as Max<R2>>::Output: Unsigned,
-        T1: Clone + Debug + Default,
-        T2: Clone + Debug + Default,
-        T3: Clone + Debug + Default,
+        T1: Clone + Debug,
+        T2: Clone + Debug,
+        T3: Clone + Debug,
         F: Fn(T1, T2) -> T3,
     {
         let new_shape = self.dim.broadcast_shape_notyped(&other.dim)?;
         let cast1 = self.broadcast_data(&other.dim)?;
         let cast2 = other.broadcast_data(&self.dim)?;
-        let mut new_data = vec![T3::default(); cast2.len()];
+        let mut new_data = Vec::with_capacity(cast2.len());
         for i in 0..cast1.len() {
-            new_data[i] = f(cast1[i].clone(), cast2[i].clone())
+            new_data.push(f(cast1[i].clone(), cast2[i].clone()))
         }
         return Ok(Ndarr {
             data: new_data,
@@ -78,9 +78,9 @@ impl<T1: Clone + Debug + Default, R1: Unsigned> Ndarr<T1, R1> {
         <R1 as Add<R2>>::Output: Sub<B1>,
         <<R1 as Add<R2>>::Output as Sub<B1>>::Output: Sub<B1>,
         <<<R1 as Add<R2>>::Output as Sub<B1>>::Output as Sub<B1>>::Output: Unsigned,
-        T1: Clone + Debug + Default,
-        T2: Clone + Debug + Default,
-        T3: Clone + Debug + Default,
+        T1: Clone + Debug,
+        T2: Clone + Debug,
+        T3: Clone + Debug,
         F: Fn(T1, T2) -> T3,
         G: Fn(T3, T3) -> T3,
     {
@@ -115,9 +115,9 @@ impl<T1: Clone + Debug + Default, R1: Unsigned> Ndarr<T1, R1> {
             <R1 as Max<R2>>::Output: Unsigned,
             R1: Add<R2>,
             <R1 as Add<R2>>::Output: Unsigned,
-            T1: Clone + Debug + Default,
-            T2: Clone + Debug + Default,
-            T3: Clone + Debug + Default,
+            T1: Clone + Debug,
+            T2: Clone + Debug,
+            T3: Clone + Debug,
             F: Fn(T1, T2) -> T3,
     {
         let rank_intimidate = self.dim.len() + other.dim.len();

@@ -4,26 +4,26 @@ use std::ops::Add;
 
 impl<T, R: Unsigned> Ndarr<T, R>
 where
-    T: Clone + Debug + Default + Signed + PartialOrd,
+    T: Clone + Debug  + Signed + PartialOrd,
 {
     pub fn abs(&self) -> Self {
         let out = self.map(|x| x.abs());
         out
     }
     pub fn is_positive(&self) -> Ndarr<bool, R> {
-        let out = self.map_types(|x| x.is_positive());
+        let out = self.map(|x| x.is_positive());
         out
     }
 
     pub fn is_negative(&self) -> Ndarr<bool, R> {
-        let out = self.map_types(|x| x.is_negative());
+        let out = self.map(|x| x.is_negative());
         out
     }
 }
 
 impl<T, R: Unsigned> Ndarr<T, R>
 where
-    T: Clone + Debug + Default,
+    T: Clone + Debug,
 {
     pub fn sum(&self) -> T
     where

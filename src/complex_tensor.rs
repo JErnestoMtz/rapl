@@ -22,11 +22,11 @@ impl Scalar for C<usize> {}
 
 impl<T: Copy + PartialEq + Clone + Debug + Default, R: Unsigned> Ndarr<C<T>, R> {
     pub fn re(&self) -> Ndarr<T, R> {
-        let out = self.map_types(|z| z.re());
+        let out = self.map(|z| z.re());
         out
     }
     pub fn im(&self) -> Ndarr<T, R> {
-        let out = self.map_types(|z| z.im());
+        let out = self.map(|z| z.im());
         out
     }
 }
@@ -70,7 +70,7 @@ impl<
     > Ndarr<C<T>, R>
 {
     pub fn r_square(&self) -> Ndarr<T, R> {
-        let out = self.map_types(|z| z.r_square());
+        let out = self.map(|z| z.r_square());
         out
     }
 }
@@ -93,7 +93,7 @@ where
     T: Clone + Debug + Default + Float,
 {
     pub fn abs(&self) -> Ndarr<T, R> {
-        let out = self.map_types(|z| z.abs());
+        let out = self.map(|z| z.abs());
         out
     }
     pub fn exp(&self) -> Self {
@@ -101,7 +101,7 @@ where
         out
     }
     pub fn arg(&self) -> Ndarr<T, R> {
-        let out = self.map_types(|z| z.arg());
+        let out = self.map(|z| z.arg());
         out
     }
     pub fn ln(&self) -> Self {
@@ -147,24 +147,24 @@ where
         out
     }
     pub fn to_polar(&self) -> Ndarr<(T, T), R> {
-        let out = self.map_types(|z| z.to_polar());
+        let out = self.map(|z| z.to_polar());
         out
     }
 
     pub fn is_infinite(&self) -> Ndarr<bool, R> {
-        let out = self.map_types(|z| z.is_infinite());
+        let out = self.map(|z| z.is_infinite());
         out
     }
     pub fn is_finite(&self) -> Ndarr<bool, R> {
-        let out = self.map_types(|z| z.is_finite());
+        let out = self.map(|z| z.is_finite());
         out
     }
     pub fn is_normal(&self) -> Ndarr<bool, R> {
-        let out = self.map_types(|z| z.is_normal());
+        let out = self.map(|z| z.is_normal());
         out
     }
     pub fn is_nan(&self) -> Ndarr<bool, R> {
-        let out = self.map_types(|z| z.is_nan());
+        let out = self.map(|z| z.is_nan());
         out
     }
 }
