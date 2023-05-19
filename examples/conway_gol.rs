@@ -9,8 +9,8 @@ const N: usize = 17;
 const STEPS: usize = 100;
 
 fn update(mat: &mut Ndarr<i8,U2>){
-    let dirs = Ndarr::from([1,0,-1]);
-    let out = dirs.map(|r| mat.roll(*r, 0)).outer_product(&dirs, |a, r| a.roll(r, 1)).sum();
+    let rolls = Ndarr::from([1,0,-1]);
+    let out = rolls.map(|r| mat.roll(*r, 0)).outer_product(&rolls, |a, r| a.roll(r, 1)).sum();
     mat.bimap_in_place(&out, |prev, new| if new == 3|| (prev == 1 &&  (new == 4)){1}else{0})
 }
 
@@ -20,7 +20,7 @@ fn main(){
     stdout.flush().unwrap();
     stdout.write_all(b"\x1B[2J\x1B[1;1H").unwrap();
 
-    for _ in 0..STEPS{
+    for i in 0..STEPS{
         update(&mut x); //call update function
         let vis = x.map(|x| {
             if *x == 0 {
@@ -30,6 +30,9 @@ fn main(){
             }
         }); //make it pretty
         println!("{}",vis);
+        println!(
+            "\n Conway's game of life: [Step {} out of {}] \n"
+        , i + 1, STEPS);
         sleep(Duration::from_millis(40));
         stdout.write_all(b"\x1B[1;1H").unwrap();
         stdout.flush().unwrap();
