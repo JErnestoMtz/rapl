@@ -1,6 +1,6 @@
 use super::*;
 
-impl<T1: Debug + Clone, R: Unsigned> Ndarr<T1, R> {
+impl<T1: Clone, R: Unsigned> Ndarr<T1, R> {
     pub fn map_in_place<F1: Fn(&T1) -> T1>(&mut self, f: F1) {
         for val in self.data.iter_mut() {
             *val = f(val)
@@ -17,9 +17,9 @@ impl<T1: Debug + Clone, R: Unsigned> Ndarr<T1, R> {
     pub fn bimap<F: Fn(T1, T1) -> T1>(&self, other: &Self, f: F) -> Self 
     where T1: Default,
     {
-        let mut out = vec![T1::default(); self.data.len()];
-        for (i, val) in out.iter_mut().enumerate() {
-            *val = f(self.data[i].clone(), other.data[i].clone())
+        let mut out = Vec::with_capacity(self.data.len());
+        for i in 0..self.data.len(){
+            out.push(f(self.data[i].clone(), other.data[i].clone()))
         }
         Ndarr {
             data: out,

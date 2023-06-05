@@ -50,7 +50,7 @@ pub struct Ndarr<T: Clone, R: Unsigned> {
     pub dim: Dim<R>,
 }
 
-impl<T: Clone + Debug, R: Unsigned> Ndarr<T, R> {
+impl<T: Clone , R: Unsigned> Ndarr<T, R> {
     pub fn new<D: Into<Dim<R>>>(data: &[T], shape: D) -> Result<Self, DimError> {
         let shape = shape.into();
         let n = helpers::multiply_list(&shape.shape, 1);
@@ -308,7 +308,6 @@ impl<T: Clone + Debug, R: Unsigned> Ndarr<T, R> {
     ///Roll array elements along a given axis, by shift `isize`.
     ///Elements that roll beyond the last position are re-introduced at the first.
     pub fn roll(&self, shift: isize, axis: usize) -> Self 
-    where T: Default 
     {
         let mut slices = self.slice_at_notyped(axis);
         let shift = (shift.rem_euclid(slices.len() as isize)) as usize;
@@ -318,7 +317,7 @@ impl<T: Clone + Debug, R: Unsigned> Ndarr<T, R> {
     }
 }
 
-pub fn de_slice<T: Clone + Debug + Default, R: Unsigned>(
+pub fn de_slice<T: Clone, R: Unsigned>(
     slices: &Vec<Ndarr<T, R>>,
     axis: usize,
 ) -> Ndarr<T, Add1<R>>
@@ -330,7 +329,7 @@ where
     let shape_slice = slices[0].dim.clone();
 
     let out_shape = shape_slice.clone().insert_element(axis, slices.len());
-    let mut new_data: Vec<T> = vec![T::default(); helpers::multiply_list(&out_shape.shape, 1)];
+    let mut new_data: Vec<T> = vec![slices[0].data[0].clone(); helpers::multiply_list(&out_shape.shape, 1)];
     for i in 0..slices.len() {
         for j in 0..l_slice {
             //calculate the flat position of element j of slice i
@@ -348,7 +347,7 @@ where
     }
 }
 
-pub fn de_slice_notyped<T: Clone + Debug + Default, R: Unsigned>(
+pub fn de_slice_notyped<T: Clone, R: Unsigned>(
     slices: &Vec<Ndarr<T, R>>,
     axis: usize,
 ) -> Ndarr<T, UTerm> {
@@ -357,7 +356,7 @@ pub fn de_slice_notyped<T: Clone + Debug + Default, R: Unsigned>(
     let out_shape = shape_slice
         .clone()
         .insert_element_notyped(axis, slices.len());
-    let mut new_data: Vec<T> = vec![T::default(); helpers::multiply_list(&out_shape.shape, 1)];
+    let mut new_data: Vec<T> = vec![slices[0].data[0].clone(); helpers::multiply_list(&out_shape.shape, 1)];
     for i in 0..slices.len() {
         for j in 0..l_slice {
             //calculate the flat position of element j of slice i
@@ -439,7 +438,7 @@ impl<T: Float + Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
         <R as typenum::Max<R2>>::Output: typenum::Unsigned,
         Ndarr<T, R>: Sub<Ndarr<T, R2>, Output = Ndarr<T, Maximum<R, R2>>>,
     {
-        self.approx_epsilon(other.to_owned(), T::from(1e-10).unwrap())
+        self.approx_epsilon(other.to_owned(), T::from(1e-8).unwrap())
     }
 }
 

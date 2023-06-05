@@ -8,3 +8,6 @@ pub mod random;
 
 #[cfg(feature = "rapl_image")]
 pub mod rapl_img;
+
+#[cfg(feature = "fft")]
+pub mod fft;
