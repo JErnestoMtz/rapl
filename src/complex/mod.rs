@@ -1,4 +1,4 @@
-use num_traits::Num;
+use num_traits::{Num, Signed, Unsigned};
 use std::{
     fmt::{Debug, Display},
     ops::{Add, AddAssign, Div, Mul, MulAssign, Neg},
@@ -13,11 +13,15 @@ pub use crate::complex::primitives::Imag;
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct C<T: Copy + PartialEq>(pub T, pub T);
 
-impl<T: Copy + PartialEq + Display> Display for C<T> {
+impl<T: Copy + PartialEq + Display + Signed> Display for C<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "C({},{})", self.0, self.1)
+        match self.1.is_positive(){
+            true => write!(f, "{}+{}i", self.0, self.1),
+            false =>write!(f, "{}{}i", self.0, self.1),
+        }
     }
 }
+
 
 impl<T: Copy + PartialEq> C<T> {
     pub fn re(&self) -> T {

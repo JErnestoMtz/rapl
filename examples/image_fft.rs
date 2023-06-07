@@ -2,12 +2,9 @@ use rapl::*;
 use rapl::utils::rapl_img::open_lumaf32;
 use image::ImageFormat;
 
-const P: usize = 80;
-
-
 fn main(){
         //open image as lumaf32 (gray scale) where 0.0 is white 1.0 is black.
-        let img = open_lumaf32(&"graphics\\peppers.png").unwrap();
+        let img = open_lumaf32("graphics/peppers.png").unwrap();
 
         //transform to complex and take the 2D FFT
         let fft = img.to_complex().fft2d();
@@ -24,11 +21,11 @@ fn main(){
         kernel[[mid_x,mid_y-1]] = -1.;
         //FFT the kernell
         let kernell = kernel.to_complex().fft2d();
-        //multiply the image FFT to the kernell fft to then do the inverse transform to ger the convolution of the
-        //image and the kernell
+        //multiply the image FFT to the kernel fft to then do the inverse transform to ger the convolution of the
+        //image and the kernel
         let out = (fft * kernell).ifft2().fftshif().re();
         //save output image
-        out.save_as_luma(&"graphics\\pepper_edges.png", ImageFormat::Png)
+        out.save_as_luma("graphics/pepper_edges.png", ImageFormat::Png)
 }
 
 
