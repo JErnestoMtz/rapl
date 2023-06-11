@@ -114,53 +114,35 @@ impl<T: Clone , R: Unsigned> Ndarr<T, R> {
         R: Sub<B1>,
         <R as Sub<B1>>::Output: Unsigned,
     {
-        let n = helpers::multiply_list(&self.dim.shape, 1); // number of elements in original array
         let new_shape = self.dim.clone().remove_element(axis);
         let n_new_arrs = self.dim.shape[axis]; // number of new arrays
+        let n_new = helpers::multiply_list(&new_shape.shape, 1); // number of elements in new slice;
 
-        let iota = 0..n;
-
-        let indexes: Vec<Dim<R>> = iota.map(|i| self.dim.get_indexes(&i)).collect(); //indexes of each element
-
-        let mut out = Vec::new(); // to store
+        let iota = 0..n_new;
+        let mut out = Vec::with_capacity(n_new_arrs); // to store
 
         for i in 0..n_new_arrs {
-            let mut this_data: Vec<T> = Vec::new();
-            for j in 0..n {
-                // if the index at the slice position coincide with i (or the slice number)
-                if indexes[j].shape[axis] == i {
-                    let ind = self.dim.get_flat_pos(&indexes[j]).unwrap();
-                    this_data.push(self.data[ind].clone())
-                }
-            }
-            //TODO: remove push, with allocation size
-            out.push(Ndarr::new(&this_data, new_shape.clone()).expect("Error initializing"))
+            let indexes: Vec<Dim<UTerm>> = iota.clone().map(|ind| new_shape.get_indexes(&ind).insert_element_notyped(axis, i)).collect(); //indexes of each elemen
+            let flat_pos: Vec<usize> = indexes.iter().map(|index| self.dim.get_flat_pos(index).unwrap()).collect();
+            let new_data: Vec<T> = flat_pos.iter().map(|i| self.data[*i].clone()).collect();
+            out.push(Ndarr{data: new_data, dim: new_shape.clone()})
         }
         out
     }
 
     pub fn slice_at_notyped(&self, axis: usize) -> Vec<Ndarr<T, UTerm>> {
-        let n = helpers::multiply_list(&self.dim.shape, 1); // number of elements in original array
         let new_shape = self.dim.clone().remove_element_notyped(axis);
         let n_new_arrs = self.dim.shape[axis]; // number of new arrays
+        let n_new = helpers::multiply_list(&new_shape.shape, 1); // number of elements in new slice;
 
-        let iota = 0..n;
-
-        let indexes: Vec<Dim<R>> = iota.map(|i| self.dim.get_indexes(&i)).collect(); //indexes of each element
-
-        let mut out = Vec::new(); // to store
+        let iota = 0..n_new;
+        let mut out = Vec::with_capacity(n_new_arrs); // to store
 
         for i in 0..n_new_arrs {
-            let mut this_data: Vec<T> = Vec::new();
-            for j in 0..n {
-                // if the index at the slice position coincide with i (or the slice number)
-                if indexes[j].shape[axis] == i {
-                    let ind = self.dim.get_flat_pos(&indexes[j]).unwrap();
-                    this_data.push(self.data[ind].clone())
-                }
-            }
-            //TODO: remove push, with allocation size
-            out.push(Ndarr::new(&this_data, new_shape.clone()).expect("Error initializing"))
+            let indexes: Vec<Dim<UTerm>> = iota.clone().map(|ind| new_shape.get_indexes(&ind).insert_element_notyped(axis, i)).collect(); //indexes of each elemen
+            let flat_pos: Vec<usize> = indexes.iter().map(|index| self.dim.get_flat_pos(index).unwrap()).collect();
+            let new_data: Vec<T> = flat_pos.iter().map(|i| self.data[*i].clone()).collect();
+            out.push(Ndarr{data: new_data, dim: new_shape.clone()})
         }
         out
     }
