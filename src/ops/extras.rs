@@ -4,7 +4,7 @@ use std::ops::Add;
 
 impl<T, R: Unsigned> Ndarr<T, R>
 where
-    T: Clone + Debug  + Signed + PartialOrd,
+    T: Clone + Debug + Signed + PartialOrd,
 {
     pub fn abs(&self) -> Self {
         let out = self.map(|x| x.abs());

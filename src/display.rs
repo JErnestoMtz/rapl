@@ -1,6 +1,5 @@
 use super::*;
 
-
 const LIMIT_X: usize = 18;
 const LIMIT_Y: usize = 18;
 const LIMIT_Z: usize = 5;
@@ -43,11 +42,11 @@ fn format_vec(
     }
     Ok(())
 }
-fn collapsed(limit: usize)->usize{
+fn collapsed(limit: usize) -> usize {
     match limit {
-       0 => LIMIT_X,
-       1 => LIMIT_Y,
-       _ => LIMIT_Z
+        0 => LIMIT_X,
+        1 => LIMIT_Y,
+        _ => LIMIT_Z,
     }
 }
 use std::fmt;

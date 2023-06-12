@@ -14,11 +14,12 @@ impl<T1: Clone, R: Unsigned> Ndarr<T1, R> {
         }
     }
     // Bimap: is the same as Zip then map, is just a convenient way for doing diadic operations between Ndarrs
-    pub fn bimap<F: Fn(T1, T1) -> T1>(&self, other: &Self, f: F) -> Self 
-    where T1: Default,
+    pub fn bimap<F: Fn(T1, T1) -> T1>(&self, other: &Self, f: F) -> Self
+    where
+        T1: Default,
     {
         let mut out = Vec::with_capacity(self.data.len());
-        for i in 0..self.data.len(){
+        for i in 0..self.data.len() {
             out.push(f(self.data[i].clone(), other.data[i].clone()))
         }
         Ndarr {

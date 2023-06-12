@@ -2,9 +2,7 @@ use super::{de_slice, Ndarr, C, U1, U2};
 use core::fmt::Debug;
 use num_traits::{FromPrimitive, Num, Signed};
 use rustfft::{num_complex::Complex, FftPlanner};
-use std::{
-    marker::{Send, Sync},
-};
+use std::marker::{Send, Sync};
 
 //rustfft use cum_complex so this functions are to translate num_complex to rapl complex
 fn to_numcomplex<T: Copy + PartialEq>(c: C<T>) -> Complex<T> {
@@ -245,5 +243,5 @@ mod fft_test {
             Ndarr::from([[10, 11, 8, 9], [14, 15, 12, 13], [2, 3, 0, 1], [6, 7, 4, 5]])
         );
         println!("{}", odd_p.fftshif());
-    } 
+    }
 }

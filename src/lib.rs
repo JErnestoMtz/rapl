@@ -1,6 +1,11 @@
-//!Note: `rapl` is in early development and is  not optimized for performance, thus is not recommended for production applications.
+//!Note: `rapl` is in early development and is  not optimized for performance, is not recommended for production applications.
 
-//!`rapl` is an experimental numerical computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomics and user-friendliness while maintaining generality. Our goal is to make Rust scripting as productive as possible and a real option for numerical computing.
+//!`rapl` is computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomics and user-friendliness while maintaining generality.
+
+//!Our goal is to make Rust scripting as productive as possible, and make Rust a real option when it comes to  numerical computing and data science. Check out the [examples](https://github.com/JErnestoMtz/rapl/tree/main/examples).
+
+//!Out of the box `rapl` provides features like **co-broadcasting, rank type checking, native complex number support**, among many others:
+
 //!```
 //!use rapl::*;
 //!fn main() {
@@ -50,7 +55,7 @@ pub struct Ndarr<T: Clone, R: Unsigned> {
     pub dim: Dim<R>,
 }
 
-impl<T: Clone , R: Unsigned> Ndarr<T, R> {
+impl<T: Clone, R: Unsigned> Ndarr<T, R> {
     pub fn new<D: Into<Dim<R>>>(data: &[T], shape: D) -> Result<Self, DimError> {
         let shape = shape.into();
         let n = helpers::multiply_list(&shape.shape, 1);
@@ -122,10 +127,19 @@ impl<T: Clone , R: Unsigned> Ndarr<T, R> {
         let mut out = Vec::with_capacity(n_new_arrs); // to store
 
         for i in 0..n_new_arrs {
-            let indexes: Vec<Dim<UTerm>> = iota.clone().map(|ind| new_shape.get_indexes(&ind).insert_element_notyped(axis, i)).collect(); //indexes of each elemen
-            let flat_pos: Vec<usize> = indexes.iter().map(|index| self.dim.get_flat_pos(index).unwrap()).collect();
+            let indexes: Vec<Dim<UTerm>> = iota
+                .clone()
+                .map(|ind| new_shape.get_indexes(&ind).insert_element_notyped(axis, i))
+                .collect(); //indexes of each elemen
+            let flat_pos: Vec<usize> = indexes
+                .iter()
+                .map(|index| self.dim.get_flat_pos(index).unwrap())
+                .collect();
             let new_data: Vec<T> = flat_pos.iter().map(|i| self.data[*i].clone()).collect();
-            out.push(Ndarr{data: new_data, dim: new_shape.clone()})
+            out.push(Ndarr {
+                data: new_data,
+                dim: new_shape.clone(),
+            })
         }
         out
     }
@@ -139,10 +153,19 @@ impl<T: Clone , R: Unsigned> Ndarr<T, R> {
         let mut out = Vec::with_capacity(n_new_arrs); // to store
 
         for i in 0..n_new_arrs {
-            let indexes: Vec<Dim<UTerm>> = iota.clone().map(|ind| new_shape.get_indexes(&ind).insert_element_notyped(axis, i)).collect(); //indexes of each elemen
-            let flat_pos: Vec<usize> = indexes.iter().map(|index| self.dim.get_flat_pos(index).unwrap()).collect();
+            let indexes: Vec<Dim<UTerm>> = iota
+                .clone()
+                .map(|ind| new_shape.get_indexes(&ind).insert_element_notyped(axis, i))
+                .collect(); //indexes of each elemen
+            let flat_pos: Vec<usize> = indexes
+                .iter()
+                .map(|index| self.dim.get_flat_pos(index).unwrap())
+                .collect();
             let new_data: Vec<T> = flat_pos.iter().map(|i| self.data[*i].clone()).collect();
-            out.push(Ndarr{data: new_data, dim: new_shape.clone()})
+            out.push(Ndarr {
+                data: new_data,
+                dim: new_shape.clone(),
+            })
         }
         out
     }
@@ -174,8 +197,7 @@ impl<T: Clone , R: Unsigned> Ndarr<T, R> {
         &self,
         axis: usize,
         f: F,
-    ) -> Result<Ndarr<T, UTerm>, DimError>
-    {
+    ) -> Result<Ndarr<T, UTerm>, DimError> {
         if axis >= self.dim.len() {
             Err(DimError::new("Axis grater than rank"))
         } else {
@@ -189,7 +211,6 @@ impl<T: Clone , R: Unsigned> Ndarr<T, R> {
             Ok(out)
         }
     }
-
 
     //similar to broadcast but, this does not allow a shape different to shape
     pub fn broadcast_to<R2: Unsigned, D: Into<Dim<R2>>>(
@@ -255,8 +276,7 @@ impl<T: Clone , R: Unsigned> Ndarr<T, R> {
     pub fn broadcast_data<R2: Unsigned, D: Into<Dim<R2>>>(
         &self,
         shape: D,
-    ) -> Result<Vec<T>, DimError>
-    {
+    ) -> Result<Vec<T>, DimError> {
         let shape = shape.into();
         let new_shape = self.dim.broadcast_shape_notyped(&shape)?;
 
@@ -271,8 +291,7 @@ impl<T: Clone , R: Unsigned> Ndarr<T, R> {
         Ok(new_data)
     }
     ///Transpose an N-dimensional array.
-    fn t(&self) -> Self 
-    {
+    fn t(&self) -> Self {
         let mut out_shape = self.dim.shape.clone();
         out_shape.reverse();
         let out_dim = Dim::<R>::new(&out_shape).unwrap();
@@ -289,8 +308,7 @@ impl<T: Clone , R: Unsigned> Ndarr<T, R> {
     }
     ///Roll array elements along a given axis, by shift `isize`.
     ///Elements that roll beyond the last position are re-introduced at the first.
-    pub fn roll(&self, shift: isize, axis: usize) -> Self 
-    {
+    pub fn roll(&self, shift: isize, axis: usize) -> Self {
         let mut slices = self.slice_at_notyped(axis);
         let shift = (shift.rem_euclid(slices.len() as isize)) as usize;
         slices.rotate_right(shift);
@@ -299,10 +317,7 @@ impl<T: Clone , R: Unsigned> Ndarr<T, R> {
     }
 }
 
-pub fn de_slice<T: Clone, R: Unsigned>(
-    slices: &Vec<Ndarr<T, R>>,
-    axis: usize,
-) -> Ndarr<T, Add1<R>>
+pub fn de_slice<T: Clone, R: Unsigned>(slices: &Vec<Ndarr<T, R>>, axis: usize) -> Ndarr<T, Add1<R>>
 where
     R: Add<B1>,
     <R as Add<B1>>::Output: Unsigned,
@@ -311,7 +326,8 @@ where
     let shape_slice = slices[0].dim.clone();
 
     let out_shape = shape_slice.clone().insert_element(axis, slices.len());
-    let mut new_data: Vec<T> = vec![slices[0].data[0].clone(); helpers::multiply_list(&out_shape.shape, 1)];
+    let mut new_data: Vec<T> =
+        vec![slices[0].data[0].clone(); helpers::multiply_list(&out_shape.shape, 1)];
     for i in 0..slices.len() {
         for j in 0..l_slice {
             //calculate the flat position of element j of slice i
@@ -338,7 +354,8 @@ pub fn de_slice_notyped<T: Clone, R: Unsigned>(
     let out_shape = shape_slice
         .clone()
         .insert_element_notyped(axis, slices.len());
-    let mut new_data: Vec<T> = vec![slices[0].data[0].clone(); helpers::multiply_list(&out_shape.shape, 1)];
+    let mut new_data: Vec<T> =
+        vec![slices[0].data[0].clone(); helpers::multiply_list(&out_shape.shape, 1)];
     for i in 0..slices.len() {
         for j in 0..l_slice {
             //calculate the flat position of element j of slice i
@@ -357,17 +374,16 @@ pub fn de_slice_notyped<T: Clone, R: Unsigned>(
 }
 
 impl<T: Clone + Debug> Ndarr<T, typenum::U0> {
-    pub fn scalar(self) -> T 
-    where T: Scalar 
+    pub fn scalar(self) -> T
+    where
+        T: Scalar,
     {
         self.data[0].to_owned()
     }
 
-    pub fn extract(self) -> T 
-    {
+    pub fn extract(self) -> T {
         self.data[0].to_owned()
     }
-
 }
 
 pub trait IntoNdarr<T, R: Unsigned>
@@ -587,8 +603,6 @@ mod tests {
             Ndarr::from([[2, 3], [4, 5]])
         );
     }
-
-
 
     #[test]
     fn float_ops() {

@@ -33,7 +33,7 @@ where
 impl<T, const N1: usize, const N2: usize, const N3: usize> From<[[[T; N1]; N2]; N3]>
     for Ndarr<T, U3>
 where
-    T: Clone + Debug  + Scalar,
+    T: Clone + Debug + Scalar,
 {
     fn from(value: [[[T; N1]; N2]; N3]) -> Self {
         let mut data = Vec::with_capacity(N1 * N2 * N3);
@@ -52,7 +52,7 @@ where
 impl<T, const N1: usize, const N2: usize, const N3: usize, const N4: usize>
     From<[[[[T; N1]; N2]; N3]; N4]> for Ndarr<T, U4>
 where
-    T: Clone + Debug  + Scalar,
+    T: Clone + Debug + Scalar,
 {
     fn from(value: [[[[T; N1]; N2]; N3]; N4]) -> Self {
         let mut data = Vec::with_capacity(N1 * N2 * N3 * N4);
@@ -85,7 +85,7 @@ where
 
 impl<T> From<std::ops::Range<T>> for Ndarr<T, U1>
 where
-    T: Clone + Debug  + Scalar,
+    T: Clone + Debug + Scalar,
     std::ops::Range<T>: Iterator,
     Vec<T>: FromIterator<<std::ops::Range<T> as Iterator>::Item>,
 {

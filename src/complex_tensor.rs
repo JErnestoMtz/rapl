@@ -33,7 +33,7 @@ impl<T: Copy + PartialEq + Clone + Debug + Default, R: Unsigned> Ndarr<C<T>, R> 
 
 impl<T: Copy + PartialEq + Num + Debug, R: Unsigned> Ndarr<T, R> {
     pub fn to_complex(&self) -> Ndarr<C<T>, R> {
-        let out:Ndarr<C<T>, R> = self.map(|x| C(*x,T::zero()));
+        let out: Ndarr<C<T>, R> = self.map(|x| C(*x, T::zero()));
         out
     }
 }

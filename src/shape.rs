@@ -4,7 +4,10 @@ use std::ops::{Add, Sub};
 
 use crate::errors::DimError;
 use crate::helpers::multiply_list;
-use typenum::{Add1, Max, Maximum, Sub1, UTerm, Unsigned, B1, U1, U2, U3, U4, U5, U6,U7,U8,U9,U10,U11,U12,U13,U14,U15,U16,U17,U18,U19};
+use typenum::{
+    Add1, Max, Maximum, Sub1, UTerm, Unsigned, B1, U1, U10, U11, U12, U13, U14, U15, U16, U17, U18,
+    U19, U2, U3, U4, U5, U6, U7, U8, U9,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dim<R: Unsigned> {
@@ -16,8 +19,12 @@ pub struct Dim<R: Unsigned> {
 impl<R: Unsigned> Dim<R> {
     //TODO: check type and make another notyped function
     pub fn new(dim: &[usize]) -> Result<Self, DimError> {
-        if R::to_usize() != dim.len() && R::to_usize() != 0{
-            return Err(DimError::new(&format!("Error initializing Dim of rank {} with slice of length {}",R::to_usize(),dim.len())));
+        if R::to_usize() != dim.len() && R::to_usize() != 0 {
+            return Err(DimError::new(&format!(
+                "Error initializing Dim of rank {} with slice of length {}",
+                R::to_usize(),
+                dim.len()
+            )));
         }
         Ok(Dim {
             shape: dim.to_owned(),
@@ -174,12 +181,10 @@ impl<R: Unsigned> Dim<R> {
         Ok(Dim::<Maximum<R, R2>>::new(&out_shape)?)
     }
 
-
     pub fn broadcast_shape_notyped<R2: Unsigned>(
         &self,
         other: &Dim<R2>,
-    ) -> Result<Dim<UTerm>, DimError>
-    {
+    ) -> Result<Dim<UTerm>, DimError> {
         let r1 = self.len();
         let r2 = other.len();
         let mut out_shape = vec![0; max(r1, r2)];
@@ -205,8 +210,6 @@ impl<R: Unsigned> Dim<R> {
         Ok(Dim::<UTerm>::new(&out_shape)?)
     }
 
-
-
     pub fn len(&self) -> usize {
         self.shape.len()
     }
@@ -218,7 +221,6 @@ impl<R: Unsigned> Dim<R> {
             rank: PhantomData,
         }
     }
-
 }
 
 impl<R: Unsigned> From<&Dim<R>> for Dim<R> {
@@ -272,22 +274,25 @@ arr_to_dim!(18, U18);
 arr_to_dim!(19, U19);
 
 impl From<usize> for Dim<U1> {
-   fn from(value: usize) -> Self {
-       Dim { shape: vec![value], rank: PhantomData }
-   } 
+    fn from(value: usize) -> Self {
+        Dim {
+            shape: vec![value],
+            rank: PhantomData,
+        }
+    }
 }
 
 #[cfg(test)]
 mod dim_tests {
 
     use super::*;
-    use typenum::{U2, U3, U5,U24};
+    use typenum::{U2, U24, U3, U5};
     #[test]
     pub fn init_dim() {
         assert!(Dim::<U3>::new(&[1, 2, 4]).is_ok());
         assert!(Dim::<U3>::new(&[1, 2]).is_err());
         assert!(Dim::<U5>::new(&[1, 2, 3, 4, 5]).is_ok());
-        assert!(Dim::<U24>::new(&vec![2;24]).is_ok());
+        assert!(Dim::<U24>::new(&vec![2; 24]).is_ok());
     }
     #[test]
     pub fn get_ind() {

@@ -15,13 +15,12 @@ pub struct C<T: Copy + PartialEq>(pub T, pub T);
 
 impl<T: Copy + PartialEq + Display + Signed> Display for C<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.1.is_positive(){
+        match self.1.is_positive() {
             true => write!(f, "{}+{}i", self.0, self.1),
-            false =>write!(f, "{}{}i", self.0, self.1),
+            false => write!(f, "{}{}i", self.0, self.1),
         }
     }
 }
-
 
 impl<T: Copy + PartialEq> C<T> {
     pub fn re(&self) -> T {
