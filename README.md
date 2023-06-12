@@ -2,9 +2,9 @@
 
 Note: `rapl` is in early development and is  not optimized for performance, is not recommended for production applications.
 
-`rapl` is an experimental numerical computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomics and user-friendliness while maintaining generality. 
+`rapl` is computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomics and user-friendliness while maintaining generality. 
 
-Our goal is to make Rust scripting as productive as possible and a real option when it comes to  numerical computing and data science. 
+Our goal is to make Rust scripting as productive as possible, and make Rust a real option when it comes to  numerical computing and data science. 
 
 Out of the box `rapl` provides features like co-broadcasting, rank type checking, native complex number support, among many others:
 
@@ -31,7 +31,7 @@ let a = Ndarr::from(1..7).reshape(&[2,3])
 ```
 - From `&str`
 ```Rust
-let chars = Ndarr::from("Hello rapl!"); //Ndarr<char,1>
+let chars = Ndarr::from("Hello rapl!"); //Ndarr<char,U1>
 ```
 - Others:
 ```Rust 
@@ -39,6 +39,28 @@ let ones: Ndarr<f32, 2> = Ndarr::ones(&[4,4]);
 let zeros : Ndarr<i32, 3>= Ndarr::zeros(&[2,3,4]);
 let letter_a = Ndarr::fill("a", &[5]);
 let fold = Ndarr::new(data: &[0, 1, 2, 3], shape: [2, 2]).expect("Error initializing");
+```
+- linspace, logspace, geomspace
+```Rust
+    let linear = Ndarr::linspace(0, 9, 10);
+    assert_eq!(linear,Ndarr::from(0..10));
+
+    let logarithmic = Ndarr::logspace(0.,9., 10., 10);
+    assert!(logarithmic.approx(&Ndarr::from([1.,1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9])));
+
+    let geom = Ndarr::geomspace(1.,256., 9);
+    assert!(geom.approx(&Ndarr::from([1., 2., 4., 8., 16., 32., 64., 128., 256.])));
+
+```
+### Random array creation
+You can easily create random array of any shape:
+```Rust
+//Normal distribution
+let arr_norm = NdarrRand::normal(low: 0f32, high: 1f32, shape: [2, 2], Seed: Some(1234));
+//Normal distribution
+let arr_uniform = NdarrRand::uniform(low: 0f32, high: 1f32, shape: [10], Seed: None);
+//Choose between values
+let arr_choose = NdarrRand::choose(&[1, 2, 3, 4, 5], [3, 3], Some(1234));
 ```
 
 ### Element wise operations
@@ -99,6 +121,11 @@ assert_eq!(sum_axis, Ndarr::from([6, 15])); //sum reduction
  let cumsum = s.scanr( 0, |x,y| x + y);
  assert_eq!(cumsum, Ndarr::from([1,3,6]));
 ```
+- Roll
+```Rust
+let a = Ndarr::from([[1, 2], [3, 4]]);
+assert_eq!(a.roll(1, 1), Ndarr::from([[2, 1], [4, 3]]))
+```
 
 ### Dyatic tensor operations
 - Generalized matrix multiplication between compatible arrays
@@ -148,6 +175,12 @@ let arr_z = arr + -1 + 2.i();
 assert_eq!(arr_z, Ndarr::from([C(0,2), C(1,2), C(2,2)]));
 assert_eq!(arr_z.im(), Ndarr::from([2,2,2]));
 ```
+### Dead Simple 1D and 2D FFT
+```Rust
+    let signal = Ndarr::linspace(-10., 10., 100).sin();
+    let signal_fft = signal.to_complex().fft();
+```
+
 ### Image to Array and Array to Image conversion
 You can easily work with images of almost any format. `rapl` provides  helpful functions to open images as both RGB and Luma `Ndarr`, and also save them to your preferred format.
 
@@ -164,17 +197,16 @@ fn main() {
     channels[2].save_as_luma(&"blue_channel.png", rapl_img::ImageFormat::Png);
 }
 ```
-
 ### Features in development:
 - [x] Port to stable Rust
 - [x] Native support for complex numbers.
-- [ ] Line space and meshigrid initialization.
-- [ ] Random array creation.
-- [ ] 1D and 2D FFT.
+- [x] Line space and meshigrid initialization.
+- [x] Random array creation.
+- [x] 1D and 2D FFT.
 - [ ] Matrix inversion.
 - [x] Image to array conversion.
 - [x] Array to image conversion.
-- [ ] APL-inspired rotate function.
+- [x] APL-inspired rotate function.
 - [x] Commonly use ML functions like Relu, Softmax etc.
 - [ ] Support for existing plotting libraries in rust.
 - [ ] Mutable slicing.

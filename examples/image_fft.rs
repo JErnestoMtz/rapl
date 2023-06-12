@@ -5,7 +5,6 @@ use image::ImageFormat;
 fn main(){
         //open image as lumaf32 (gray scale) where 0.0 is white 1.0 is black.
         let img = open_lumaf32("graphics/peppers.png").unwrap();
-
         //transform to complex and take the 2D FFT
         let fft = img.to_complex().fft2d();
 
