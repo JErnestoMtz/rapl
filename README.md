@@ -4,7 +4,7 @@
 
 Note: `rapl` is in early development and is  not optimized for performance, is not recommended for production applications.
 
-`rapl` is computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomics and user-friendliness while maintaining generality. 
+`rapl` is mathematical  computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomics and user-friendliness while maintaining generality. 
 
 Our goal is to make Rust scripting as productive as possible, and make Rust a real option when it comes to  numerical computing and data science. Check out the [examples](https://github.com/JErnestoMtz/rapl/tree/main/examples).
 
