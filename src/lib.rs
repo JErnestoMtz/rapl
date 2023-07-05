@@ -109,7 +109,7 @@ impl<T: Clone, R: Unsigned> Ndarr<T, R> {
         }
         Ok(Ndarr {
             data: self.data.clone(),
-            dim: shape.clone(),
+            dim: shape,
         })
     }
 
@@ -228,7 +228,7 @@ impl<T: Clone, R: Unsigned> Ndarr<T, R> {
         let new_shape = self.dim.broadcast_shape(&shape)?;
 
         if new_shape.len() > R2::to_usize() {
-            return Err(DimError::new("Array can not be broadcasted to shape"));
+            Err(DimError::new("Array can not be broadcasted to shape"))
         } else {
             let n_old = helpers::multiply_list(&self.dim.shape, 1);
             let n = helpers::multiply_list(&new_shape.shape, 1);
@@ -241,10 +241,10 @@ impl<T: Clone, R: Unsigned> Ndarr<T, R> {
                 }
             }
 
-            return Ok(Ndarr {
+            Ok(Ndarr {
                 data: new_data,
                 dim: new_shape,
-            });
+            })
         }
     }
 
@@ -291,7 +291,7 @@ impl<T: Clone, R: Unsigned> Ndarr<T, R> {
         Ok(new_data)
     }
     ///Transpose an N-dimensional array.
-    fn t(&self) -> Self {
+    pub fn t(&self) -> Self {
         let mut out_shape = self.dim.shape.clone();
         out_shape.reverse();
         let out_dim = Dim::<R>::new(&out_shape).unwrap();
@@ -328,7 +328,7 @@ where
     let out_shape = shape_slice.clone().insert_element(axis, slices.len());
     let mut new_data: Vec<T> =
         vec![slices[0].data[0].clone(); helpers::multiply_list(&out_shape.shape, 1)];
-    for i in 0..slices.len() {
+    for (i, _) in slices.iter().enumerate() {
         for j in 0..l_slice {
             //calculate the flat position of element j of slice i
             let ind = shape_slice.get_indexes(&j);
@@ -356,7 +356,7 @@ pub fn de_slice_notyped<T: Clone, R: Unsigned>(
         .insert_element_notyped(axis, slices.len());
     let mut new_data: Vec<T> =
         vec![slices[0].data[0].clone(); helpers::multiply_list(&out_shape.shape, 1)];
-    for i in 0..slices.len() {
+    for (i, _) in slices.iter().enumerate() {
         for j in 0..l_slice {
             //calculate the flat position of element j of slice i
             let ind = shape_slice.get_indexes(&j);
@@ -457,7 +457,7 @@ mod tests {
     fn bases() {
         let a: Ndarr<u32, U2> = Ndarr::zeros([2, 2]);
         let b: Ndarr<u32, U2> = Ndarr::ones([2, 2]);
-        let c = Ndarr::fill(5, &[4]);
+        let c = Ndarr::fill(5, [4]);
         assert_eq!(a, Ndarr::from([[0, 0], [0, 0]]));
         assert_eq!(b, Ndarr::from([[1, 1], [1, 1]]));
         assert_eq!(c, Ndarr::from([5, 5, 5, 5]));
@@ -473,7 +473,7 @@ mod tests {
     fn transpose() {
         let arr = Ndarr::new(&[0, 1, 2, 3, 4, 5, 6, 7], [2, 2, 2]).expect("Error initializing");
         // same as arr.T.flatten() in numpy
-        assert_eq!(arr.clone().t().data, vec![0, 4, 2, 6, 1, 5, 3, 7])
+        assert_eq!(arr.t().data, vec![0, 4, 2, 6, 1, 5, 3, 7])
     }
 
     #[test]
@@ -481,7 +481,7 @@ mod tests {
         let arr1 = Ndarr::new(&[1, 1, 1, 1], [2, 2]).expect("Error initializing");
         let arr2 = Ndarr::new(&[1, 1, 1, 1], [2, 2]).expect("Error initializing");
         let arr3 = Ndarr::new(&[2, 2, 2, 2], [2, 2]).expect("Error initializing");
-        assert_eq!((arr1.clone() + arr2.clone()).data, arr3.clone().data);
+        assert_eq!((arr1.clone() + arr2.clone()).data, arr3.data);
         assert_eq!((&arr1 - &arr2).data, vec![0, 0, 0, 0]);
         assert_eq!((&arr3 * &arr3).data, vec![4, 4, 4, 4]);
         assert_eq!((&arr3 / &arr3).data, vec![1, 1, 1, 1]);
@@ -526,9 +526,9 @@ mod tests {
         //[[ 9, 10, 11],
         //[12, 13, 14],
         //[15, 16, 17]]])
-        let slices_0 = arr.clone().slice_at(0);
-        let slices_1 = arr.clone().slice_at(1);
-        let slices_2 = arr.clone().slice_at(2);
+        let slices_0 = arr.slice_at(0);
+        let slices_1 = arr.slice_at(1);
+        let slices_2 = arr.slice_at(2);
 
         assert_eq!(
             slices_0[0],
@@ -581,7 +581,7 @@ mod tests {
         //[[ 9, 10, 11],
         //[12, 13, 14],
         //[15, 16, 17]]])
-        let red_0 = arr.clone().reduce(0, |x, y| x + y).unwrap();
+        let red_0 = arr.reduce(0, |x, y| x + y).unwrap();
         let red_1 = arr.reduce(1, |x, y| x + y).unwrap();
         assert_eq!(
             red_0,
@@ -618,7 +618,7 @@ mod tests {
     }
     #[test]
     fn reshape() {
-        let a = Ndarr::from([1, 2, 3, 4]).reshape(&[2, 2]).unwrap();
+        let a = Ndarr::from([1, 2, 3, 4]).reshape([2, 2]).unwrap();
         assert_eq!(a, Ndarr::from([[1, 2], [3, 4]]))
     }
 
