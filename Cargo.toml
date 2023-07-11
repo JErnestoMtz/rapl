@@ -19,10 +19,21 @@ rand_chacha = "0.3.1"
 rand_distr = "0.4.3"
 typenum = "1.16.0"
 rustfft = {version = "6.1.0", optional = true}
-
+rayon = "1.7.0"
+crossbeam = "0.8.2"
 
 [features]
 default = ["complex", "rapl_image", "fft"]
 fft = ["complex", "dep:rustfft"]
 complex = []
 rapl_image = ["dep:image"]
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "ops_benchmark"
+harness = false
+
+
+
