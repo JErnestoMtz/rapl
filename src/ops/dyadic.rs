@@ -1,9 +1,11 @@
 use super::*;
-use rayon::prelude::*;
+use rayon::{prelude::*, result};
+use std::any::TypeId;
 use std::cmp::{max, min};
-use std::sync::Mutex;
-use std::{ops::*, result};
+use std::sync::{Mutex, Arc};
+use std::{ops::*};
 use typenum::{Max, Maximum, Sub1, Sum, Unsigned, B1};
+use faer_core::{Mat,mul};
 
 const TILE_SIZE: usize = 256;
 
@@ -49,17 +51,80 @@ impl<T1: Clone + Debug, R1: Unsigned> Ndarr<T1, R1> {
         }
     }
 
-    fn matmul_2d(&self, data1: &[T1], data2: &[T1], shape1: &[usize], shape2: &[usize]) -> Vec<T1>
+    fn matmul_faer_f32(data1: &[T1], data2: &[T1], shape1: &[usize], shape2: &[usize]) -> Vec<T1>
     where
-        T1: Clone + Debug + Default + Add<Output = T1> + Mul<Output = T1> + Send + Sync + AddAssign,
+        T1: Clone + Debug + Default + Add<Output = T1> + Mul<Output = T1> + Send + Sync + AddAssign + 'static,
     {
-        if data1.len() < 1025 && data2.len() < 1025 {
-            return self.naive_2d(data1, data2, shape1[0], shape2[1]);
-        } else {
-            return self.paralell_2d(data1, data2, shape1, shape2);
-        }
+        //Transforms types
+        // SAFETY: 
+            // 1. `T1` is `f32`: Is assumes that this function is only reachable if `T1` is `f32`.
+            // 2. Memory Compatibility: Assumes compatible memory layout between `T` and `f32`.
+            // 3. Drop Behavior: Transmutation bypasses `T1`'s drop behavior.
+        let mut v_1 = std::mem::ManuallyDrop::new(data1.to_vec());
+        let typed_1: Vec<f32> = unsafe {Vec::from_raw_parts(v_1.as_mut_ptr() as *mut f32,v_1.len(),v_1.capacity())};
+
+        let mut v_2 = std::mem::ManuallyDrop::new(data2.to_vec());
+        let typed_2: Vec<f32> = unsafe {Vec::from_raw_parts(v_2.as_mut_ptr() as *mut f32,v_2.len(),v_2.capacity())};
+
+        let m1 = Mat::with_dims(shape1[0],shape1[1],|i, j| typed_1[shape1[1]*i+j]);
+        let m2 = Mat::with_dims(shape2[0],shape2[1],|i, j| typed_2[shape2[1]*i+j]); 
+
+        let mut out = Mat::zeros(shape1[0],shape2[1]);
+
+        mul::matmul(
+        out.as_mut(),
+        m1.as_ref(),
+        m2.as_ref(),
+        None,
+        1.0,
+        faer_core::Parallelism::Rayon(0));
+        
+        // Transform types
+        let combinations = (0..out.ncols()).flat_map(|i| (0..out.nrows()).map(move |j| (i, j))).map(|(i,j) | out.read(i, j)).collect::<Vec<_>>();
+        let mut v_out = std::mem::ManuallyDrop::new(combinations);
+        let out_typed: Vec<T1> = unsafe {Vec::from_raw_parts(v_out.as_mut_ptr() as *mut T1, v_out.len(),v_out.capacity())};
+
+        out_typed
     }
-    fn naive_2d(&self, data1: &[T1], data2: &[T1], rows: usize, cols: usize) -> Vec<T1>
+
+    fn matmul_faer_f64(data1: &[T1], data2: &[T1], shape1: &[usize], shape2: &[usize]) -> Vec<T1>
+    where
+        T1: Clone + Debug + Default + Add<Output = T1> + Mul<Output = T1> + Send + Sync + AddAssign + 'static,
+    {
+       //Transforms types
+        // SAFETY: 
+            // 1. `T1` is `f64`: Is assumes that this function is only reachable if `T1` is `f64`.
+            // 2. Memory Compatibility: Assumes compatible memory layout between `T` and `f64`.
+            // 3. Drop Behavior: Transmutation bypasses `T1`'s drop behavior.
+        let mut v_1 = std::mem::ManuallyDrop::new(data1.to_vec());
+        let typed_1: Vec<f64> = unsafe {Vec::from_raw_parts(v_1.as_mut_ptr() as *mut f64,v_1.len(),v_1.capacity())};
+
+        let mut v_2 = std::mem::ManuallyDrop::new(data2.to_vec());
+        let typed_2: Vec<f64> = unsafe {Vec::from_raw_parts(v_2.as_mut_ptr() as *mut f64,v_2.len(),v_2.capacity())};
+
+        let m1 = Mat::with_dims(shape1[0],shape1[1],|i, j| typed_1[shape1[1]*i+j]);
+        let m2 = Mat::with_dims(shape2[0],shape2[1],|i, j| typed_2[shape2[1]*i+j]); 
+
+        let mut out = Mat::zeros(shape1[0],shape2[1]);
+
+        mul::matmul(
+        out.as_mut(),
+        m1.as_ref(),
+        m2.as_ref(),
+        None,
+        1.0,
+        faer_core::Parallelism::Rayon(0));
+        
+        // Transform types
+        let combinations = (0..out.ncols()).flat_map(|i| (0..out.nrows()).map(move |j| (i, j))).map(|(i,j) | out.read(i, j)).collect::<Vec<_>>();
+        let mut v_out = std::mem::ManuallyDrop::new(combinations);
+        let out_typed: Vec<T1> = unsafe {Vec::from_raw_parts(v_out.as_mut_ptr() as *mut T1, v_out.len(),v_out.capacity())};
+
+        out_typed
+    }
+    
+
+    fn naive_2d(data1: &[T1], data2: &[T1], rows: usize, cols: usize) -> Vec<T1>
     where
         T1: Clone + Debug + Default + Add<Output = T1> + Mul<Output = T1>,
     {
@@ -77,50 +142,42 @@ impl<T1: Clone + Debug, R1: Unsigned> Ndarr<T1, R1> {
         return result_data;
     }
 
-    fn paralell_2d(&self, data1: &[T1], data2: &[T1], shape1: &[usize], shape2: &[usize]) -> Vec<T1>
+
+    fn naive_2d_parallel(data1: &[T1], data2: &[T1], rows: usize, cols: usize) -> Vec<T1>
     where
-        T1: Clone + Debug + Default + Add<Output = T1> + Mul<Output = T1> + Send + Sync + AddAssign,
+        T1: Clone + Default + Add<Output = T1> + Mul<Output = T1> + Send + Sync,
     {
-        let inners = shape1[1];
-        let rows = shape1[0];
-        let columns = shape2[1];
-
-        let num_row_tiles = (rows + TILE_SIZE - 1) / TILE_SIZE;
-        let num_column_tiles = (columns + TILE_SIZE - 1) / TILE_SIZE;
-        let num_inner_tiles = (inners + TILE_SIZE - 1) / TILE_SIZE;
-
-        let result: Vec<T1> = vec![T1::default(); rows * columns];
-        let result_mutex = Mutex::new(result);
-
-        (0..num_inner_tiles).into_par_iter().for_each(|inner_tile| {
-            let inner_start = inner_tile * TILE_SIZE;
-            let inner_end = min(inners, inner_start + TILE_SIZE);
-
-            for row_tile in 0..num_row_tiles {
-                let row_start = row_tile * TILE_SIZE;
-                let row_end = min(rows, row_start + TILE_SIZE);
-
-                for column_tile in 0..num_column_tiles {
-                    let column_start = column_tile * TILE_SIZE;
-                    let column_end = min(columns, column_start + TILE_SIZE);
-
-                    for tinner in inner_start..inner_end {
-                        for trow in row_start..row_end {
-                            let mut temp = data1[trow * inners + tinner].clone()
-                                * data2[tinner * columns].clone();
-
-                            for tcol in (column_start + 1)..column_end {
-                                temp += data1[trow * inners + tinner].clone()
-                                    * data2[tinner * columns + tcol].clone();
-                            }
-                            let mut result_lock = result_mutex.lock().unwrap();
-                            result_lock[trow * columns + column_start + inner_tile] += temp;
-                        }
-                    }
+        let n = cols;
+        let mut result_data = vec![T1::default(); rows * cols];
+        result_data.par_chunks_mut(cols).enumerate().for_each(|(i, row_chunk)| {
+            for j in 0..cols {
+                let mut sum = data1[i * n].clone() * data2[j].clone();
+                for k in 1..n {
+                    sum = sum + data1[i * n + k].clone() * data2[k * cols + j].clone();
                 }
+                row_chunk[j] = sum;
             }
         });
-        result_mutex.into_inner().unwrap()
+        result_data
+    }
+
+
+    fn matmul_2d(data1: &[T1], data2: &[T1], shape1: &[usize], shape2: &[usize]) -> Vec<T1>
+    where
+        T1: Clone + Debug + Default + Add<Output = T1> + Mul<Output = T1> + Send + Sync + AddAssign + 'static,
+    {
+        
+        if TypeId::of::<T1>() == TypeId::of::<f64>(){
+            return Self::matmul_faer_f64(data1, data2, shape1, shape2);
+        }else if TypeId::of::<T1>() == TypeId::of::<f32>(){
+            return Self::matmul_faer_f32(data1, data2, shape1, shape2);
+        }else{
+            if data1.len() < 1025 && data2.len() < 1025{
+                return Self::naive_2d(data1, data2, shape1[0], shape2[1])
+            }else{
+                return Self::naive_2d_parallel(data1, data2, shape1[0], shape2[1])
+            }      
+        }
     }
 
     pub fn mat_mul<R2: Unsigned>(&self, other: &Ndarr<T1, R2>) -> Ndarr<T1, Sub1<Sub1<Sum<R1, R2>>>>
@@ -132,11 +189,11 @@ impl<T1: Clone + Debug, R1: Unsigned> Ndarr<T1, R1> {
         <R1 as Add<R2>>::Output: Sub<B1>,
         <<R1 as Add<R2>>::Output as Sub<B1>>::Output: Sub<B1>,
         <<<R1 as Add<R2>>::Output as Sub<B1>>::Output as Sub<B1>>::Output: Unsigned,
-        T1: Clone + Debug + Default + Add<Output = T1> + Mul<Output = T1> + Send + Sync + AddAssign,
+        T1: Clone + Debug + Default + Add<Output = T1> + Mul<Output = T1> + Send + Sync + AddAssign + 'static,
     {
-        if R1::to_usize() == 2 && R2::to_usize() == 2 {
+        if self.dim.len() == 2 && other.dim.len() == 2 {
             Ndarr {
-                data: self.matmul_2d(&self.data, &other.data, self.shape(), other.shape()),
+                data: Self::matmul_2d(&self.data, &other.data, self.shape(), other.shape()),
                 dim: Dim::<Sub1<Sub1<Sum<R1, R2>>>>::new(&[self.shape()[0], other.shape()[1]])
                     .unwrap(),
             }
@@ -275,19 +332,29 @@ mod dyadic_test {
 
     #[test]
     fn mat_mul() {
+        //Test integer matmul
         let a = Ndarr::from([[0, 1, 2], [3, 4, 5], [6, 7, 8]]);
         let b = Ndarr::from([[9, 10, 11], [12, 13, 14], [15, 16, 17]]);
         let result_a_b = Ndarr::from([[42, 45, 48], [150, 162, 174], [258, 279, 300]]);
 
         assert_eq!(a.mat_mul(&b), result_a_b);
-
+        //Test f64 matmul
         let a2: Ndarr<f64, U2> = Ndarr::linspace(0.1, 0.9, 9).reshape([3, 3]).unwrap();
         let b2: Ndarr<f64, U2> = Ndarr::linspace(1.1, 1.9, 9).reshape([3, 3]).unwrap();
         let result_a2_b2 = Ndarr::from([[0.9, 0.96, 1.02], [2.16, 2.31, 2.46], [3.42, 3.66, 3.9]]);
-        assert!(a2.mat_mul(&b2).approx(&result_a2_b2));
+        let r = a2.mat_mul(&b2);
+        assert!(r.approx(&result_a2_b2));
+
+        //Test big f64 matmul
+        let big: Ndarr<f64, U2> = Ndarr::linspace(0., 625., 62500).reshape([250, 250]).unwrap();
+        let r_big = big.mat_mul(&big.t());
+        assert_eq!(*r_big.index([5,5]),47362.97810317607);
+
+
         let c = Ndarr::from(0..5);
         assert_eq!(c.mat_mul(&c).scalar(), 30)
     }
+
     #[test]
     fn inner_product() {
         let a = Ndarr::from(1..13).reshape([2, 2, 3]).unwrap();
@@ -297,4 +364,5 @@ mod dyadic_test {
             a.mat_mul(&b)
         )
     }
+
 }

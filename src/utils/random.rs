@@ -6,7 +6,7 @@ use rand::prelude::*;
 use rand::seq::IteratorRandom;
 use rand_chacha::ChaCha8Rng;
 use rand_distr::{Distribution, Normal, StandardNormal};
-
+use std::iter::IntoIterator;
 /// Struct to encapsulate all the random functionality.
 pub struct NdarrRand {}
 
@@ -73,7 +73,8 @@ impl NdarrRand {
         elements: &[T],
         shape: D,
         seed: Option<u64>,
-    ) -> Ndarr<T, R> {
+    ) -> Ndarr<T, R> 
+    {
         let d: Dim<R> = shape.into();
         let n = d.get_number_elements();
         let elements = elements.iter();

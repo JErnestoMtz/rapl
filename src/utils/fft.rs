@@ -207,13 +207,12 @@ mod fft_test {
                 C(0.25, 0.25980762),
             ],
             [
-                C(0.25, 0.08660254),
+                C(0.25, -0.08660254),
                 C(0.25, -0.25980762),
                 C(-0.35, 0.08660254),
             ],
         ]);
         let rapl_fft2 = a.fft2d();
-        //test fft
         assert!(rapl_fft2.re().approx(&numpy_fft2.re()));
         assert!(rapl_fft2.im().approx(&numpy_fft2.im()));
         //test ifft

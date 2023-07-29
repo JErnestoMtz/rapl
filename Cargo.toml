@@ -21,6 +21,7 @@ typenum = "1.16.0"
 rustfft = {version = "6.1.0", optional = true}
 rayon = "1.7.0"
 crossbeam = "0.8.2"
+faer-core = "0.9.1"
 
 [features]
 default = ["complex", "rapl_image", "fft"]

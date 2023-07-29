@@ -34,7 +34,7 @@ use std::{fmt::Debug, fmt::Display};
 pub mod complex;
 
 pub use errors::DimError;
-use num_traits::Float;
+use num_traits::{Float, Signed};
 pub use scalars::Scalar;
 
 #[cfg(feature = "complex")]
@@ -414,14 +414,14 @@ where
     }
 }
 
-impl<T: Float + Clone + Debug + Default, R: Unsigned> Ndarr<T, R> {
+impl<T: Float + Clone + Debug + Default + Signed, R: Unsigned> Ndarr<T, R> {
     fn approx_epsilon<R2: Unsigned>(&self, other: Ndarr<T, R2>, epsilon: T) -> bool
     where
         R: Max<R2>,
         <R as typenum::Max<R2>>::Output: typenum::Unsigned,
         Ndarr<T, R>: Sub<Ndarr<T, R2>, Output = Ndarr<T, Maximum<R, R2>>>,
     {
-        let diff = self.clone() - other;
+        let diff = (self - other).abs();
         for val in diff.data {
             if val > epsilon {
                 return false;
