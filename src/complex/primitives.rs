@@ -1,7 +1,7 @@
 use super::*;
 use num_traits::{identities::zero, Num};
 
-pub trait Imag<T: Copy + PartialEq> {
+pub trait Imag<T> {
     fn i(&self) -> C<T>;
 }
 

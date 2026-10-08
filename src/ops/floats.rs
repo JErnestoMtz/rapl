@@ -2,47 +2,46 @@ use num_traits::Float;
 
 use super::*;
 
-impl<T, R: Unsigned> Ndarr<T, R>
-where
-    T: Clone + Copy + Debug + Default + Float,
-{
-    pub fn sin(&self) -> Self {
+// Shares method names with the complex family (`complex_tensor.rs`); the element
+// type as head parameter lets rustc prove the inherent impls disjoint.
+impl<T: Float, R: Rank, B: Buffer<T>> Ndarr<T, R, B> {
+    pub fn sin(&self) -> Ndarr<T, R> {
         self.map(|x| x.sin())
     }
 
-    pub fn cos(&self) -> Self {
+    pub fn cos(&self) -> Ndarr<T, R> {
         self.map(|x| x.cos())
     }
 
-    pub fn tan(&self) -> Self {
+    pub fn tan(&self) -> Ndarr<T, R> {
         self.map(|x| x.tan())
     }
 
-    pub fn sinh(&self) -> Self {
+    pub fn sinh(&self) -> Ndarr<T, R> {
         self.map(|x| x.sinh())
     }
 
-    pub fn cosh(&self) -> Self {
+    pub fn cosh(&self) -> Ndarr<T, R> {
         self.map(|x| x.cosh())
     }
 
-    pub fn tanh(&self) -> Self {
+    pub fn tanh(&self) -> Ndarr<T, R> {
         self.map(|x| x.tanh())
     }
 
-    pub fn exp(&self) -> Self {
+    pub fn exp(&self) -> Ndarr<T, R> {
         self.map(|x| x.exp())
     }
 
-    pub fn log(&self, base: T) -> Self {
+    pub fn log(&self, base: T) -> Ndarr<T, R> {
         self.map(|x| x.log(base))
     }
 
-    pub fn ln(&self) -> Self {
+    pub fn ln(&self) -> Ndarr<T, R> {
         self.map(|x| x.ln())
     }
 
-    pub fn log2(&self) -> Self {
+    pub fn log2(&self) -> Ndarr<T, R> {
         self.map(|x| x.log2())
     }
     pub fn is_infinite(&self) -> Ndarr<bool, R> {
@@ -58,20 +57,16 @@ where
         self.map(|x| x.is_nan())
     }
 
-    ///Max Float, floating types do not implement `Ord`, but this gives a way to get the maximum value in an `Ndarr` if all comparisons are allowed.
-    pub fn maxf(&self) -> T {
-        self.data
-            .clone()
-            .into_iter()
-            .reduce(T::max)
-            .expect("Cannot perform fmax deu to imposable comparison")
-    }
-    ///Min Float, floating types do not implement `Ord`, but this gives a way to get the minimum value in an `Ndarr` if all comparisons are allowed.
-    pub fn minf(&self) -> T {
-        self.data
-            .clone()
-            .into_iter()
-            .reduce(T::min)
-            .expect("Cannot perform minf due to imposable comparison.")
+    /// Whether two arrays have the same shape and all elements differ by at most `tolerance`.
+    pub fn approx_epsilon<R2: Rank, B2: Buffer<T>>(
+        &self,
+        other: &Ndarr<T, R2, B2>,
+        tolerance: T,
+    ) -> bool {
+        self.shape() == other.shape()
+            && self
+                .iter_elems()
+                .zip(other.iter_elems())
+                .all(|(left, right)| (*left - *right).abs() <= tolerance)
     }
 }

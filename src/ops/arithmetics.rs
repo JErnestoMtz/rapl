@@ -1,73 +1,54 @@
 use super::*;
 use std::ops::*;
-use typenum::{Maximum, Unsigned};
 
-macro_rules!  ndarr_op{
+macro_rules! ndarr_op {
     ($Ty1:ty, $Ty2:ty, $Trait:tt, $F:tt, $Op:tt) => {
-
-        impl <T1, T2, T3, R1: Unsigned, R2: Unsigned> $Trait<$Ty2> for $Ty1
+        impl<T1, T2, T3, R1: Rank, R2: Rank, B1, B2> $Trait<$Ty2> for $Ty1
         where
-            R1: Max<R2>,
-            <R1 as Max<R2>>::Output: Unsigned,
-            T1: Clone + Debug + Default + $Trait<T2, Output = T3>,
-            T2: Clone + Debug + Default,
-            T3: Clone + Debug + Default,
+            R1: BroadcastRank<R2>,
+            T1: Clone + $Trait<T2, Output = T3>,
+            T2: Clone,
+            B1: Buffer<T1>,
+            B2: Buffer<T2>,
         {
-            type Output = Ndarr<T3,Maximum<R1,R2>>;
+            type Output = Ndarr<T3, Broadcasted<R1, R2>>;
             fn $F(self, rhs: $Ty2) -> Self::Output {
-                self.poly_dyadic(&rhs, |x,y| x $Op y).unwrap()
+                self.zip_with(&rhs, |x, y| x.clone() $Op y.clone()).unwrap()
             }
         }
     };
 }
-//--------------------------------- Add --------------------------------------
-ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Add, add, +);
-ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Add, add, +);
-ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Add, add, +);
-ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Add, add, +);
 
-//--------------------------------- Sub --------------------------------------
-ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Sub, sub, -);
-ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Sub, sub, -);
-ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Sub, sub, -);
-ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Sub, sub, -);
+macro_rules! ndarr_ops {
+    ($Trait:tt, $F:tt, $Op:tt) => {
+        ndarr_op!(Ndarr<T1, R1, B1>, Ndarr<T2, R2, B2>, $Trait, $F, $Op);
+        ndarr_op!(Ndarr<T1, R1, B1>, &Ndarr<T2, R2, B2>, $Trait, $F, $Op);
+        ndarr_op!(&Ndarr<T1, R1, B1>, Ndarr<T2, R2, B2>, $Trait, $F, $Op);
+        ndarr_op!(&Ndarr<T1, R1, B1>, &Ndarr<T2, R2, B2>, $Trait, $F, $Op);
+    };
+}
 
-//--------------------------------- Mul --------------------------------------
-ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Mul, mul, *);
-ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Mul, mul, *);
-ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Mul, mul, *);
-ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Mul, mul, *);
+ndarr_ops!(Add, add, +);
+ndarr_ops!(Sub, sub, -);
+ndarr_ops!(Mul, mul, *);
+ndarr_ops!(Div, div, /);
+ndarr_ops!(Rem, rem, %);
 
-//--------------------------------- Div --------------------------------------
-ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Div, div, /);
-ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Div, div, /);
-ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Div, div, /);
-ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Div, div, /);
-
-//--------------------------------- Rem --------------------------------------
-ndarr_op!(Ndarr<T1,R1>,   Ndarr<T2,R2>, Rem, rem, %);
-ndarr_op!(Ndarr<T1,R1>,  &Ndarr<T2,R2>, Rem, rem, %);
-ndarr_op!(&Ndarr<T1,R1>,  Ndarr<T2,R2>, Rem, rem, %);
-ndarr_op!(&Ndarr<T1,R1>, &Ndarr<T2,R2>, Rem, rem, %);
-
-//////////////////////////////// Scalars ////////////////////////////////////
 macro_rules! scalar_op {
     ($Op:tt, $f_name:tt, $f:tt) => {
-        impl<L,P, T, R: Unsigned> $Op<P> for Ndarr<T, R>
+        impl<T, L, P, R: Rank, B: Buffer<T>> $Op<P> for Ndarr<T, R, B>
         where
-            L: Clone + Debug + Default,
-            T: Clone + Debug + Default + $Op<P, Output = L>,
+            T: Clone + $Op<P, Output = L>,
             P: Scalar + Copy,
         {
-            type Output = Ndarr<L,R>;
+            type Output = Ndarr<L, R>;
             fn $f_name(self, other: P) -> Self::Output {
                 self.map(|x| x.clone() $f other)
             }
         }
-        impl<L,P, T, R: Unsigned> $Op<P> for &Ndarr<T, R>
+        impl<T, L, P, R: Rank, B: Buffer<T>> $Op<P> for &Ndarr<T, R, B>
         where
-            L: Clone + Debug + Default,
-            T: Clone + Debug + Default + $Op<P, Output = L>,
+            T: Clone + $Op<P, Output = L>,
             P: Scalar + Copy,
         {
             type Output = Ndarr<L, R>;
@@ -84,133 +65,98 @@ scalar_op!(Mul, mul, *);
 scalar_op!(Div, div, /);
 scalar_op!(Rem, rem, %);
 
+// Spelled per primitive type: a blanket impl puts an uncovered type
+// parameter in the self position of a foreign trait (E0210).
 macro_rules! scalar_op2 {
     ($Op:tt, $f_name:tt, $f:tt, $t:ty) => {
-        impl<T, R: Unsigned> $Op<Ndarr<T,R>> for $t
-            where T: Clone + Debug + Default + $Op<$t,Output = T>,
+        impl<T, R: Rank, B: Buffer<T>> $Op<Ndarr<T, R, B>> for $t
+        where
+            T: Clone + $Op<$t, Output = T>,
         {
-            type Output = Ndarr<T,R>;
-            fn $f_name(self, rhs: Ndarr<T,R>) -> Self::Output {
+            type Output = Ndarr<T, R>;
+            fn $f_name(self, rhs: Ndarr<T, R, B>) -> Self::Output {
                 rhs.map(|x| x.clone() $f self)
             }
         }
-        impl<T, R: Unsigned> $Op<&Ndarr<T,R>> for $t
-            where T: Clone + Debug + Default + $Op<$t,Output = T>,
+        impl<T, R: Rank, B: Buffer<T>> $Op<&Ndarr<T, R, B>> for $t
+        where
+            T: Clone + $Op<$t, Output = T>,
         {
-            type Output = Ndarr<T,R>;
-            fn $f_name(self, rhs: &Ndarr<T,R>) -> Self::Output {
+            type Output = Ndarr<T, R>;
+            fn $f_name(self, rhs: &Ndarr<T, R, B>) -> Self::Output {
                 rhs.map(|x| x.clone() $f self)
             }
         }
-    }
+    };
 }
 macro_rules! scalar_to_ndarr {
-    ($t:ty) => {
-        scalar_op2!(Add, add, +, $t);
-        scalar_op2!(Sub, sub, -, $t);
-        scalar_op2!(Mul, mul, *, $t);
-        scalar_op2!(Div, div, /, $t);
-        scalar_op2!(Rem, rem, %, $t);
+    ($($t:ty),+ $(,)?) => {
+        $(
+            scalar_op2!(Add, add, +, $t);
+            scalar_op2!(Sub, sub, -, $t);
+            scalar_op2!(Mul, mul, *, $t);
+            scalar_op2!(Div, div, /, $t);
+            scalar_op2!(Rem, rem, %, $t);
+        )+
     };
 }
 
-scalar_to_ndarr!(u8);
-scalar_to_ndarr!(u16);
-scalar_to_ndarr!(u32);
-scalar_to_ndarr!(u64);
-scalar_to_ndarr!(u128);
-scalar_to_ndarr!(i8);
-scalar_to_ndarr!(i16);
-scalar_to_ndarr!(i32);
-scalar_to_ndarr!(i64);
-scalar_to_ndarr!(i128);
+scalar_to_ndarr!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, f32, f64, char);
 
-scalar_to_ndarr!(f32);
-scalar_to_ndarr!(f64);
-
-scalar_to_ndarr!(char);
-
-//////////////////////////////////////////// Neg /////////////////////////////////////////////
-
-impl<T, R: Unsigned> Neg for Ndarr<T, R>
+impl<T, R: Rank, B: Buffer<T>> Neg for Ndarr<T, R, B>
 where
-    T: Neg<Output = T> + Clone + Debug + Default + Copy,
-{
-    type Output = Self;
-    fn neg(self) -> Self::Output {
-        self.map(|x| -*x)
-    }
-}
-
-impl<T, R: Unsigned> Neg for &Ndarr<T, R>
-where
-    T: Neg<Output = T> + Clone + Debug + Default + Copy,
+    T: Clone + Neg<Output = T>,
 {
     type Output = Ndarr<T, R>;
     fn neg(self) -> Self::Output {
-        self.map(|x| -*x)
+        self.map(|x| -x.clone())
     }
 }
 
-//////////////////////////////////////////// AddAssing /////////////////////////////////////////////
-
-impl<P, T, R: Unsigned> AddAssign<&P> for Ndarr<T, R>
+impl<T, R: Rank, B: Buffer<T>> Neg for &Ndarr<T, R, B>
 where
-    T: Add<Output = T> + Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Clone,
+    T: Clone + Neg<Output = T>,
 {
-    fn add_assign(&mut self, other: &P) {
-        self.bimap_in_place(&other.into_ndarr(&self.dim), |x, y| x + y)
+    type Output = Ndarr<T, R>;
+    fn neg(self) -> Self::Output {
+        self.map(|x| -x.clone())
     }
 }
 
-////////////////////////////////////////////  SubAssing /////////////////////////////////////////////
+// Array right-hand sides update in place via `zip_with_in_place`, broadcasting to
+// the left-hand shape; scalars via `map_in_place`. Operators cannot return
+// `Result`, so a right-hand side that does not broadcast panics.
+macro_rules! assign_op {
+    ($Trait:tt, $f_name:tt, $Op:tt, $f:tt) => {
+        impl<T, R: Rank, R2: Rank, B: BufferMut<T>, B2: Buffer<T>> $Trait<&Ndarr<T, R2, B2>>
+            for Ndarr<T, R, B>
+        where
+            T: Clone + $Op<Output = T>,
+        {
+            fn $f_name(&mut self, other: &Ndarr<T, R2, B2>) {
+                self.zip_with_in_place(other, |x, y| x.clone() $f y.clone())
+                    .expect("the right-hand side must broadcast to the left-hand shape")
+            }
+        }
 
-impl<P, T, R: Unsigned> SubAssign<&P> for Ndarr<T, R>
-where
-    T: Sub<Output = T> + Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Clone,
-{
-    fn sub_assign(&mut self, other: &P) {
-        self.bimap_in_place(&other.into_ndarr(&self.dim), |x, y| x - y)
-    }
+        impl<T, P, R: Rank, B: BufferMut<T>> $Trait<P> for Ndarr<T, R, B>
+        where
+            T: Clone + $Op<P, Output = T>,
+            P: Scalar + Copy,
+        {
+            fn $f_name(&mut self, scalar: P) {
+                self.map_in_place(|x| x.clone() $f scalar)
+            }
+        }
+    };
 }
 
-////////////////////////////////////////////  MulAssing /////////////////////////////////////////////
+assign_op!(AddAssign, add_assign, Add, +);
+assign_op!(SubAssign, sub_assign, Sub, -);
+assign_op!(MulAssign, mul_assign, Mul, *);
+assign_op!(DivAssign, div_assign, Div, /);
+assign_op!(RemAssign, rem_assign, Rem, %);
 
-impl<P, T, R: Unsigned> MulAssign<&P> for Ndarr<T, R>
-where
-    T: Mul<Output = T> + Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Clone,
-{
-    fn mul_assign(&mut self, other: &P) {
-        self.bimap_in_place(&other.into_ndarr(&self.dim), |x, y| x * y)
-    }
-}
-
-////////////////////////////////////////////  DivAssing /////////////////////////////////////////////
-
-impl<P, T, R: Unsigned> DivAssign<&P> for Ndarr<T, R>
-where
-    T: Div<Output = T> + Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Clone,
-{
-    fn div_assign(&mut self, other: &P) {
-        self.bimap_in_place(&other.into_ndarr(&self.dim), |x, y| x / y)
-    }
-}
-
-////////////////////////////////////////////  RemAssing /////////////////////////////////////////////
-
-impl<P, T, R: Unsigned> RemAssign<&P> for Ndarr<T, R>
-where
-    T: Rem<Output = T> + Clone + Debug + Default,
-    P: IntoNdarr<T, R> + Clone,
-{
-    fn rem_assign(&mut self, other: &P) {
-        self.bimap_in_place(&other.into_ndarr(&self.dim), |x, y| x % y)
-    }
-}
 #[cfg(test)]
 mod test_arithmetics {
     use super::*;

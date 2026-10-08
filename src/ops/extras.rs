@@ -1,63 +1,15 @@
 use super::*;
 use num_traits::Signed;
-use std::ops::Add;
 
-impl<T, R: Unsigned> Ndarr<T, R>
-where
-    T: Clone + Debug + Signed + PartialOrd,
-{
-    pub fn abs(&self) -> Self {
-        let out = self.map(|x| x.abs());
-        out
+impl<T: Signed, R: Rank, B: Buffer<T>> Ndarr<T, R, B> {
+    pub fn abs(&self) -> Ndarr<T, R> {
+        self.map(|x| x.abs())
     }
     pub fn is_positive(&self) -> Ndarr<bool, R> {
-        let out = self.map(|x| x.is_positive());
-        out
+        self.map(|x| x.is_positive())
     }
 
     pub fn is_negative(&self) -> Ndarr<bool, R> {
-        let out = self.map(|x| x.is_negative());
-        out
-    }
-}
-
-impl<T, R: Unsigned> Ndarr<T, R>
-where
-    T: Clone + Debug,
-{
-    pub fn sum(&self) -> T
-    where
-        T: Add<Output = T>,
-    {
-        let data = &self.data;
-        let mut sum = data[0].clone();
-        for i in 1..data.len() {
-            sum = sum + data[i].clone();
-        }
-        return sum;
-    }
-
-    pub fn max(&self) -> Option<&T>
-    where
-        T: Ord,
-    {
-        self.data.iter().max()
-    }
-}
-
-#[cfg(test)]
-mod test_extras {
-    use super::Ndarr;
-
-    #[test]
-    fn max() {
-        let arr = Ndarr::from([-2, 0, 4, 8]);
-        assert_eq!(arr.max().unwrap(), &8)
-    }
-
-    #[test]
-    fn sum() {
-        let arr = Ndarr::from([-2, 0, 4, 8]);
-        assert_eq!(arr.sum(), 10)
+        self.map(|x| x.is_negative())
     }
 }

@@ -1,9 +1,8 @@
-use num_traits::{Num, Signed, Unsigned};
+use num_traits::{Num, Signed};
 use std::{
-    fmt::{Debug, Display},
+    fmt::Display,
     ops::{Add, AddAssign, Div, Mul, MulAssign, Neg},
 };
-mod cast;
 mod floats;
 mod ops;
 mod primitives;
@@ -11,18 +10,19 @@ mod primitives;
 pub use crate::complex::primitives::Imag;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
-pub struct C<T: Copy + PartialEq>(pub T, pub T);
+pub struct C<T>(pub T, pub T);
 
-impl<T: Copy + PartialEq + Display + Signed> Display for C<T> {
+impl<T: Display + Signed> Display for C<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.1.is_positive() {
-            true => write!(f, "{}+{}i", self.0, self.1),
-            false => write!(f, "{}{}i", self.0, self.1),
+        let sign = if self.1.is_negative() { "" } else { "+" };
+        match f.precision() {
+            Some(p) => write!(f, "{:.p$}{sign}{:.p$}i", self.0, self.1),
+            None => write!(f, "{}{sign}{}i", self.0, self.1),
         }
     }
 }
 
-impl<T: Copy + PartialEq> C<T> {
+impl<T: Copy> C<T> {
     pub fn re(&self) -> T {
         self.0
     }
@@ -31,21 +31,27 @@ impl<T: Copy + PartialEq> C<T> {
     }
 }
 
-impl<T: Copy + PartialEq + Neg<Output = T>> C<T> {
+impl<T: Copy + Neg<Output = T>> C<T> {
     pub fn conj(&self) -> C<T> {
         C(self.0, -self.1)
     }
 }
 
-impl<T: Copy + PartialEq + Add<Output = T> + Mul<Output = T>> C<T> {
+impl<T: Copy + Add<Output = T> + Mul<Output = T>> C<T> {
     pub fn r_square(&self) -> T {
         self.0 * self.0 + self.1 * self.1
     }
 }
 
+impl<T: Num> From<T> for C<T> {
+    fn from(value: T) -> Self {
+        C(value, T::zero())
+    }
+}
+
 impl<T> C<T>
 where
-    T: Copy + PartialEq + Neg<Output = T> + Div<Output = T> + Mul<Output = T> + Add<Output = T>,
+    T: Copy + Neg<Output = T> + Div<Output = T> + Mul<Output = T> + Add<Output = T>,
 {
     pub fn inv(&self) -> Self {
         let r_sq = self.r_square();
@@ -53,28 +59,14 @@ where
     }
 }
 
-impl<T> C<T>
-where
-    C<T>: MulAssign + Debug,
-    T: Copy + PartialEq + Num,
-{
-    // this seems to to be relatively fast for n < 100, but we should find a better way for larger n's
+impl<T: Copy + Num> C<T> {
     pub fn powi(&self, n: i32) -> Self {
-        if n == 0 {
-            return C(T::one(), T::zero());
-        } else if n > 0 {
-            let mut out = self.clone();
-            for _ in 1..n {
-                out *= *self;
-            }
-            return out;
+        let one = C(T::one(), T::zero());
+        let pow = (0..n.unsigned_abs()).fold(one, |acc, _| acc * *self);
+        if n < 0 {
+            one / pow
         } else {
-            let mut out = *self;
-            for _ in 1..-n {
-                out *= *self;
-            }
-            let out = C(T::one(), T::zero()) / out;
-            return out;
+            pow
         }
     }
 }
@@ -82,7 +74,6 @@ where
 #[cfg(test)]
 mod tests {
     #![allow(non_upper_case_globals)]
-    use std::f32::consts::{FRAC_PI_2, LN_2, PI};
     use std::f64::consts::FRAC_1_SQRT_2;
 
     use super::*;
@@ -91,8 +82,8 @@ mod tests {
     pub const _1_0: C<f64> = C(1.0, 0.0);
     pub const _0_1: C<f64> = C(0.0, 1.0);
     pub const _n1_0: C<f64> = C(-1.0, 0.0);
-    pub const _0_n1: C<f64> = C(-1.0, 0.0);
-    pub const _1_1: C<f64> = C(-1.0, 0.0);
+    pub const _0_n1: C<f64> = C(0.0, -1.0);
+    pub const _1_1: C<f64> = C(1.0, 1.0);
     pub const _2_n1: C<f64> = C(-2.0, -1.0);
     pub const unit: C<f64> = C(FRAC_1_SQRT_2, FRAC_1_SQRT_2);
     pub const all_z: [C<f64>; 8] = [_0_0, _1_0, _0_1, _n1_0, _0_n1, _1_1, _2_n1, unit];
@@ -138,7 +129,7 @@ mod tests {
         assert_eq!(c1 / c2, expected);
     }
     #[test]
-    fn assing() {
+    fn assign() {
         let mut z = C(0, 0);
         z += 2;
         assert_eq!(z, C(2, 0));
@@ -172,14 +163,15 @@ mod tests {
 
     #[test]
     fn ln() {
-        let a = C(0.0, 1.0);
-        assert_eq!(a.ln(), C(0.0, FRAC_PI_2));
+        // Use f64 + approx: complex ln of axis values is not bit-exact on all platforms.
+        let a = C(0.0_f64, 1.0);
+        assert!(approx(a.ln(), C(0.0, std::f64::consts::FRAC_PI_2)));
 
-        let a = C(2.0, 0.0);
-        assert_eq!(a.ln(), C(LN_2, 0.0));
+        let a = C(2.0_f64, 0.0);
+        assert!(approx(a.ln(), C(std::f64::consts::LN_2, 0.0)));
 
-        let a = C(-1.0, 0.0);
-        assert_eq!(a.ln(), C(0.0, PI));
+        let a = C(-1.0_f64, 0.0);
+        assert!(approx(a.ln(), C(0.0, std::f64::consts::PI)));
     }
 
     #[test]
@@ -218,7 +210,7 @@ mod tests {
         let z2 = 2.i();
         assert_eq!(z2.powi(4), C(16, 0));
         let z3 = C(3, -5);
-        assert_eq!(z3.clone().powi(3), z3.clone() * z3.clone() * z3);
+        assert_eq!(z3.clone().powi(3), z3 * z3 * z3);
         assert_eq!(_2_n1.powi(2), _2_n1 * _2_n1);
         assert_eq!(C(5, 10).powi(0), C(1, 0));
         assert_eq!(2.0.i().powi(-2), C(-1. / 4., 0.));
@@ -233,14 +225,8 @@ mod tests {
     fn powc() {
         assert!(approx(_2_n1.powc(C(2., 0.)), _2_n1 * _2_n1));
         assert!(approx(_2_n1.powc(C(0., 0.)), C(1., 0.)));
-        //form python
-        //>>> z = 2.0 + 0.5j
-        //>>> z**z
-        //(2.4767939208048335+2.8290270856372506j)
+        // Reference value from python.
         let z: C<f64> = 2.0 + 0.5.i();
-        assert!(approx(
-            z.powc(z.clone()),
-            C(2.4767939208048335, 2.8290270856372506)
-        ))
+        assert!(approx(z.powc(z), C(2.4767939208048335, 2.8290270856372506)))
     }
 }

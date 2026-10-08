@@ -1,7 +1,6 @@
 use super::*;
 use std::ops::*;
 
-//-----------------ADD----------------------
 macro_rules! complex_add {
     ($LHS:ty, $RHS:ty, $T:tt) => {
         impl<$T: Add<Output = $T> + Copy + PartialEq> Add<$RHS> for $LHS {
@@ -56,7 +55,6 @@ real_complex_add!(f64);
 real_complex_add!(usize);
 real_complex_add!(isize);
 
-//-----------------SUB----------------------
 macro_rules! complex_sub {
     ($LHS:ty, $RHS:ty, $T:tt) => {
         impl<$T: Sub<Output = $T> + Copy + PartialEq> Sub<$RHS> for $LHS {
@@ -105,8 +103,6 @@ real_complex_sub!(i128);
 real_complex_sub!(f32);
 real_complex_sub!(f64);
 real_complex_sub!(isize);
-
-//-----------------MUl----------------------
 
 macro_rules! complex_mul {
     ($LHS:ty, $RHS:ty, $T:tt ) => {
@@ -169,7 +165,6 @@ real_complex_mul!(f64);
 real_complex_mul!(usize);
 real_complex_mul!(isize);
 
-//-----------------Div----------------------
 macro_rules! complex_div {
     ($LHS:ty, $RHS:ty, $T:tt ) => {
         impl<
@@ -217,7 +212,7 @@ macro_rules! real_complex_div {
         impl Div<C<$T>> for $T {
             type Output = C<$T>;
             fn div(self, rhs: C<$T>) -> Self::Output {
-                let den = self * self + rhs.1 * rhs.1;
+                let den = rhs.0 * rhs.0 + rhs.1 * rhs.1;
                 C((self * rhs.0) / den, (-self * rhs.1) / den)
             }
         }
@@ -240,7 +235,6 @@ real_complex_div!(f32);
 real_complex_div!(f64);
 real_complex_div!(isize);
 
-//-------------NEG-------------------
 macro_rules! complex_neg {
     ($LHS:ty, $T:tt ) => {
         impl<$T: Neg<Output = $T> + Copy + PartialEq> Neg for $LHS {
@@ -254,62 +248,57 @@ macro_rules! complex_neg {
 complex_neg!(C<T>, T);
 complex_neg!(&C<T>, T);
 
-//-------------------------------- AddAdding ------------------------------
-
-impl<T: Copy + PartialEq + Add<T, Output = T>> AddAssign<C<T>> for C<T> {
+impl<T: Copy + Add<T, Output = T>> AddAssign<C<T>> for C<T> {
     fn add_assign(&mut self, rhs: Self) {
         self.0 = self.0 + rhs.0;
         self.1 = self.1 + rhs.1;
     }
 }
-impl<T: Copy + PartialEq + Add<T, Output = T>> AddAssign<T> for C<T> {
+impl<T: Copy + Add<T, Output = T>> AddAssign<T> for C<T> {
     fn add_assign(&mut self, rhs: T) {
         self.0 = self.0 + rhs;
     }
 }
 
-//-------------------------------- Sub ------------------------------
-impl<T: Copy + PartialEq + Sub<T, Output = T>> SubAssign<C<T>> for C<T> {
+impl<T: Copy + Sub<T, Output = T>> SubAssign<C<T>> for C<T> {
     fn sub_assign(&mut self, rhs: Self) {
         self.0 = self.0 - rhs.0;
         self.1 = self.1 - rhs.1;
     }
 }
-impl<T: Copy + PartialEq + Sub<T, Output = T>> SubAssign<T> for C<T> {
+impl<T: Copy + Sub<T, Output = T>> SubAssign<T> for C<T> {
     fn sub_assign(&mut self, rhs: T) {
         self.0 = self.0 - rhs;
     }
 }
 
-//-------------------------------- Mul ------------------------------
 impl<T: Copy + PartialEq + Mul<T, Output = T> + Add<Output = T> + Sub<Output = T>> MulAssign<C<T>>
     for C<T>
 {
     fn mul_assign(&mut self, rhs: Self) {
-        let out = self.clone() * rhs;
+        let out = *self * rhs;
         self.0 = out.0;
         self.1 = out.1;
     }
 }
-impl<T: Copy + PartialEq + Mul<T, Output = T>> MulAssign<T> for C<T> {
+impl<T: Copy + Mul<T, Output = T>> MulAssign<T> for C<T> {
     fn mul_assign(&mut self, rhs: T) {
         self.0 = self.0 * rhs;
         self.1 = self.1 * rhs;
     }
 }
 
-//-------------------------------- Div ------------------------------
 impl<
         T: Copy + PartialEq + Div<Output = T> + Mul<T, Output = T> + Add<Output = T> + Sub<Output = T>,
     > DivAssign<C<T>> for C<T>
 {
     fn div_assign(&mut self, rhs: Self) {
-        let out = self.clone() / rhs;
+        let out = *self / rhs;
         self.0 = out.0;
         self.1 = out.1;
     }
 }
-impl<T: Copy + PartialEq + Div<T, Output = T>> DivAssign<T> for C<T> {
+impl<T: Copy + Div<T, Output = T>> DivAssign<T> for C<T> {
     fn div_assign(&mut self, rhs: T) {
         self.0 = self.0 / rhs;
         self.1 = self.1 / rhs;

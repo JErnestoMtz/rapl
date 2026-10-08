@@ -2,215 +2,267 @@
 [![Documentation](https://docs.rs/rapl/badge.svg)](https://docs.rs/rapl)
 [![Crate](https://img.shields.io/crates/v/rapl.svg)](https://crates.io/crates/rapl)
 
-Note: `rapl` is in early development and is  not optimized for performance, is not recommended for production applications.
+**Enjoyable, composable, hackable N-dimensional arrays for Rust.**
 
-`rapl` is mathematical  computing Rust library that provides a simple way of working with N-dimensional array, along with a wide range of mathematical functions to manipulate them. It takes inspiration from NumPy and APL, with the primary aim of achieving maximum ergonomics and user-friendliness while maintaining generality. 
+`rapl` combines the familiar parts of NumPy with a lot of inspiration from array
+programming languages like APL and BQN. Ranks are part of the type, so rank
+mistakes are compile errors.
 
-Our goal is to make Rust scripting as productive as possible, and make Rust a real option when it comes to  numerical computing and data science. Check out the [examples](https://github.com/JErnestoMtz/rapl/tree/main/examples).
+`rapl` has a small core, and every operation can be built from a small set of
+composable primitives.
 
-Out of the box `rapl` provides features like **co-broadcasting, rank type checking, native complex number support**, among many others:
-
-```Rust
+```rust
 use rapl::*;
-fn main() {
-    let a = Ndarr::from([1 + 1.i(), 2 + 1.i()]);
-    let b = Ndarr::from([[1, 2], [3, 4]]);
-    let r = a + b - 2;
-    assert_eq!(r, Ndarr::from([[1.i(), 2 + 1.i()],[2 + 1.i(), 4 + 1.i()]]));
+
+fn main() -> Result<(), DimError> {
+    let x = Ndarr::from([3, 1, 4, 1, 5, 9, 2, 6]);
+
+    let w = x.slice(s![Win(3)])?;          // every window of 3: a [6, 3] view, no copy
+    println!("{w}");
+    // ┌→────┐
+    // ↓3 1 4│
+    // │1 4 1│
+    // │4 1 5│
+    // │1 5 9│
+    // │5 9 2│
+    // │9 2 6│
+    // └~────┘
+
+    let peaks = w.reduce(1, i32::max)?;    // 4 4 5 9 9 9
+
+    let hops = w.slice(s![..;2, ..])?;     // a stride is just a step on the positions
+    // ┌→────┐
+    // ↓3 1 4│
+    // │4 1 5│
+    // │5 9 2│
+    // └~────┘
+
+    // The same in 2-D: every 2×2 patch of an image, then max pooling.
+    let img = Ndarr::from([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]);
+    let pooled = img
+        .slice(s![Win(2), Win(2)])?        // [2, 2, 3, 2]: row, kh, col, kw
+        .reduce(3, i32::max)?
+        .reduce(1, i32::max)?;
+    // ┌→───────┐
+    // ↓ 6  7  8│
+    // │10 11 12│
+    // └~───────┘
+    Ok(())
 }
 ```
 
-### Array initialization
-There are multiple handy ways of initializing N-dimensional arrays (or `Ndarr`).
-- From Native Rust arrays to `Ndarr`.
-```Rust 
-let a = Ndarr::from(["a","b","c"]); 
-let b = Ndarr::from([[1,2],[3,4]]);
-```
-- From ranges.
-```Rust
-let a = Ndarr::from(1..7).reshape(&[2,3])
-```
-- From `&str`
-```Rust
-let chars = Ndarr::from("Hello rapl!"); //Ndarr<char,U1>
-```
-- Others:
-```Rust 
-let ones: Ndarr<f32, 2> = Ndarr::ones(&[4,4]);
-let zeros : Ndarr<i32, 3>= Ndarr::zeros(&[2,3,4]);
-let letter_a = Ndarr::fill("a", &[5]);
-let fold = Ndarr::new(data: &[0, 1, 2, 3], shape: [2, 2]).expect("Error initializing");
-```
-- linspace, logspace, geomspace
-```Rust
-    let linear = Ndarr::linspace(0, 9, 10);
-    assert_eq!(linear,Ndarr::from(0..10));
+> `rapl` is in early development. The API is still settling, and speed is not yet
+> a priority (see [Philosophy](#philosophy)), so it is not yet recommended for
+> speed-sensitive applications.
 
-    let logarithmic = Ndarr::logspace(0.,9., 10., 10);
-    assert!(logarithmic.approx(&Ndarr::from([1.,1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9])));
+## What makes rapl different
 
-    let geom = Ndarr::geomspace(1.,256., 9);
-    assert!(geom.approx(&Ndarr::from([1., 2., 4., 8., 16., 32., 64., 128., 256.])));
+**Rank generic.** Every operation works on arrays of any rank: a vector, a
+matrix, a batch of images, a stack of attention heads. The rank lives in the
+type (`Ndarr<f32, U3>`), so a rank mismatch is a compile error.
 
-```
-### Random array creation
-You can easily create random array of any shape:
-```Rust
-//Normal distribution
-let arr_norm = NdarrRand::normal(low: 0f32, high: 1f32, shape: [2, 2], Seed: Some(1234));
-//Normal distribution
-let arr_uniform = NdarrRand::uniform(low: 0f32, high: 1f32, shape: [10], Seed: None);
-//Choose between values
-let arr_choose = NdarrRand::choose(&[1, 2, 3, 4, 5], [3, 3], Some(1234));
+**Type generic where possible.** Elements are any `T`, not just floats:
+strings, chars, tuples, your own structs. Arithmetic needs arithmetic and `sin`
+needs a float. Everything else (slicing, permuting, mapping, folding, outer
+products) works for any element type.
+
+**Enjoyable, composable, hackable.** `rapl` is not the fastest ndarray library
+in Rust and does not try to be. It tries to be pleasant to write, read and
+modify: a small core, **three small dependencies**, and conveniences defined as short
+compositions of public primitives rather than private kernels.
+
+## A taste
+
+A 2-D convolution from windows and one fused contraction:
+
+```rust
+// image: [h, w, c_in], filters: [kh, kw, c_in, c_out]
+let patches = image
+    .slice(s![Win(3), Win(3), ..])?       // [h', 3, w', 3, c_in], a view
+    .permute_axes(&[0, 2, 1, 3, 4])?;     // [h', w', 3, 3, c_in]
+let features = patches.contract(&filters, U3::new(), |x, w| x * w, |a, b| a + b)?;
 ```
 
-### Element wise operations
-- Arithmetic operation with with scalars
-```Rust
-let ones: Ndarr<i32, 2> = Ndarr::ones(&[4,4]);
-let twos = ones + 1;
-let sixes = twos * 3;
-```
-- Arithmetic operation between `Ndarr`s,
-```Rust
-let a = Ndarr::from([[1,2],[3,4]]);
-let b = Ndarr::from([[1,2],[-3,-4]]);
+The [examples](https://github.com/JErnestoMtz/rapl/tree/main/examples) include
+AlexNet with hand-written backpropagation, multi-head attention, an
+ultra-compact APL-style Conway's Game of Life, an Ising model, and FFT edge
+detection.
 
-assert_eq!(a + b, Ndarr::from([[2,4],[0,0]]))
-```
-Note: If the shapes are not equal `rapl` will automatically broadcast the arrays into a compatible shape (if it exist) and perform the operation.
-- Math operations including trigonometric and activation functions.
-```Rust
-let x = Ndarr::from([-1.0 , -0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6, 0.8, 1.0]);
-let sin_x = x.sin();
-let cos_x = x.cos();
-let tanh_x = x.tanh();
+## A tour
 
-let abs_x = x.abs();
-let relu_x = x.relu();
-```
-- Map function
-```Rust
-let a = Ndarr::from([[1,2],[3,4]]);
-let mapped = a.map(|x| x*2-1);
-```
-### Monadic tensor operations
-- Transpose
-```Rust
-let arr = Ndarr::from([[1,2,3],[4,5,6]]);	
-assert_eq!(arr.shape(), [2,3]);
-assert_eq!(arr.clone().t().shape, [3,2]); //transpose
-```
-- Reshape
-```Rust
-let a = Ndarr::from(1..7).reshape(&[2,3]).unwrap();
-```
-- Slice
-```Rust
-let arr = Ndarr::from([[1,2],[3,4]]);
+Snippets assume `use rapl::*;` and a function that returns `Result`, so `?`
+works.
 
-assert_eq!(arr.slice_at(1)[0], Ndarr::from([1,3]))
-```
-- Reduce
-```Rust
-let sum_axis = arr.clone().reduce(1, |x,y| x + y).unwrap();
-assert_eq!(sum_axis, Ndarr::from([6, 15])); //sum reduction
-```
-- Scan right an left
-```Rust
- let s = Ndarr::from([1,2,3]);
- let cumsum = s.scanr( 0, |x,y| x + y);
- assert_eq!(cumsum, Ndarr::from([1,3,6]));
-```
-- Roll
-```Rust
-let a = Ndarr::from([[1, 2], [3, 4]]);
-assert_eq!(a.roll(1, 1), Ndarr::from([[2, 1], [4, 3]]))
+### Creating arrays
+
+```rust
+let words = Ndarr::from(vec!["a", "b", "c"]);            // any element type
+let matrix = Ndarr::from([[1, 2], [3, 4]]);              // rank from the literal
+let range = Ndarr::from(1..7).reshape([2, 3])?;
+let chars = Ndarr::from("Hello rapl!");                  // Ndarr<char, U1>
+
+let zeros = Ndarr::<f64, U3>::zeros([2, 3, 4]);
+let filled = Ndarr::fill("a", [5]);
+let line = Ndarr::linspace(0.0, 1.0, 5);
+
+// `from_fn` passes each element's coordinates:
+let identity = Ndarr::from_fn([3, 3], |ix| i32::from(ix[0] == ix[1]));
+// ┌→────┐
+// ↓1 0 0│
+// │0 1 0│
+// │0 0 1│
+// └~────┘
 ```
 
-### Dyatic tensor operations
-- Generalized matrix multiplication between compatible arrays
-```Rust
-use rapl::*
-use rapl::ops::{mat_mul};
-let a = Ndarr::from(1..7).reshape(&[2,3]).unwrap();
-let b = Ndarr::from(1..7).reshape(&[3,2]).unwrap();
-    
-let matmul = mat_mul(a, b))
-```
-- [APL](https://en.wikipedia.org/wiki/APL_(programming_language)) inspired Inner Product.
-```Rust
-    let a = Ndarr::from(1..7).reshape(&[2,3]).unwrap();
-    let b = Ndarr::from(1..7).reshape(&[3,2]).unwrap();
-    
-    let inner = rapl::ops::inner_product(|x,y| x*y, |x,y| x+y, a.clone(), b.clone());
-    assert_eq!(inner, rapl::ops::mat_mul(a, b))
+Random arrays use the same `from_fn` with a generator you own; `rapl` does not
+choose a PRNG.
 
-```
-- Outer Product.
+### Element-wise math and broadcasting
 
-```Rust
-    let suits = Ndarr::from(["♣","♠","♥","♦"]);
-    let ranks = Ndarr::from(["2","3","4","5","6","7","8","9","10","J","Q","K","A"]);
+```rust
+// Shapes broadcast from the right, as in NumPy, and complex numbers are native:
+let a = Ndarr::from([1 + 1.i(), 2 + 1.i()]);
+let b = Ndarr::from([[1, 2], [3, 4]]);
+assert_eq!(a + b - 2, Ndarr::from([[1.i(), 2 + 1.i()], [2 + 1.i(), 4 + 1.i()]]));
 
-    let add_str = |x: &str, y: &str| (x.to_owned() + y);
+let x = Ndarr::linspace(-1.0_f64, 1.0, 5);
+let y = x.sin() * 2.0 + x.tanh();
+let relu = x.map(|v| v.max(0.0));                 // anything else is one `map` away
 
-    let deck = ops::outer_product( add_str, ranks, suits).flatten(); //All cards in a deck
-```
-### Complex numbers
-You can ergonomically do operations between native numeric types and complex types `C<T>` with a simple and clean interface. 
-``` Rust
-use rapl::*;
-// Complex sclars
-    let z = 1 + 2.i();
-    assert_eq!(z, C(1,2));
-    assert_eq!(z - 3, -2 + 2.i());
+// Combine two arrays, of different element types if needed:
+let grid = Ndarr::from([[1, 2, 3], [4, 5, 6]]);
+let labels = grid.zip_with(&Ndarr::from(vec!["a", "b", "c"]), |n, s| format!("{s}{n}"))?;
+// ┌→───────┐
+// ↓a1 b2 c3│
+// │a4 b5 c6│
+// └~───────┘
 ```
 
-Seamlessly work with complex numbers, and complex tensors.
-```Rust
-use rapl::*;
-// Complex tensors
-let arr = Ndarr::from([1, 2, 3]);
-let arr_z = arr + -1 + 2.i();
-assert_eq!(arr_z, Ndarr::from([C(0,2), C(1,2), C(2,2)]));
-assert_eq!(arr_z.im(), Ndarr::from([2,2,2]));
-```
-### Dead Simple 1D and 2D FFT
-```Rust
-    let signal = Ndarr::linspace(-10., 10., 100).sin();
-    let signal_fft = signal.to_complex().fft();
+### Indexing, slicing and views
+
+```rust
+let mut a = Ndarr::from([[0, 1, 2, 3], [4, 5, 6, 7]]);
+assert_eq!(a[[1, 2]], 6);                          // fixed or dynamic rank alike
+
+let row = a.slice(s![1, ..])?;                     // an integer drops the axis
+let evens = a.slice(s![.., ..;2])?;                // ranges with steps
+let reversed = a.slice(s![.., ..;-1])?;            // negative steps, as in NumPy
+let start = 1usize;
+let tail = a.slice(s![0, start..])?;               // any integer type, no casts
+
+a.slice_mut(s![.., 0])?.map_in_place(|v| v * 10);  // mutable views, same syntax
 ```
 
-### Image to Array and Array to Image conversion
-You can easily work with images of almost any format. `rapl` provides  helpful functions to open images as both RGB and Luma `Ndarr`, and also save them to your preferred format.
+Views are O(1): `slice`, `t_view`, windows and broadcasts share the original
+buffer. `permute_axes` and `reshape` consume their input and keep its storage,
+so they never copy; `to_owned_array()` is the explicit copy.
 
-```Rust
-use rapl::*;
-use rapl::utils::rapl_img;
+### Reductions, scans and cells
 
-fn main() {
-    //open RGB image as  Ndarr<u8,3>
-    let img: Ndarr<u8,U3> = rapl_img::open_rgbu8(&"image_name.jpg").unwrap();
-    //Split RGB channels by Slicing along 3'th axis.
-    let channels: Vec<Ndarr<u8,U2>> = img.slice_at(2);
-    //select blue channel and save it as black and white image.
-    channels[2].save_as_luma(&"blue_channel.png", rapl_img::ImageFormat::Png);
-}
+```rust
+use std::ops::Add;
+
+let m = Ndarr::from([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+let col_sums = m.reduce(0, f64::add)?;                  // [5, 7, 9], axis removed
+let row_max = m.reduce(Keep(1), f64::max)?;             // [[3], [6]], axis kept
+let centered = &m - &row_max;                           // so it broadcasts back
+let running = m.scan_axis(1, ScanDirection::Forward, |acc, x| acc + x)?;
+
+// Cells: any function over the trailing axes, e.g. the max of each window.
+let windows = m.slice(s![Win(2), Win(2)])?.permute_axes(&[0, 2, 1, 3])?;
+let window_max = windows.map_cells(U2::new(), |w| {
+    w.iter_elems().copied().fold(f64::NEG_INFINITY, f64::max)
+})?;
 ```
-### Features in development:
-- [x] Port to stable Rust
-- [x] Native support for complex numbers.
-- [x] Line space and meshigrid initialization.
-- [x] Random array creation.
-- [x] 1D and 2D FFT.
-- [ ] Matrix inversion.
-- [x] Image to array conversion.
-- [x] Array to image conversion.
-- [x] APL-inspired rotate function.
-- [x] Commonly use ML functions like Relu, Softmax etc.
-- [ ] Support for existing plotting libraries in rust.
-- [ ] Mutable slicing.
-- [ ] Other Linear algebra functionalities: Eigen, LU, Gauss Jordan, Etc.
-- [ ] Automatic differentiation.
+
+### Products
+
+```rust
+let a = Ndarr::from(1..7).reshape([2, 3])?;
+let b = Ndarr::from(1..7).reshape([3, 2])?;
+let product = a.mat_mul(&b)?;
+
+// `mat_mul` batches leading axes like NumPy's `@`:
+let batch = Ndarr::from(1..13).reshape([2, 2, 3])?;
+assert_eq!(batch.mat_mul(&b)?.shape(), &[2, 2, 2]);
+
+// The general form: any number of contracted axes, any combining functions.
+let tensordot = a.contract(&b, U1::new(), |x, y| x * y, |x, y| x + y)?;
+
+// Outer products combine every pair, for any element type:
+let suits = Ndarr::from(vec!["♣", "♠", "♥", "♦"]);
+let ranks = Ndarr::from(vec!["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]);
+let deck = ranks.outer_product(&suits, |rank, suit| format!("{rank}{suit}"))?;
+assert_eq!(deck.len(), 52);
+println!("{deck}");
+// ┌→──────────────┐
+// ↓2♣  2♠  2♥  2♦ │
+// │3♣  3♠  3♥  3♦ │
+// │4♣  4♠  4♥  4♦ │
+// │5♣  5♠  5♥  5♦ │
+// │6♣  6♠  6♥  6♦ │
+// │7♣  7♠  7♥  7♦ │
+// │8♣  8♠  8♥  8♦ │
+// │9♣  9♠  9♥  9♦ │
+// │10♣ 10♠ 10♥ 10♦│
+// │J♣  J♠  J♥  J♦ │
+// │Q♣  Q♠  Q♥  Q♦ │
+// │K♣  K♠  K♥  K♦ │
+// │A♣  A♠  A♥  A♦ │
+// └~──────────────┘
+```
+
+### Rank checking, static and dynamic
+
+```rust
+let m = Ndarr::from([[1, 2], [3, 4]]);
+let v: Ndarr<i32, U1> = m.reduce(0, |a, b| a + b)?;   // U2 -> U1, checked at compile time
+let [rows, cols] = m.dim().to_array();               // destructure a fixed-rank shape
+
+let d = m.clone().into_dyn();                         // rank known only at runtime
+let w: Ndarr<i32, Dyn> = d.reduce(0, |a, b| a + b)?;  // same API, checked at runtime
+```
+
+### Complex numbers and FFT
+
+```rust
+let z = 1 + 2.i();
+assert_eq!(z - 3, -2 + 2.i());
+
+let shifted = Ndarr::from([1, 2, 3]) + -1 + 2.i();    // complex arrays
+assert_eq!(shifted.im(), Ndarr::from([2, 2, 2]));
+
+// 1-D and 2-D FFT with the `fft` feature, implemented in rapl itself:
+let signal = Ndarr::linspace(-10.0, 10.0, 100).sin();
+let spectrum = signal.to_complex().fft();
+```
+
+## Philosophy
+
+- **Small core, everything composes.** `rapl` exposes a handful of structural
+  and higher-order primitives: cells, windows, scans, reduce, contraction.
+  Conveniences are short definitions over them, so improving a primitive
+  improves everything built on it.
+- **Clarity over speed.** There are no SIMD kernels, BLAS bindings or
+  special-cased fast paths. If a clear composition of primitives can express
+  something, that composition is the implementation. For heavy production
+  workloads, use a performance-oriented crate; `rapl` is meant for exploring,
+  prototyping, teaching and scripting.
+- **Minimal dependencies.** Every dependency has to earn its place. Today
+  there are three small, widely used crates and nothing else at runtime:
+  `typenum` and `generic-array` carry the compile-time rank system, and
+  `num-traits` provides the numeric traits. Features like the FFT are
+  implemented in `rapl` itself rather than pulled in.
+- **Hackable.** No `unsafe`, and a codebase meant to be read. A missing
+  function is usually a `map`, a `reduce` or a `contract` away, and we would
+  rather document the composition than grow the catalog.
+
+## Getting started
+
+```sh
+cargo add rapl
+# or, with the FFT:
+cargo add rapl --features fft
+```
+
+Complex numbers are enabled by default. Contributions and issues are welcome.

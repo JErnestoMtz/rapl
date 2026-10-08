@@ -10,3 +10,11 @@ impl DimError {
         }
     }
 }
+
+impl std::fmt::Display for DimError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(&self.details)
+    }
+}
+
+impl std::error::Error for DimError {}

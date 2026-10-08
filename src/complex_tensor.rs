@@ -1,177 +1,108 @@
-use std::ops::{Add, Div, Mul, MulAssign, Neg};
+use std::ops::{Add, Div, Mul, Neg};
 
 use super::*;
 use crate::complex::*;
-use crate::scalars::Scalar;
 use num_traits::{Float, Num};
 
-impl Scalar for C<f64> {}
-impl Scalar for C<f32> {}
-impl Scalar for C<i128> {}
-impl Scalar for C<i64> {}
-impl Scalar for C<i32> {}
-impl Scalar for C<i16> {}
-impl Scalar for C<i8> {}
-impl Scalar for C<isize> {}
-impl Scalar for C<u128> {}
-impl Scalar for C<u64> {}
-impl Scalar for C<u32> {}
-impl Scalar for C<u16> {}
-impl Scalar for C<u8> {}
-impl Scalar for C<usize> {}
+impl<T: Scalar> Scalar for C<T> {}
 
-impl<T: Copy + PartialEq + Clone + Debug + Default, R: Unsigned> Ndarr<C<T>, R> {
+// Element-wise complex ops accept any buffer/view and materialize owned outputs.
+impl<T: Copy, R: Rank, B: Buffer<C<T>>> Ndarr<C<T>, R, B> {
     pub fn re(&self) -> Ndarr<T, R> {
-        let out = self.map(|z| z.re());
-        out
+        self.map(|z| z.re())
     }
     pub fn im(&self) -> Ndarr<T, R> {
-        let out = self.map(|z| z.im());
-        out
+        self.map(|z| z.im())
     }
 }
 
-impl<T: Copy + PartialEq + Num + Debug, R: Unsigned> Ndarr<T, R> {
+impl<T: Copy + Num, R: Rank, B: Buffer<T>> Ndarr<T, R, B> {
     pub fn to_complex(&self) -> Ndarr<C<T>, R> {
-        let out: Ndarr<C<T>, R> = self.map(|x| C(*x, T::zero()));
-        out
+        self.map(|x| C(*x, T::zero()))
     }
 }
-impl<T: Copy + PartialEq + Neg<Output = T> + Clone + Debug + Default, R: Unsigned> Ndarr<C<T>, R> {
+
+impl<T: Copy + Neg<Output = T>, R: Rank, B: Buffer<C<T>>> Ndarr<C<T>, R, B> {
     /// Element wise complex conjugate.
-    pub fn conj(&self) -> Self {
-        let out = self.map(|z| z.conj());
-        out
+    pub fn conj(&self) -> Ndarr<C<T>, R> {
+        self.map(|z| z.conj())
     }
 
     /// Conjugate or Hermitian transpose.
-    pub fn h(&self) -> Self {
-        let out = self.map(|z| z.conj());
-        out.t()
+    pub fn h(&self) -> Ndarr<C<T>, R> {
+        self.map(|z| z.conj()).t()
     }
 }
 
-impl<T, R: Unsigned> Ndarr<C<T>, R>
+impl<T, R: Rank, B: Buffer<C<T>>> Ndarr<C<T>, R, B>
 where
-    T: Copy
-        + PartialEq
-        + Neg<Output = T>
-        + Clone
-        + Debug
-        + Default
-        + Div<Output = T>
-        + Mul<Output = T>
-        + Add<Output = T>,
+    T: Copy + Neg<Output = T> + Div<Output = T> + Mul<Output = T> + Add<Output = T>,
 {
-    /// Applies inv element wise.
-    pub fn inv(&self) -> Self {
-        let out = self.map(|z| z.inv());
-        out
+    /// Element-wise `inv`.
+    pub fn inv(&self) -> Ndarr<C<T>, R> {
+        self.map(|z| z.inv())
     }
 }
 
-impl<
-        T: Copy + PartialEq + Add<Output = T> + Mul<Output = T> + Clone + Debug + Default,
-        R: Unsigned,
-    > Ndarr<C<T>, R>
-{
+impl<T: Copy + Add<Output = T> + Mul<Output = T>, R: Rank, B: Buffer<C<T>>> Ndarr<C<T>, R, B> {
     pub fn r_square(&self) -> Ndarr<T, R> {
-        let out = self.map(|z| z.r_square());
-        out
+        self.map(|z| z.r_square())
     }
 }
 
-impl<T, R: Unsigned> Ndarr<C<T>, R>
-where
-    C<T>: MulAssign + Debug,
-    T: Clone + Default + Debug + Copy + PartialEq + Num,
-{
-    pub fn powi(&self, n: i32) -> Self {
-        let out = self.map(|z| z.powi(n));
-        out
+impl<T: Copy + Num, R: Rank, B: Buffer<C<T>>> Ndarr<C<T>, R, B> {
+    pub fn powi(&self, n: i32) -> Ndarr<C<T>, R> {
+        self.map(|z| z.powi(n))
     }
 }
 
-//---------------Complex Float Tensors
-
-impl<T, R: Unsigned> Ndarr<C<T>, R>
-where
-    T: Clone + Debug + Default + Float,
-{
+impl<T: Float, R: Rank, B: Buffer<C<T>>> Ndarr<C<T>, R, B> {
     pub fn abs(&self) -> Ndarr<T, R> {
-        let out = self.map(|z| z.abs());
-        out
+        self.map(|z| z.abs())
     }
-    pub fn exp(&self) -> Self {
-        let out = self.map(|z| z.exp());
-        out
+    pub fn exp(&self) -> Ndarr<C<T>, R> {
+        self.map(|z| z.exp())
     }
     pub fn arg(&self) -> Ndarr<T, R> {
-        let out = self.map(|z| z.arg());
-        out
+        self.map(|z| z.arg())
     }
-    pub fn ln(&self) -> Self {
-        let out = self.map(|z| z.ln());
-        out
+    pub fn ln(&self) -> Ndarr<C<T>, R> {
+        self.map(|z| z.ln())
     }
-    pub fn sqrt(&self) -> Self {
-        let out = self.map(|z| z.sqrt());
-        out
+    pub fn sqrt(&self) -> Ndarr<C<T>, R> {
+        self.map(|z| z.sqrt())
     }
-    pub fn powf(&self, n: T) -> Self {
-        let out = self.map(|z| z.powf(n));
-        out
+    pub fn powf(&self, n: T) -> Ndarr<C<T>, R> {
+        self.map(|z| z.powf(n))
     }
-    pub fn powc(&self, _z: C<T>) -> Self {
-        let out = self.map(|z| z.powc(*z));
-        out
+    pub fn powc(&self, exponent: C<T>) -> Ndarr<C<T>, R> {
+        self.map(|z| z.powc(exponent))
     }
 
-    pub fn sin(&self) -> Self {
-        let out = self.map(|z| z.sin());
-        out
+    pub fn sin(&self) -> Ndarr<C<T>, R> {
+        self.map(|z| z.sin())
     }
-    pub fn cos(&self) -> Self {
-        let out = self.map(|z| z.cos());
-        out
+    pub fn cos(&self) -> Ndarr<C<T>, R> {
+        self.map(|z| z.cos())
     }
-    pub fn tan(&self) -> Self {
-        let out = self.map(|z| z.tan());
-
-        out
-    }
-    pub fn csc(&self) -> Self {
-        let out = self.map(|z| z.csc());
-        out
-    }
-    pub fn sec(&self) -> Self {
-        let out = self.map(|z| z.sec());
-        out
-    }
-    pub fn cot(&self) -> Self {
-        let out = self.map(|z| z.cot());
-        out
+    pub fn tan(&self) -> Ndarr<C<T>, R> {
+        self.map(|z| z.tan())
     }
     pub fn to_polar(&self) -> Ndarr<(T, T), R> {
-        let out = self.map(|z| z.to_polar());
-        out
+        self.map(|z| z.to_polar())
     }
 
     pub fn is_infinite(&self) -> Ndarr<bool, R> {
-        let out = self.map(|z| z.is_infinite());
-        out
+        self.map(|z| z.is_infinite())
     }
     pub fn is_finite(&self) -> Ndarr<bool, R> {
-        let out = self.map(|z| z.is_finite());
-        out
+        self.map(|z| z.is_finite())
     }
     pub fn is_normal(&self) -> Ndarr<bool, R> {
-        let out = self.map(|z| z.is_normal());
-        out
+        self.map(|z| z.is_normal())
     }
     pub fn is_nan(&self) -> Ndarr<bool, R> {
-        let out = self.map(|z| z.is_nan());
-        out
+        self.map(|z| z.is_nan())
     }
 }
 
@@ -192,5 +123,17 @@ mod complex_tensor_test {
     fn exp_test() {
         let quads = Ndarr::from([1. + 0_f64.i(), 1.0.i(), -1. + 0_f64.i(), -1.0.i()]);
         println!("{:?}", quads * (PI / 2.).i().exp())
+    }
+
+    /// Both map families are generic over the buffer, so views call them on
+    /// either side of the real/complex name collision.
+    #[test]
+    fn views_call_both_map_families() {
+        let real = Ndarr::from([[0.0_f64, 1.0], [2.0, 3.0]]);
+        assert_eq!(real.t_view().sin(), real.t().sin());
+        assert_eq!(real.view().abs(), real.abs());
+        let complex = real.to_complex();
+        assert_eq!(complex.t_view().sin(), complex.t().sin());
+        assert_eq!(complex.view().abs(), complex.abs());
     }
 }
