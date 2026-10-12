@@ -257,6 +257,23 @@ let spectrum = signal.to_complex().fft();
   function is usually a `map`, a `reduce` or a `contract` away, and we would
   rather document the composition than grow the catalog.
 
+## Plotting
+
+[`rapl-plot`](https://crates.io/crates/rapl-plot) draws `Ndarr`s
+directly, to SVG or PNG. The shape of the data decides what is drawn, and
+labels, colors and widths broadcast like any other array.
+
+```rust
+use rapl::*;
+use rapl_plot::*;
+
+let x = Ndarr::linspace(0.0, 10.0, 200);
+// [200, 2]: one curve per column.
+let waves = Ndarr::from_fn([200, 2], |ix| (x[[ix[0]]] + ix[1] as f64).sin());
+
+line(&x, &waves).label(["sin(x)", "sin(x + 1)"]).save("waves.svg")?;
+```
+
 ## Getting started
 
 ```sh
